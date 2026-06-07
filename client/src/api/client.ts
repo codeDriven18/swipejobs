@@ -32,6 +32,23 @@ function persistAuthResponse(response: AuthResponse) {
   setAuthSession(response.accessToken, response.refreshToken, toStoredAuthUser(response.user));
 }
 
+function parseResponseBody(text: string): unknown {
+  const trimmed = text.trim();
+  if (!trimmed) return undefined;
+
+  try {
+    return JSON.parse(trimmed) as unknown;
+  } catch {
+    return text;
+  }
+}
+
+async function readJsonResponse<T>(response: Response): Promise<T> {
+  const text = await response.text();
+  if (!text.trim()) return undefined as T;
+  return JSON.parse(text) as T;
+}
+
 async function tryRefreshTokens(): Promise<boolean> {
   const refreshToken = getRefreshToken();
   if (!refreshToken) return false;
@@ -48,7 +65,7 @@ async function tryRefreshTokens(): Promise<boolean> {
       clearAuthSession();
       return false;
     }
-    const data = (await response.json()) as AuthResponse;
+    const data = await readJsonResponse<AuthResponse>(response);
     persistAuthResponse(data);
     return true;
   } catch {
@@ -104,12 +121,8 @@ export async function apiClient<T>(
   }
 
   if (!response.ok) {
-    let errorBody: unknown;
-    try {
-      errorBody = await response.json();
-    } catch {
-      errorBody = await response.text();
-    }
+    const errorText = await response.text();
+    const errorBody = parseResponseBody(errorText);
     throw new ApiError(
       `API request failed: ${response.statusText}`,
       response.status,
@@ -121,7 +134,7 @@ export async function apiClient<T>(
     return undefined as T;
   }
 
-  return response.json() as Promise<T>;
+  return readJsonResponse<T>(response);
 }
 
 export function applyAuthResponse(response: AuthResponse) {

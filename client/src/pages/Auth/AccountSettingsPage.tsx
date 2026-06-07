@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { ApiError } from '@/api/client';
 import { authApi } from '@/api/authApi';
 import { useAuth } from '@/context/AuthContext';
+import { PasswordField } from '@/components/forms/PasswordField';
 import { PageHeader } from '@/components/ui/PageHeader';
 import styles from '../Settings/SettingsPage.module.css';
 import authStyles from './AuthPage.module.css';
@@ -73,18 +74,16 @@ export function AccountSettingsPage() {
         <h2 className={styles.cardTitle}>Change password</h2>
         <p className={styles.cardDesc}>Use at least 8 characters.</p>
         <form onSubmit={(e) => void handleChangePassword(e)} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <input
-            className={authStyles.input}
-            type="password"
+          <PasswordField
+            inputClassName={authStyles.input}
             placeholder="Current password"
             autoComplete="current-password"
             required
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
           />
-          <input
-            className={authStyles.input}
-            type="password"
+          <PasswordField
+            inputClassName={authStyles.input}
             placeholder="New password"
             autoComplete="new-password"
             required
@@ -92,9 +91,8 @@ export function AccountSettingsPage() {
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
           />
-          <input
-            className={authStyles.input}
-            type="password"
+          <PasswordField
+            inputClassName={authStyles.input}
             placeholder="Confirm new password"
             autoComplete="new-password"
             required

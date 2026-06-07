@@ -3,6 +3,7 @@ import type { FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ApiError } from '@/api/client';
 import { useAuth } from '@/context/AuthContext';
+import { PasswordField } from '@/components/forms/PasswordField';
 import type { AccountType } from '@/models/auth';
 import styles from './AuthPage.module.css';
 
@@ -128,15 +129,14 @@ export function RegisterPage() {
 
         <div className={styles.field}>
           <label className={styles.label} htmlFor="password">Password</label>
-          <input
+          <PasswordField
             id="password"
-            className={styles.input}
-            type="password"
             autoComplete="new-password"
             required
             minLength={8}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            inputClassName={styles.input}
           />
         </div>
 
