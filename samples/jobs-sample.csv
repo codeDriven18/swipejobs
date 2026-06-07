@@ -1,3 +1,0 @@
-Id,Branch,Title,CompanyOrPerson,Description,City,Country,IsRemote,EmploymentType,DurationDays,PayMin,PayMax,Currency,PostedAt,ApplyUrl,Contact,Status,Source,Tags
-,ItJobs,Junior QA Engineer,SoftLab,Assist with manual and automated testing.,Tashkent,Uzbekistan,false,FullTime,,600,900,USD,2026-02-20,https://example.com/apply,qa@softlab.com,Active,Manual,QA;Testing
-,Gigs,Event helper (2 days),Local Events,Set up and break down booths.,Berlin,Germany,false,Gig,2,90,120,EUR,2026-02-22,mailto:gigs@events.com,@events,Active,Manual,Cleaning;Delivery
