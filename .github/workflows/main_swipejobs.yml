@@ -56,7 +56,6 @@ jobs:
         shell: bash
         env:
           DB_CONNECTION: ${{ secrets.AZURE_DB_CONNECTION_STRING }}
-          JWT_KEY: ${{ secrets.AZURE_JWT_KEY }}
         run: |
           RG=$(az webapp list --query "[?name=='swipejobs'].resourceGroup | [0]" -o tsv)
           echo "Configuring app settings for resource group: $RG"
@@ -65,10 +64,7 @@ jobs:
             --name swipejobs \
             --settings \
               ASPNETCORE_ENVIRONMENT=Production \
-              ConnectionStrings__DefaultConnection="$DB_CONNECTION" \
-              Jwt__Key="$JWT_KEY" \
-              Jwt__Issuer=SwipeJobs \
-              Jwt__Audience=SwipeJobsClient
+              ConnectionStrings__DefaultConnection="$DB_CONNECTION"
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
