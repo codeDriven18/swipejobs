@@ -8,6 +8,9 @@ on:
       - main
   workflow_dispatch:
 
+env:
+  AZURE_WEBAPP_NAME: swipejobs
+
 jobs:
   build:
     runs-on: windows-latest
@@ -56,32 +59,173 @@ jobs:
         shell: bash
         env:
           DB_CONNECTION: ${{ secrets.AZURE_DB_CONNECTION_STRING }}
+          AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
         run: |
-          if [ -z "$DB_CONNECTION" ]; then
+          set -euo pipefail
+
+          APP_NAME="${{ env.AZURE_WEBAPP_NAME }}"
+
+          if [ -z "${DB_CONNECTION:-}" ]; then
             echo "::error::GitHub secret AZURE_DB_CONNECTION_STRING is not set."
-            echo "Add it at: Repository → Settings → Secrets and variables → Actions"
             exit 1
           fi
 
-          RG=$(az webapp list --query "[?name=='swipejobs'].resourceGroup | [0]" -o tsv)
-          echo "Configuring app settings for resource group: $RG"
+          retry_az() {
+            local description="$1"
+            shift
+            local attempt max=6 delay=10
+            for attempt in $(seq 1 "$max"); do
+              echo "[$attempt/$max] $description"
+              if output=$("$@" 2>&1); then
+                if [ -n "$output" ]; then
+                  echo "$output"
+                fi
+                return 0
+              fi
+              code=$?
+              echo "$output"
+              if echo "$output" | grep -qiE 'Conflict|409|Another operation|in progress'; then
+                if [ "$attempt" -lt "$max" ]; then
+                  echo "Transient Azure conflict — retrying in ${delay}s..."
+                  sleep "$delay"
+                  delay=$((delay * 2))
+                  continue
+                fi
+              fi
+              echo "::error::$description failed (exit $code)"
+              echo "Running with --debug for full Azure response..."
+              "$@" --debug 2>&1 || true
+              return "$code"
+            done
+          }
 
-          # win-x64 self-contained publish requires a 64-bit IIS worker (fixes HTTP 500.32 ANCM).
-          az webapp config set \
-            --resource-group "$RG" \
-            --name swipejobs \
-            --use-32bit-worker-process false
+          echo "Discovering web app '$APP_NAME'..."
+          az webapp list \
+            --query "[].{name:name, resourceGroup:resourceGroup, host:defaultHostName, state:state}" \
+            -o table
 
-          az webapp config appsettings set \
+          if [ -n "${AZURE_RESOURCE_GROUP:-}" ]; then
+            RG="$AZURE_RESOURCE_GROUP"
+            echo "Using resource group from AZURE_RESOURCE_GROUP secret: $RG"
+          else
+            RG=$(az webapp list --query "[?name=='$APP_NAME'] | [0].resourceGroup" -o tsv | tr -d '\r')
+          fi
+
+          if [ -z "$RG" ] || [ "$RG" = "null" ]; then
+            echo "::error::Could not resolve resource group for web app '$APP_NAME'."
+            echo "Set GitHub secret AZURE_RESOURCE_GROUP to your App Service resource group name."
+            exit 1
+          fi
+
+          HOST=$(az webapp show --resource-group "$RG" --name "$APP_NAME" --query defaultHostName -o tsv | tr -d '\r')
+          STATE=$(az webapp show --resource-group "$RG" --name "$APP_NAME" --query state -o tsv | tr -d '\r')
+          echo "Target: app=$APP_NAME rg=$RG host=$HOST state=$STATE"
+
+          USE_32=$(az webapp show --resource-group "$RG" --name "$APP_NAME" --query siteConfig.use32BitWorkerProcess -o tsv | tr -d '\r')
+          echo "Current use32BitWorkerProcess=$USE_32"
+
+          if [ "$USE_32" = "true" ]; then
+            retry_az "Enable 64-bit IIS worker (fixes HTTP 500.32 ANCM)" \
+              az webapp config set \
+                --resource-group "$RG" \
+                --name "$APP_NAME" \
+                --use-32bit-worker-process false
+            sleep 5
+          else
+            echo "64-bit IIS worker already enabled — skipping config set."
+          fi
+
+          echo "Existing app settings (names only):"
+          az webapp config appsettings list \
             --resource-group "$RG" \
-            --name swipejobs \
-            --settings \
-              ASPNETCORE_ENVIRONMENT=Production \
-              ConnectionStrings__DefaultConnection="$DB_CONNECTION"
+            --name "$APP_NAME" \
+            --query "[].name" \
+            -o tsv | sort
+
+          # Azure treats app setting names as case-insensitive; mismatched casing causes 409 Conflict.
+          TARGET_KEYS=("ASPNETCORE_ENVIRONMENT" "ConnectionStrings__DefaultConnection")
+          EXISTING_JSON=$(az webapp config appsettings list --resource-group "$RG" --name "$APP_NAME" -o json)
+
+          CONFLICT_KEYS=""
+          for target_key in "${TARGET_KEYS[@]}"; do
+            target_lower=$(echo "$target_key" | tr '[:upper:]' '[:lower:]')
+            keys=$(echo "$EXISTING_JSON" | jq -r --arg tl "$target_lower" --arg tk "$target_key" \
+              '.[] | select((.name | ascii_downcase) == $tl and .name != $tk) | .name')
+            CONFLICT_KEYS="$CONFLICT_KEYS $keys"
+          done
+
+          for old_key in $CONFLICT_KEYS; do
+            if [ -n "$old_key" ]; then
+              echo "Removing case-conflicting setting: $old_key"
+              retry_az "Delete conflicting app setting $old_key" \
+                az webapp config appsettings delete \
+                  --resource-group "$RG" \
+                  --name "$APP_NAME" \
+                  --setting-names "$old_key"
+            fi
+          done
+
+          python -c "import json, os; json.dump({'ASPNETCORE_ENVIRONMENT': 'Production', 'ConnectionStrings__DefaultConnection': os.environ['DB_CONNECTION']}, open('appsettings.json', 'w'))"
+
+          echo "Applying app settings (values redacted in Azure CLI output):"
+          retry_az "Set app settings" \
+            az webapp config appsettings set \
+              --resource-group "$RG" \
+              --name "$APP_NAME" \
+              --settings "@appsettings.json"
+
+          echo "Verified app settings present:"
+          az webapp config appsettings list \
+            --resource-group "$RG" \
+            --name "$APP_NAME" \
+            --query "[?name=='ASPNETCORE_ENVIRONMENT' || name=='ConnectionStrings__DefaultConnection'].name" \
+            -o tsv
 
       - name: Deploy to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'swipejobs'
-          slot-name: 'Production'
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
           package: ./publish
+
+      - name: Verify deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="https://swipejobs-afexcuape8ecexdk.eastasia-01.azurewebsites.net"
+          ORIGIN="https://swipejobss.netlify.app"
+
+          for attempt in $(seq 1 12); do
+            echo "--- verify attempt $attempt ---"
+            HEALTH_CODE=$(curl -sS -o /tmp/health.json -w "%{http_code}" "$BASE/api/health" || true)
+            echo "GET /api/health -> $HEALTH_CODE"
+            if [ "$HEALTH_CODE" = "200" ]; then
+              cat /tmp/health.json
+              break
+            fi
+            sleep 15
+          done
+
+          if [ "$HEALTH_CODE" != "200" ]; then
+            echo "::error::Health check did not return 200 (last code: $HEALTH_CODE)"
+            exit 1
+          fi
+
+          CORS_HEADERS=$(curl -sS -D - -o /dev/null -X OPTIONS "$BASE/api/auth/login" \
+            -H "Origin: $ORIGIN" \
+            -H "Access-Control-Request-Method: POST" \
+            -H "Access-Control-Request-Headers: content-type" || true)
+          echo "$CORS_HEADERS"
+          echo "$CORS_HEADERS" | grep -qi "access-control-allow-origin: $ORIGIN" || {
+            echo "::warning::CORS preflight missing Access-Control-Allow-Origin for $ORIGIN"
+          }
+
+          LOGIN_CODE=$(curl -sS -o /tmp/login.json -w "%{http_code}" -X POST "$BASE/api/auth/login" \
+            -H "Origin: $ORIGIN" \
+            -H "Content-Type: application/json" \
+            -d '{"email":"test@test.com","password":"Test1234!"}' || true)
+          echo "POST /api/auth/login -> $LOGIN_CODE (401/400 expected for bad credentials; not 500)"
+          if [ "$LOGIN_CODE" = "500" ]; then
+            echo "::error::Login endpoint returned 500"
+            cat /tmp/login.json || true
+            exit 1
+          fi
