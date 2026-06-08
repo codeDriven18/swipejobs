@@ -40,7 +40,6 @@ public static class DatabaseStartupExtensions
         catch (Exception ex)
         {
             logger.LogError(ex, "Database initialization failed.");
-            throw;
         }
     }
 }

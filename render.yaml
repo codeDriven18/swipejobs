@@ -25,5 +25,9 @@ services:
         sync: false
       - key: Cors__AllowedOrigins__0
         value: https://swipejobss.netlify.app
+      - key: Cors__AllowedOrigins__1
+        value: http://localhost:5173
+      - key: Cors__AllowedOrigins__2
+        value: http://127.0.0.1:5173
       - key: Seed__DemoData
         value: "false"

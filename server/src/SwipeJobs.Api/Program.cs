@@ -96,7 +96,15 @@ builder.Services.AddSwaggerGen(options =>
 var corsOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
     ?? Array.Empty<string>();
 if (corsOrigins.Length == 0 && builder.Environment.IsDevelopment())
-    corsOrigins = ["http://localhost:5173"];
+{
+    corsOrigins =
+    [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:4173",
+        "http://127.0.0.1:4173",
+    ];
+}
 
 if (corsOrigins.Length == 0)
     throw new InvalidOperationException("Cors:AllowedOrigins must be configured for production.");
@@ -108,23 +116,30 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(corsOrigins)
             .AllowAnyHeader()
             .AllowAnyMethod()
-            .AllowCredentials();
+            .AllowCredentials()
+            .SetPreflightMaxAge(TimeSpan.FromHours(1));
     });
 });
 
 var app = builder.Build();
 
 app.Logger.LogInformation("SwipeJobs API starting in {Environment} mode.", app.Environment.EnvironmentName);
+app.Logger.LogInformation("CORS allowed origins: {Origins}", string.Join(", ", corsOrigins));
 
 await app.InitializeDatabaseAsync();
 app.Logger.LogInformation("SignalR hub mapped at /hubs/notifications.");
 
 if (!app.Environment.IsDevelopment())
 {
-    app.UseForwardedHeaders(new ForwardedHeadersOptions
+    var forwardedHeadersOptions = new ForwardedHeadersOptions
     {
-        ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
-    });
+        ForwardedHeaders = ForwardedHeaders.XForwardedFor
+            | ForwardedHeaders.XForwardedProto
+            | ForwardedHeaders.XForwardedHost,
+    };
+    forwardedHeadersOptions.KnownIPNetworks.Clear();
+    forwardedHeadersOptions.KnownProxies.Clear();
+    app.UseForwardedHeaders(forwardedHeadersOptions);
     app.UseHsts();
 }
 
@@ -138,12 +153,12 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseResponseCompression();
-app.UseMiddleware<SecurityHeadersMiddleware>();
+app.UseCors("ClientPolicy");
 
 if (!app.Environment.IsDevelopment())
     app.UseHttpsRedirection();
 
-app.UseCors("ClientPolicy");
+app.UseMiddleware<SecurityHeadersMiddleware>();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
