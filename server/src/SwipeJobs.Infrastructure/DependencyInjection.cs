@@ -63,20 +63,7 @@ public static class DependencyInjection
 
 
         Console.Error.WriteLine(
-
-            "Using PostgreSQL ({Source}): Host={Host};Database={Database};Username={Username};SSL Mode={SslMode};PasswordLength={PasswordLength}",
-
-            runtimeInfo.Source,
-
-            runtimeInfo.Host,
-
-            runtimeInfo.Database,
-
-            runtimeInfo.Username,
-
-            runtimeInfo.SslMode,
-
-            runtimeInfo.PasswordLength);
+            $"Using PostgreSQL ({runtimeInfo.Source}): Host={runtimeInfo.Host};Database={runtimeInfo.Database};Username={runtimeInfo.Username};SSL Mode={runtimeInfo.SslMode};PasswordLength={runtimeInfo.PasswordLength}");
 
 
 
@@ -155,10 +142,7 @@ public static class DependencyInjection
         {
 
             Console.Error.WriteLine(
-
-                "Connection candidate ConnectionStrings:DefaultConnection: {Summary}",
-
-                PostgresConnectionStringNormalizer.DescribeForLogs(fromConfig));
+                $"Connection candidate ConnectionStrings:DefaultConnection: {PostgresConnectionStringNormalizer.DescribeForLogs(fromConfig)}");
 
             return (fromConfig, "ConnectionStrings:DefaultConnection");
 
@@ -191,12 +175,7 @@ public static class DependencyInjection
             {
 
                 Console.Error.WriteLine(
-
-                    "Connection candidate {Key}: {Summary}",
-
-                    key,
-
-                    PostgresConnectionStringNormalizer.DescribeForLogs(value));
+                    $"Connection candidate {key}: {PostgresConnectionStringNormalizer.DescribeForLogs(value)}");
 
                 return (value, key);
 
