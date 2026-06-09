@@ -37,9 +37,11 @@ public static class DependencyInjection
 
         if (string.IsNullOrWhiteSpace(connectionString))
         {
-            throw new InvalidOperationException(
+            var message =
                 "ConnectionStrings:DefaultConnection must be configured via Azure app settings " +
-                "(ConnectionStrings__DefaultConnection) or connection strings (DefaultConnection).");
+                "(ConnectionStrings__DefaultConnection) or connection strings (DefaultConnection).";
+            Console.Error.WriteLine(message);
+            throw new InvalidOperationException(message);
         }
 
         services.AddDbContext<AppDbContext>(options =>

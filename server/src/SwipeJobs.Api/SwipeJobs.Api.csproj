@@ -4,8 +4,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <!-- Self-contained win-x64 on Azure IIS (OutOfProcess + stdout logs in web.config) -->
-    <AspNetCoreHostingModel>OutOfProcess</AspNetCoreHostingModel>
+    <!-- Self-contained win-x64 on Azure IIS (InProcess + 64-bit worker + stdout in web.config) -->
+    <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
     <IsTransformWebConfigDisabled>true</IsTransformWebConfigDisabled>
   </PropertyGroup>
 

@@ -173,7 +173,7 @@ jobs:
             fi
           done
 
-          python -c "import json, os; json.dump({'ASPNETCORE_ENVIRONMENT': 'Production', 'ConnectionStrings__DefaultConnection': os.environ['DB_CONNECTION']}, open('appsettings.json', 'w'))"
+          JWT_KEY="${JWT_KEY:-SwipeJobs-Azure-Production-Change-Me-32Chars!}"
 
           echo "Applying app settings (values redacted in Azure CLI output):"
           retry_az "Set app settings" \
@@ -182,7 +182,8 @@ jobs:
               --name "$APP_NAME" \
               --settings \
                 "ASPNETCORE_ENVIRONMENT=Production" \
-                "ConnectionStrings__DefaultConnection=$DB_CONNECTION"
+                "ConnectionStrings__DefaultConnection=$DB_CONNECTION" \
+                "Jwt__Key=$JWT_KEY"
 
           retry_az "Set connection string (CUSTOMCONNSTR fallback)" \
             az webapp config connection-string set \
@@ -312,12 +313,23 @@ jobs:
             done
           done
 
-          echo "=== Kudu: run SwipeJobs.Api.exe (10s startup capture) ==="
+          echo "=== Kudu: run SwipeJobs.Api.exe with Azure app settings ==="
+          AZ_CONN=$(az webapp config appsettings list --resource-group "$RG" --name "$APP_NAME" --query "[?name=='ConnectionStrings__DefaultConnection'].value | [0]" -o tsv | tr -d '\r')
+          AZ_JWT=$(az webapp config appsettings list --resource-group "$RG" --name "$APP_NAME" --query "[?name=='Jwt__Key'].value | [0]" -o tsv | tr -d '\r')
+          echo "Azure ConnectionStrings__DefaultConnection length: ${#AZ_CONN}"
+          echo "Azure Jwt__Key length: ${#AZ_JWT}"
+          export AZ_CONN AZ_JWT
+          KUDU_PAYLOAD=$(python -c "import json, os; cmd='set ConnectionStrings__DefaultConnection=' + os.environ['AZ_CONN'] + '&& set Jwt__Key=' + os.environ.get('AZ_JWT','') + '&& set ASPNETCORE_ENVIRONMENT=Production&& D:\\\\home\\\\site\\\\wwwroot\\\\SwipeJobs.Api.exe'; print(json.dumps({'command': cmd, 'dir': 'D:\\\\home\\\\site\\\\wwwroot'}))")
           KUDU_CMD=$(curl -sS -X POST "https://$SCM_HOST/api/command" \
             -u "$USER:$PASS" \
             -H "Content-Type: application/json" \
-            -d '{"command":"cmd /c D:\\home\\site\\wwwroot\\SwipeJobs.Api.exe","dir":"D:\\home\\site\\wwwroot"}' || true)
-          echo "$KUDU_CMD" | jq -r '.Output, .Error' 2>/dev/null || echo "$KUDU_CMD"
+            -d "$KUDU_PAYLOAD" || true)
+          echo "$KUDU_CMD" | jq -r '.Output, .Error, .ExitCode' 2>/dev/null || echo "$KUDU_CMD"
+
+          if [ -n "${GITHUB_STEP_SUMMARY:-}" ]; then
+            echo "## Azure ANCM diagnose" >> "$GITHUB_STEP_SUMMARY"
+            cat azure-diagnose.log >> "$GITHUB_STEP_SUMMARY" || true
+          fi
 
           echo "=== az webapp log download ==="
           az webapp log download --resource-group "$RG" --name "$APP_NAME" --log-file azure-logs.zip || true
