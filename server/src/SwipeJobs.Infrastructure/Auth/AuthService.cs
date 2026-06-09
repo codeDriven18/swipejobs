@@ -52,6 +52,7 @@ public class AuthService : IAuthService
         if (string.IsNullOrWhiteSpace(dto.Password) || dto.Password.Length < 8)
             throw new InvalidOperationException("Password must be at least 8 characters.");
 
+        _logger.LogWarning("Register diagnostics: AuthService before first database query for {Email}", email);
         var existing = await _userRepository.GetByEmailAsync(email, cancellationToken);
         if (existing is not null)
             throw new InvalidOperationException("An account with this email already exists.");
@@ -68,7 +69,9 @@ public class AuthService : IAuthService
         };
 
         await _userRepository.AddAsync(user, cancellationToken);
+        _logger.LogWarning("Register diagnostics: AuthService before SaveChangesAsync (user insert) for {Email}", email);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+        _logger.LogWarning("Register diagnostics: AuthService after SaveChangesAsync (user insert) for {Email}", email);
 
         await _auditLogService.LogAsync(
             AuditAction.UserCreated,
