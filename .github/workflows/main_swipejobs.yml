@@ -51,6 +51,8 @@ jobs:
       contents: read
 
     steps:
+      - uses: actions/checkout@v4
+
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
@@ -80,6 +82,10 @@ jobs:
           fi
 
           echo "AZURE_DB_CONNECTION_STRING length: ${#DB_CONNECTION}"
+          if [ ! -f server/scripts/parse_pg_connection.py ]; then
+            echo "::error::Missing server/scripts/parse_pg_connection.py (repo checkout required in deploy job)."
+            exit 1
+          fi
           DB_CONNECTION=$(printf '%s' "$DB_CONNECTION" | python server/scripts/parse_pg_connection.py normalize)
           echo "Normalized AZURE_DB_CONNECTION_STRING length: ${#DB_CONNECTION}"
           echo "GitHub secret connection metadata:"
