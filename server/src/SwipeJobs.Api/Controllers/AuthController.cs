@@ -1,10 +1,12 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
 using SwipeJobs.Application.Common.Dtos;
 using SwipeJobs.Application.Common.Interfaces;
 using SwipeJobs.Application.Common.Interfaces.Repositories;
 using SwipeJobs.Application.Modules.Auth.Interfaces;
 using SwipeJobs.Infrastructure.Auth;
+using System.Text.Json;
 
 namespace SwipeJobs.Api.Controllers;
 
@@ -16,17 +18,20 @@ public class AuthController : ControllerBase
     private readonly IUserRepository _userRepository;
     private readonly ICurrentUserService _currentUser;
     private readonly ILogger<AuthController> _logger;
+    private readonly JsonSerializerOptions _jsonSerializerOptions;
 
     public AuthController(
         IAuthService authService,
         IUserRepository userRepository,
         ICurrentUserService currentUser,
-        ILogger<AuthController> logger)
+        ILogger<AuthController> logger,
+        IOptions<JsonOptions> jsonOptions)
     {
         _authService = authService;
         _userRepository = userRepository;
         _currentUser = currentUser;
         _logger = logger;
+        _jsonSerializerOptions = jsonOptions.Value.JsonSerializerOptions;
     }
 
     [AllowAnonymous]
@@ -45,6 +50,30 @@ public class AuthController : ControllerBase
                 _logger,
                 "controller-register",
                 $"userId={result.User.Id} role={result.User.Role}");
+
+            try
+            {
+                var serialized = JsonSerializer.Serialize(result, _jsonSerializerOptions);
+                _logger.LogWarning(
+                    "AuthController.Register JSON probe succeeded: bytes={Length} userId={UserId} role={Role}",
+                    serialized.Length,
+                    result.User.Id,
+                    result.User.Role);
+            }
+            catch (Exception serializationEx)
+            {
+                RegisterFlowDiagnostics.LogFullExceptionChain(
+                    _logger,
+                    "AuthController.Register JSON probe failed before Ok(result)",
+                    serializationEx);
+                throw;
+            }
+
+            _logger.LogWarning(
+                "AuthController.Register returning Ok(AuthResponseDto): userId={UserId} accessTokenLength={AccessTokenLength} refreshTokenLength={RefreshTokenLength}",
+                result.User.Id,
+                result.AccessToken.Length,
+                result.RefreshToken.Length);
             return Ok(result);
         }
         catch (Exception ex)

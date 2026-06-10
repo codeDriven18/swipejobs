@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using SwipeJobs.Api.Extensions;
+using SwipeJobs.Api.Filters;
 using SwipeJobs.Api.Hubs;
 using SwipeJobs.Api.Middleware;
 using SwipeJobs.Api.Services;
@@ -65,7 +66,10 @@ try
     builder.Services.AddSignalR();
     builder.Services.AddSwipeJobsCors(builder.Configuration, builder.Environment);
 
-    builder.Services.AddControllers();
+    builder.Services.AddControllers(options =>
+    {
+        options.Filters.Add<AuthRegisterDiagnosticsFilter>();
+    });
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen(options =>
     {
@@ -123,6 +127,9 @@ try
         app.UseForwardedHeaders(forwardedHeadersOptions);
     }
 
+    app.UseMiddleware<ExceptionHandlingMiddleware>();
+    app.UseMiddleware<RegisterResponseCompletionMiddleware>();
+
     if (app.Environment.IsDevelopment())
     {
         app.UseSwagger();
@@ -137,7 +144,6 @@ try
     app.UseCors(CorsExtensions.CorsPolicyName);
     app.UseAuthentication();
     app.UseAuthorization();
-    app.UseMiddleware<ExceptionHandlingMiddleware>();
 
     app.MapControllers();
     app.MapHub<NotificationHub>("/hubs/notifications");

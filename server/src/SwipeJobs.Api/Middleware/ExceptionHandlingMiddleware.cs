@@ -31,29 +31,39 @@ public class ExceptionHandlingMiddleware
         catch (UnauthorizedAccessException ex)
         {
             LogCaughtException(context, ex, StatusCodes.Status403Forbidden);
-            await WriteErrorAsync(context, StatusCodes.Status403Forbidden, "Forbidden", "forbidden");
+            if (await TryWriteErrorAsync(context, StatusCodes.Status403Forbidden, "Forbidden", "forbidden"))
+                return;
+            throw;
         }
         catch (InvalidOperationException ex)
         {
             LogCaughtException(context, ex, StatusCodes.Status400BadRequest);
-            await WriteErrorAsync(context, StatusCodes.Status400BadRequest, ex.Message, "bad_request");
+            if (await TryWriteErrorAsync(context, StatusCodes.Status400BadRequest, ex.Message, "bad_request"))
+                return;
+            throw;
         }
         catch (KeyNotFoundException ex)
         {
             LogCaughtException(context, ex, StatusCodes.Status404NotFound);
-            await WriteErrorAsync(context, StatusCodes.Status404NotFound, "Not found", "not_found");
+            if (await TryWriteErrorAsync(context, StatusCodes.Status404NotFound, "Not found", "not_found"))
+                return;
+            throw;
         }
         catch (DbUpdateException ex)
         {
             LogCaughtException(context, ex, StatusCodes.Status500InternalServerError);
             var message = ClassifyDatabaseFailure(ex);
-            await WriteErrorAsync(context, StatusCodes.Status500InternalServerError, message, "database_error");
+            if (await TryWriteErrorAsync(context, StatusCodes.Status500InternalServerError, message, "database_error"))
+                return;
+            throw;
         }
         catch (Exception ex)
         {
             LogCaughtException(context, ex, StatusCodes.Status500InternalServerError);
             var message = _environment.IsDevelopment() ? ex.Message : "An unexpected error occurred.";
-            await WriteErrorAsync(context, StatusCodes.Status500InternalServerError, message, "internal_error");
+            if (await TryWriteErrorAsync(context, StatusCodes.Status500InternalServerError, message, "internal_error"))
+                return;
+            throw;
         }
     }
 
@@ -86,10 +96,22 @@ public class ExceptionHandlingMiddleware
         return "Database operation failed.";
     }
 
-    private static Task WriteErrorAsync(HttpContext context, int statusCode, string message, string code)
+    private async Task<bool> TryWriteErrorAsync(HttpContext context, int statusCode, string message, string code)
     {
+        if (context.Response.HasStarted)
+        {
+            _logger.LogError(
+                "Exception after response started for {Method} {Path}; cannot write error body. Status may already be committed.",
+                context.Request.Method,
+                context.Request.Path);
+            Console.Error.WriteLine(
+                $"[ExceptionHandlingMiddleware] Response already started for {context.Request.Method} {context.Request.Path}");
+            return false;
+        }
+
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/json";
-        return context.Response.WriteAsJsonAsync(new ApiErrorResponse(message, code));
+        await context.Response.WriteAsJsonAsync(new ApiErrorResponse(message, code));
+        return true;
     }
 }
