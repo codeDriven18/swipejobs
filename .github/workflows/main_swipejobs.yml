@@ -53,6 +53,36 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Apply EF Core migrations to PostgreSQL
+        shell: bash
+        env:
+          DB_CONNECTION: ${{ secrets.AZURE_DB_CONNECTION_STRING }}
+        run: |
+          set -euo pipefail
+          if [ -z "${DB_CONNECTION:-}" ]; then
+            echo "::error::GitHub secret AZURE_DB_CONNECTION_STRING is not set."
+            exit 1
+          fi
+          DB_CONNECTION=$(printf '%s' "$DB_CONNECTION" | python server/scripts/parse_pg_connection.py normalize)
+          echo "Applying EF Core migrations before Azure deploy..."
+          dotnet tool install --global dotnet-ef
+          export PATH="$PATH:$HOME/.dotnet/tools"
+          dotnet ef database update \
+            --project server/src/SwipeJobs.Infrastructure/SwipeJobs.Infrastructure.csproj \
+            --startup-project server/src/SwipeJobs.Api/SwipeJobs.Api.csproj \
+            --connection "$DB_CONNECTION" \
+            --verbose
+          echo "Migration history after dotnet ef database update:"
+          dotnet ef migrations list \
+            --project server/src/SwipeJobs.Infrastructure/SwipeJobs.Infrastructure.csproj \
+            --startup-project server/src/SwipeJobs.Api/SwipeJobs.Api.csproj \
+            --connection "$DB_CONNECTION"
+
       - name: Download artifact
         uses: actions/download-artifact@v4
         with:
@@ -445,6 +475,12 @@ jobs:
 
           if ! grep -q '"database":"healthy"' /tmp/health.json; then
             echo "::error::Database health check failed:"
+            cat /tmp/health.json
+            exit 1
+          fi
+
+          if ! grep -q '"usersTableExists":true' /tmp/health.json; then
+            echo "::error::Users table missing according to /api/health (usersTableExists != true):"
             cat /tmp/health.json
             exit 1
           fi

@@ -24,4 +24,12 @@ public record HealthResponse(
     string? ConnectionSource = null,
     int? PasswordLength = null,
     bool? HasConflictingSources = null,
-    IReadOnlyList<ConnectionSourceHealthInfo>? ConnectionSources = null);
+    IReadOnlyList<ConnectionSourceHealthInfo>? ConnectionSources = null,
+    string? CurrentDatabase = null,
+    string? CurrentSchema = null,
+    bool? EfHistoryTableExists = null,
+    bool? UsersTableExists = null,
+    IReadOnlyList<string>? AppliedMigrations = null,
+    IReadOnlyList<string>? PendingMigrations = null,
+    int? DiscoveredMigrationCount = null,
+    IReadOnlyList<string>? PublicTables = null);

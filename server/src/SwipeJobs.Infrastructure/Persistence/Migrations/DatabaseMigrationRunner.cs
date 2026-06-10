@@ -27,30 +27,22 @@ public static class DatabaseMigrationRunner
 
         Log(logger, "Database connection verified (CanConnectAsync=true).");
 
-        await LogEfMigrationHistoryAsync(dbContext, logger, "before Migrate", cancellationToken);
+        var before = await DatabaseSchemaDiagnostics.CaptureAsync(dbContext, cancellationToken);
+        DatabaseSchemaDiagnostics.LogSnapshot(logger, before, "before Migrate");
 
-        var allMigrations = dbContext.Database.GetMigrations().ToList();
-        Log(logger, $"Discovered migrations in assembly ({allMigrations.Count}): [{FormatList(allMigrations)}]");
-
-        if (allMigrations.Count == 0)
+        if (before.DiscoveredMigrationIds.Count == 0)
         {
             throw new InvalidOperationException(
                 $"No EF Core migrations were discovered in assembly '{migrationsAssembly}'. " +
                 "The published build may be missing migration classes.");
         }
 
-        if (!allMigrations.Contains(InitialMigrationId))
+        if (!before.DiscoveredMigrationIds.Contains(InitialMigrationId))
         {
             throw new InvalidOperationException(
                 $"Expected migration '{InitialMigrationId}' (creates \"{UsersTableName}\") " +
-                $"was not found. Found: [{FormatList(allMigrations)}]");
+                $"was not found. Found: [{string.Join(", ", before.DiscoveredMigrationIds)}]");
         }
-
-        var applied = (await dbContext.Database.GetAppliedMigrationsAsync(cancellationToken)).ToList();
-        var pending = (await dbContext.Database.GetPendingMigrationsAsync(cancellationToken)).ToList();
-
-        Log(logger, $"Applied migrations ({applied.Count}): [{FormatList(applied)}]");
-        Log(logger, $"Pending migrations ({pending.Count}): [{FormatList(pending)}]");
 
         Log(logger, "Executing Database.MigrateAsync()...");
         try
@@ -63,27 +55,71 @@ public static class DatabaseMigrationRunner
             throw;
         }
 
-        Log(logger, "Database.MigrateAsync() completed successfully.");
+        Log(logger, "Database.MigrateAsync() completed.");
 
-        await LogEfMigrationHistoryAsync(dbContext, logger, "after Migrate", cancellationToken);
+        var snapshot = await DatabaseSchemaDiagnostics.CaptureAsync(dbContext, cancellationToken);
+        DatabaseSchemaDiagnostics.LogSnapshot(logger, snapshot, "after Migrate");
 
-        var appliedAfter = (await dbContext.Database.GetAppliedMigrationsAsync(cancellationToken)).ToList();
-        var stillPending = (await dbContext.Database.GetPendingMigrationsAsync(cancellationToken)).ToList();
-
-        if (stillPending.Count > 0)
+        if (!snapshot.UsersTableExists)
         {
-            throw new InvalidOperationException(
-                $"Migrations remain pending after MigrateAsync: [{FormatList(stillPending)}]. " +
-                $"Applied: [{FormatList(appliedAfter)}]");
+            await RepairStaleMigrationHistoryAsync(dbContext, logger, snapshot, cancellationToken);
+            snapshot = await DatabaseSchemaDiagnostics.CaptureAsync(dbContext, cancellationToken);
+            DatabaseSchemaDiagnostics.LogSnapshot(logger, snapshot, "after history repair");
         }
 
-        if (!appliedAfter.Contains(InitialMigrationId))
+        if (!snapshot.UsersTableExists)
+        {
+            throw new InvalidOperationException(
+                $"\"{UsersTableName}\" table is still missing after MigrateAsync and history repair. " +
+                $"Database={snapshot.CurrentDatabase}; schema={snapshot.CurrentSchema}; " +
+                $"applied=[{string.Join(", ", snapshot.AppliedMigrationIds)}]; " +
+                $"public tables=[{string.Join(", ", snapshot.PublicTables)}]");
+        }
+
+        if (snapshot.PendingMigrationIds.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"Migrations remain pending after MigrateAsync: [{string.Join(", ", snapshot.PendingMigrationIds)}]");
+        }
+
+        if (!snapshot.AppliedMigrationIds.Contains(InitialMigrationId))
         {
             throw new InvalidOperationException(
                 $"Migration '{InitialMigrationId}' was not recorded in __EFMigrationsHistory after MigrateAsync.");
         }
 
-        await VerifyUsersTableExistsAsync(dbContext, logger, cancellationToken);
+        Log(logger, $"Verified \"{UsersTableName}\" table exists in database '{snapshot.CurrentDatabase}'.");
+    }
+
+    private static async Task RepairStaleMigrationHistoryAsync(
+        AppDbContext dbContext,
+        ILogger logger,
+        DatabaseSchemaSnapshot snapshot,
+        CancellationToken cancellationToken)
+    {
+        if (!snapshot.AppliedMigrationIds.Contains(InitialMigrationId))
+        {
+            Log(
+                logger,
+                $"\"{UsersTableName}\" missing but '{InitialMigrationId}' is not in __EFMigrationsHistory — re-running MigrateAsync.");
+            await dbContext.Database.MigrateAsync(cancellationToken);
+            return;
+        }
+
+        Log(
+            logger,
+            $"Detected stale __EFMigrationsHistory for '{InitialMigrationId}' without \"{UsersTableName}\" table. " +
+            "Removing history row and re-applying migration.");
+
+        await dbContext.Database.ExecuteSqlRawAsync(
+            """
+            DELETE FROM "__EFMigrationsHistory"
+            WHERE "MigrationId" = {0}
+            """,
+            new object[] { InitialMigrationId },
+            cancellationToken);
+
+        await dbContext.Database.MigrateAsync(cancellationToken);
     }
 
     public static async Task VerifyUsersTableExistsAsync(
@@ -91,59 +127,18 @@ public static class DatabaseMigrationRunner
         ILogger logger,
         CancellationToken cancellationToken = default)
     {
-        try
+        if (await DatabaseSchemaDiagnostics.UsersTableExistsAsync(dbContext, cancellationToken))
         {
-            await dbContext.Database.ExecuteSqlRawAsync(
-                $"SELECT 1 FROM \"{UsersTableName}\" LIMIT 0",
-                cancellationToken);
             Log(logger, $"Verified \"{UsersTableName}\" table exists.");
+            return;
         }
-        catch (PostgresException pg) when (pg.SqlState is PostgresErrorCodes.UndefinedTable)
-        {
-            LogError(
-                logger,
-                $"\"{UsersTableName}\" table is missing (SqlState={pg.SqlState}) after migration. Registration will fail.",
-                pg);
-            throw new InvalidOperationException(
-                $"Database schema is incomplete: \"{UsersTableName}\" table does not exist after MigrateAsync.",
-                pg);
-        }
+
+        var snapshot = await DatabaseSchemaDiagnostics.CaptureAsync(dbContext, cancellationToken);
+        DatabaseSchemaDiagnostics.LogSnapshot(logger, snapshot, "Users verification failed");
+
+        throw new InvalidOperationException(
+            $"Database schema is incomplete: \"{UsersTableName}\" table does not exist.");
     }
-
-    private static async Task LogEfMigrationHistoryAsync(
-        AppDbContext dbContext,
-        ILogger logger,
-        string stage,
-        CancellationToken cancellationToken)
-    {
-        var applied = (await dbContext.Database.GetAppliedMigrationsAsync(cancellationToken)).ToList();
-        Log(
-            logger,
-            $"__EFMigrationsHistory ({stage}): {applied.Count} row(s) — [{FormatList(applied)}]");
-
-        var historyTableExists = await HistoryTableExistsAsync(dbContext, cancellationToken);
-        Log(logger, $"__EFMigrationsHistory table exists ({stage}): {historyTableExists}");
-    }
-
-    private static async Task<bool> HistoryTableExistsAsync(
-        AppDbContext dbContext,
-        CancellationToken cancellationToken)
-    {
-        try
-        {
-            await dbContext.Database
-                .SqlQueryRaw<int>("SELECT COUNT(*) AS \"Value\" FROM \"__EFMigrationsHistory\"")
-                .SingleAsync(cancellationToken);
-            return true;
-        }
-        catch (PostgresException pg) when (pg.SqlState is PostgresErrorCodes.UndefinedTable)
-        {
-            return false;
-        }
-    }
-
-    private static string FormatList(IReadOnlyList<string> items)
-        => items.Count == 0 ? "none" : string.Join(", ", items);
 
     private static void Log(ILogger logger, string message)
     {

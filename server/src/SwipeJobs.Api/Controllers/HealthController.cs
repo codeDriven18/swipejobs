@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using SwipeJobs.Api.Models;
 using SwipeJobs.Infrastructure.Persistence;
+using SwipeJobs.Infrastructure.Persistence.Migrations;
 
 namespace SwipeJobs.Api.Controllers;
 
@@ -31,6 +32,7 @@ public class HealthController : ControllerBase
         var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
         var dbStatus = "healthy";
         string? databaseError = null;
+        DatabaseSchemaSnapshot? schema = null;
 
         try
         {
@@ -39,6 +41,21 @@ public class HealthController : ControllerBase
                 dbStatus = "unhealthy";
                 databaseError = "CanConnectAsync returned false.";
                 _logger.LogError("Database CanConnectAsync returned false.");
+            }
+            else
+            {
+                schema = await DatabaseSchemaDiagnostics.CaptureAsync(_dbContext, cancellationToken);
+                DatabaseSchemaDiagnostics.LogSnapshot(_logger, schema, "health check");
+
+                if (!schema.UsersTableExists)
+                {
+                    dbStatus = "unhealthy";
+                    databaseError =
+                        $"Schema missing \"{DatabaseMigrationRunner.UsersTableName}\" table (SqlState 42P01). " +
+                        $"Applied migrations: [{string.Join(", ", schema.AppliedMigrationIds)}]. " +
+                        $"Pending: [{string.Join(", ", schema.PendingMigrationIds)}].";
+                    _logger.LogError("{DatabaseError}", databaseError);
+                }
             }
         }
         catch (Exception ex)
@@ -72,7 +89,15 @@ public class HealthController : ControllerBase
             _connectionInfo.Source,
             _connectionInfo.PasswordLength,
             _connectionInfo.HasConflictingSources,
-            sourceAudit));
+            sourceAudit,
+            schema?.CurrentDatabase,
+            schema?.CurrentSchema,
+            schema?.HistoryTableExists,
+            schema?.UsersTableExists,
+            schema?.AppliedMigrationIds,
+            schema?.PendingMigrationIds,
+            schema?.DiscoveredMigrationIds.Count,
+            schema?.PublicTables));
     }
 
     private static string GetDatabaseErrorMessage(Exception ex)
