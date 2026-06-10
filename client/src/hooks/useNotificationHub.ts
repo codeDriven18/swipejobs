@@ -46,7 +46,7 @@ export function useNotificationHub(onReceived: (notification: AppNotification) =
 
     connection.onclose((error) => {
       if (error) {
-        console.warn('[SignalR] Connection closed with error:', error.message);
+        logSignalR('Connection closed with error', error.message);
       } else {
         logSignalR('Connection closed');
       }
@@ -61,7 +61,7 @@ export function useNotificationHub(onReceived: (notification: AppNotification) =
         logSignalR('Connected', connection.state);
       } catch (error) {
         if (!cancelled) {
-          console.warn('[SignalR] Failed to start notification hub:', error);
+          logSignalR('Failed to start notification hub', error);
         }
       }
     })();

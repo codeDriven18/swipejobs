@@ -5,27 +5,31 @@ import { useAuth } from '@/context/AuthContext';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { CompanyLink } from '@/components/jobs/CompanyLink';
+import { JobCardSkeletonList } from '@/components/ui/Skeleton';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { useProfile } from '@/hooks/useProfile';
 import { JobCategoryLabels } from '@/models/enums';
 import type { JobApplication } from '@/models/application';
 import styles from './ApplicationsPage.module.css';
 
 export function ApplicationsPage() {
-  const { isAuthenticated } = useAuth();
-  const { loading: profileLoading } = useProfile();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (profileLoading) return;
+    if (authLoading) return;
     if (!isAuthenticated) { setLoading(false); return; }
     applicationsApi.getMine().then(setApplications).finally(() => setLoading(false));
-  }, [isAuthenticated, profileLoading]);
+  }, [isAuthenticated, authLoading]);
 
-  if (profileLoading || loading) {
-    return <p className={styles.status}>Loading applications...</p>;
+  if (authLoading || loading) {
+    return (
+      <section className={styles.page}>
+        <PageHeader title="Applications" subtitle="Track your Quick Apply submissions." />
+        <JobCardSkeletonList count={2} />
+      </section>
+    );
   }
 
   if (!isAuthenticated) {

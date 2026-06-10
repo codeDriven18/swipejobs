@@ -36,3 +36,18 @@ export function ProfileSkeleton() {
     </div>
   );
 }
+
+export function DashboardSkeleton() {
+  return (
+    <div className={styles.list} aria-busy="true" aria-label="Loading dashboard">
+      <Skeleton variant="lineTitle" />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.625rem' }}>
+        <Skeleton variant="card" />
+        <Skeleton variant="card" />
+        <Skeleton variant="card" />
+      </div>
+      <Skeleton variant="card" />
+      <Skeleton variant="card" />
+    </div>
+  );
+}

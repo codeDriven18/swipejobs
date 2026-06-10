@@ -81,6 +81,7 @@ public static class DependencyInjection
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<IAuditLogService, Audit.AuditLogService>();
         services.AddScoped<IDataSeeder, DataSeeder>();
+        services.AddScoped<ShowcaseJobSeeder>();
 
         return services;
     }

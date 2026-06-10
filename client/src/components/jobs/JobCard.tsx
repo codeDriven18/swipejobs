@@ -51,7 +51,7 @@ export function JobCard({ job, onClick, saved, onSaveToggle }: JobCardProps) {
       <CompanyLink name={job.company} slug={job.companySlug} className={styles.company} />
 
       <div className={styles.salaryRow}>
-        <span className={styles.salary}>{formatSalary(job.salaryMin, job.salaryMax, job.category)}</span>
+        <span className={styles.salary}>{formatSalary(job.salaryMin, job.salaryMax, job.category, job.externalUrl)}</span>
       </div>
 
       <p className={styles.meta}>

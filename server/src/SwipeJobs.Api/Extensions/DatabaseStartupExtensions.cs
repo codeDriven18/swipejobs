@@ -20,6 +20,10 @@ public static class DatabaseStartupExtensions
 
         var seeder = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
         await seeder.SeedAsync();
+
+        var showcaseSeeder = scope.ServiceProvider.GetRequiredService<ShowcaseJobSeeder>();
+        await showcaseSeeder.SeedAsync();
+
         logger.LogInformation("Database startup: seed completed.");
         Console.Error.WriteLine("[DatabaseStartup] Seed completed.");
     }

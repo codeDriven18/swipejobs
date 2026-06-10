@@ -113,7 +113,7 @@ export function JobDetailPage() {
 
       <div className={styles.info}>
         <p><strong>Location:</strong> {job.city ?? job.location ?? 'Flexible'}</p>
-        <p><strong>Salary:</strong> {formatSalary(job.salaryMin, job.salaryMax, job.category)}</p>
+        <p><strong>Salary:</strong> {formatSalary(job.salaryMin, job.salaryMax, job.category, job.externalUrl)}</p>
         {job.sourceName && <p><strong>Source:</strong> {job.sourceName}</p>}
       </div>
 

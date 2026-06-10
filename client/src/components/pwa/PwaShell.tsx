@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from 'react';
 import { useOnlineStatus } from '@/hooks/useOnlineStatus';
+import { useTheme } from '@/theme/ThemeProvider';
 import styles from './PwaShell.module.css';
 
 function applyDisplayModeClass() {
@@ -20,6 +21,7 @@ function hideBootSplash() {
 
 export function PwaShell({ children }: { children: ReactNode }) {
   const online = useOnlineStatus();
+  const { mode } = useTheme();
 
   useEffect(() => {
     applyDisplayModeClass();
@@ -34,8 +36,8 @@ export function PwaShell({ children }: { children: ReactNode }) {
   return (
     <div className={styles.pwaShell}>
       {!online && (
-        <div className={styles.offlineBanner} role="status">
-          You&apos;re offline — showing cached content
+        <div className={styles.offlineBanner} data-theme={mode} role="status">
+          You&apos;re offline — cached pages may be available; job data requires a connection.
         </div>
       )}
       {children}

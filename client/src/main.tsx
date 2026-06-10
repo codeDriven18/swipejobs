@@ -13,9 +13,6 @@ import '@/styles/pwa.css';
 if (import.meta.env.PROD) {
   registerSW({
     immediate: true,
-    onRegistered() {
-      console.info('[PWA] Service worker registered.');
-    },
     onRegisterError(error) {
       console.error('[PWA] Service worker registration failed:', error);
     },

@@ -6,6 +6,7 @@ import { JobCard } from '@/components/jobs/JobCard';
 import { CompanyLink } from '@/components/jobs/CompanyLink';
 import { InstallAppButton } from '@/components/pwa/InstallAppButton';
 import { PageHeader } from '@/components/ui/PageHeader';
+import { DashboardSkeleton } from '@/components/ui/Skeleton';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAuth } from '@/context/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
@@ -109,7 +110,12 @@ export function DashboardPage() {
     : [];
 
   if (profileLoading || loading) {
-    return <p className={styles.status}>Loading your dashboard...</p>;
+    return (
+      <section className={styles.page}>
+        <PageHeader title="Dashboard" subtitle="Your personalized job search hub." />
+        <DashboardSkeleton />
+      </section>
+    );
   }
 
   if (!isAuthenticated) {

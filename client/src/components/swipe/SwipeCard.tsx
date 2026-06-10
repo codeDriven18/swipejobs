@@ -127,7 +127,7 @@ export function SwipeCard({
 
       <div className={styles.salaryBlock}>
         <span className={styles.salaryLabel}>Compensation</span>
-        <span className={styles.salary}>{formatSalary(job.salaryMin, job.salaryMax, job.category)}</span>
+        <span className={styles.salary}>{formatSalary(job.salaryMin, job.salaryMax, job.category, job.externalUrl)}</span>
       </div>
 
       <p className={styles.location}>{job.city ?? job.location ?? 'Flexible location'}</p>

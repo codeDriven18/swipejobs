@@ -6,24 +6,22 @@ import { useAuth } from '@/context/AuthContext';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { JobCardSkeletonList } from '@/components/ui/Skeleton';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { useProfile } from '@/hooks/useProfile';
 import type { SavedJob } from '@/models/savedJob';
 import styles from './SavedPage.module.css';
 
 export function SavedPage() {
-  const { isAuthenticated } = useAuth();
-  const { loading: profileLoading } = useProfile();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
   const [saved, setSaved] = useState<SavedJob[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (profileLoading) return;
+    if (authLoading) return;
     if (!isAuthenticated) { setLoading(false); return; }
     savedJobsApi.getMine().then(setSaved).finally(() => setLoading(false));
-  }, [isAuthenticated, profileLoading]);
+  }, [isAuthenticated, authLoading]);
 
-  if (profileLoading || loading) {
+  if (authLoading || loading) {
     return (
       <section className={styles.page}>
         <PageHeader title="Saved" subtitle="Jobs you've bookmarked." />

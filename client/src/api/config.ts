@@ -24,9 +24,8 @@ export const API_CONFIG = {
   timeout: 10_000,
 } as const;
 
-console.log(
-  import.meta.env.PROD ? 'Production API URL:' : 'Development API URL:',
-  apiUrl,
-);
+if (import.meta.env.DEV) {
+  console.log('Development API URL:', apiUrl);
+}
 
 export const APP_ENV = import.meta.env.VITE_APP_ENV ?? import.meta.env.MODE;

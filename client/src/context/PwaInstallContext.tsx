@@ -48,14 +48,18 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       event.preventDefault();
       deferredPrompt.current = event as BeforeInstallPromptEvent;
       setCanInstall(true);
-      console.info('[PWA] Install prompt captured — use Install App button to show banner.');
+      if (import.meta.env.DEV) {
+        console.info('[PWA] Install prompt captured.');
+      }
     };
 
     const handleAppInstalled = () => {
       deferredPrompt.current = null;
       setCanInstall(false);
       setIsInstalled(true);
-      console.info('[PWA] App installed.');
+      if (import.meta.env.DEV) {
+        console.info('[PWA] App installed.');
+      }
     };
 
     const mediaQuery = window.matchMedia('(display-mode: standalone)');
@@ -83,7 +87,9 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
   const promptInstall = useCallback(async (): Promise<boolean> => {
     const event = deferredPrompt.current;
     if (!event) {
-      console.warn('[PWA] Install prompt unavailable.');
+      if (import.meta.env.DEV) {
+        console.warn('[PWA] Install prompt unavailable.');
+      }
       return false;
     }
 
@@ -94,11 +100,9 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
 
     if (choice.outcome === 'accepted') {
       setIsInstalled(true);
-      console.info('[PWA] User accepted install prompt.');
       return true;
     }
 
-    console.info('[PWA] User dismissed install prompt.');
     return false;
   }, []);
 
