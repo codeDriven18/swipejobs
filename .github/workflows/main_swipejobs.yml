@@ -53,6 +53,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Login to Azure
+        id: azure-login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_576290AC42DC4A16BF27E92F9C0E1637 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_C86F95965C204C3F89FDFA40C1A41A8B }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_1B53392385324F709311D27CB9A0DCD6 }}
+
       - name: Set up .NET
         uses: actions/setup-dotnet@v4
         with:
@@ -88,13 +96,6 @@ jobs:
         with:
           name: .net-app
           path: ./publish
-
-      - name: Login to Azure
-        uses: azure/login@v2
-        with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_576290AC42DC4A16BF27E92F9C0E1637 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_C86F95965C204C3F89FDFA40C1A41A8B }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_1B53392385324F709311D27CB9A0DCD6 }}
 
       - name: Configure Azure application settings
         shell: bash
@@ -328,7 +329,7 @@ jobs:
           sleep 20
 
       - name: Diagnose Azure ANCM startup
-        if: always()
+        if: always() && steps.azure-login.outcome == 'success'
         shell: bash
         env:
           AZURE_RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
