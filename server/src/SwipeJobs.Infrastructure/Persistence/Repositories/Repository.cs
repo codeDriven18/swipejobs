@@ -28,7 +28,13 @@ public class Repository<T> : IRepository<T> where T : class
 
     public virtual Task UpdateAsync(T entity, CancellationToken cancellationToken = default)
     {
-        DbSet.Update(entity);
+        // Update() is for detached graphs. On tracked entities (typical read-modify-save flow)
+        // it can reset child delete states and cause DbUpdateConcurrencyException (0 rows affected).
+        if (Context.Entry(entity).State == EntityState.Detached)
+        {
+            DbSet.Update(entity);
+        }
+
         return Task.CompletedTask;
     }
 

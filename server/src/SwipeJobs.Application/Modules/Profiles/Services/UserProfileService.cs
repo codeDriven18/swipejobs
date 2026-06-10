@@ -67,30 +67,23 @@ public class UserProfileService : IUserProfileService
         return ProfileMapper.ToDto(created!);
     }
 
+    public async Task<UserProfileDto?> UpdateForCurrentUserAsync(
+        Guid userId,
+        UpdateUserProfileDto dto,
+        CancellationToken cancellationToken = default)
+    {
+        var profile = await _profileRepository.GetByUserIdAsync(userId, cancellationToken);
+        if (profile is null) return null;
+
+        return await ApplyUpdateAsync(profile, dto, cancellationToken);
+    }
+
     public async Task<UserProfileDto?> UpdateAsync(Guid id, UpdateUserProfileDto dto, CancellationToken cancellationToken = default)
     {
         var profile = await _profileRepository.GetByIdWithDetailsAsync(id, cancellationToken);
         if (profile is null) return null;
 
-        profile.FirstName = dto.FirstName;
-        profile.LastName = dto.LastName;
-        profile.Email = dto.Email;
-        profile.Phone = dto.Phone;
-        profile.Bio = dto.Bio;
-        profile.ResumeUrl = dto.ResumeUrl;
-        profile.Location = dto.Location;
-
-        profile.Educations.Clear();
-        profile.Skills.Clear();
-        profile.Experiences.Clear();
-        ApplyCollections(profile, dto.Educations, dto.Skills, dto.Experiences);
-        ProfileCompletenessChecker.UpdateFlag(profile);
-
-        await _profileRepository.UpdateAsync(profile, cancellationToken);
-        await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-        var updated = await _profileRepository.GetByIdWithDetailsAsync(id, cancellationToken);
-        return updated is null ? null : ProfileMapper.ToDto(updated);
+        return await ApplyUpdateAsync(profile, dto, cancellationToken);
     }
 
     public async Task<bool> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
@@ -108,6 +101,34 @@ public class UserProfileService : IUserProfileService
         var profile = await _profileRepository.GetByIdWithDetailsAsync(id, cancellationToken)
             ?? throw new KeyNotFoundException("Profile not found.");
         return ProfileCompletenessChecker.Check(profile);
+    }
+
+    private async Task<UserProfileDto> ApplyUpdateAsync(
+        UserProfile profile,
+        UpdateUserProfileDto dto,
+        CancellationToken cancellationToken)
+    {
+        profile.FirstName = dto.FirstName;
+        profile.LastName = dto.LastName;
+        profile.Email = dto.Email;
+        profile.Phone = dto.Phone;
+        profile.Bio = dto.Bio;
+        profile.ResumeUrl = dto.ResumeUrl;
+        profile.Location = dto.Location;
+
+        profile.Educations.Clear();
+        profile.Skills.Clear();
+        profile.Experiences.Clear();
+        ApplyCollections(profile, dto.Educations, dto.Skills, dto.Experiences);
+        ProfileCompletenessChecker.UpdateFlag(profile);
+
+        _unitOfWork.LogPendingChanges($"profile-update profileId={profile.Id} userId={profile.UserId}");
+
+        // Entity is already tracked from the repository query; do not call DbSet.Update().
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        var updated = await _profileRepository.GetByIdWithDetailsAsync(profile.Id, cancellationToken);
+        return ProfileMapper.ToDto(updated!);
     }
 
     private static void ApplyCollections(

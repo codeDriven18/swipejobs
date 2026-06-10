@@ -31,10 +31,8 @@ public class ProfilesController : ControllerBase
     [HttpPut("me")]
     public async Task<IActionResult> UpdateMe([FromBody] UpdateUserProfileDto dto, CancellationToken cancellationToken)
     {
-        var existing = await _profileService.GetByUserIdAsync(_currentUser.GetRequiredUserId(), cancellationToken);
-        if (existing is null) return NotFound();
-
-        var profile = await _profileService.UpdateAsync(existing.Id, dto, cancellationToken);
+        var userId = _currentUser.GetRequiredUserId();
+        var profile = await _profileService.UpdateForCurrentUserAsync(userId, dto, cancellationToken);
         return profile is null ? NotFound() : Ok(profile);
     }
 
