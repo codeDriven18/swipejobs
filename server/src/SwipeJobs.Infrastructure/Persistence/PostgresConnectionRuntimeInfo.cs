@@ -8,4 +8,6 @@ public sealed class PostgresConnectionRuntimeInfo
     public string Username { get; init; } = string.Empty;
     public string SslMode { get; init; } = string.Empty;
     public int PasswordLength { get; init; }
+    public bool HasConflictingSources { get; init; }
+    public IReadOnlyList<ConnectionSourceSnapshot> AllSources { get; init; } = [];
 }

@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using Npgsql;
 using SwipeJobs.Infrastructure.Persistence;
+using SwipeJobs.Infrastructure.Persistence.Migrations;
 using SwipeJobs.Infrastructure.Persistence.Seeding;
 
 namespace SwipeJobs.Api.Extensions;
@@ -9,70 +9,18 @@ public static class DatabaseStartupExtensions
 {
     public static async Task InitializeDatabaseAsync(this WebApplication app)
     {
-        var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("Startup");
+        var logger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("DatabaseStartup");
         using var scope = app.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
 
-        try
-        {
-            if (await dbContext.Database.CanConnectAsync())
-                logger.LogInformation("Database connected.");
-            else
-            {
-                logger.LogError("Database connection failed.");
-                return;
-            }
+        logger.LogWarning("Database startup: applying EF Core migrations before accepting requests...");
+        Console.Error.WriteLine("[DatabaseStartup] Applying EF Core migrations before accepting requests...");
 
-            var pending = await dbContext.Database.GetPendingMigrationsAsync();
-            if (pending.Any())
-            {
-                await dbContext.Database.MigrateAsync();
-                logger.LogInformation("Migrations applied: {Count}", pending.Count());
-            }
-            else
-            {
-                logger.LogInformation("Migrations up to date.");
-            }
+        await DatabaseMigrationRunner.ApplyPendingMigrationsAsync(dbContext, logger);
 
-            var seeder = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
-            await seeder.SeedAsync();
-            logger.LogInformation("Seed completed.");
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Database initialization failed.");
-            LogDatabaseException(logger, ex);
-        }
-    }
-
-    private static void LogDatabaseException(ILogger logger, Exception ex)
-    {
-        for (var current = ex; current is not null; current = current.InnerException)
-        {
-            switch (current)
-            {
-                case PostgresException pg:
-                    logger.LogError(
-                        "PostgreSQL error. SqlState={SqlState} Severity={Severity} Message={Message}",
-                        pg.SqlState,
-                        pg.Severity,
-                        pg.MessageText);
-                    return;
-                case NpgsqlException npgsql:
-                    logger.LogError(
-                        "Npgsql error. Message={Message}",
-                        npgsql.Message);
-                    return;
-                case System.Net.Sockets.SocketException socket:
-                    logger.LogError(
-                        "Network error. SocketError={SocketError} Message={Message}",
-                        socket.SocketErrorCode,
-                        socket.Message);
-                    return;
-                case TimeoutException timeout:
-                    logger.LogError("Connection timeout. Message={Message}", timeout.Message);
-                    return;
-            }
-        }
+        var seeder = scope.ServiceProvider.GetRequiredService<IDataSeeder>();
+        await seeder.SeedAsync();
+        logger.LogInformation("Database startup: seed completed.");
+        Console.Error.WriteLine("[DatabaseStartup] Seed completed.");
     }
 }

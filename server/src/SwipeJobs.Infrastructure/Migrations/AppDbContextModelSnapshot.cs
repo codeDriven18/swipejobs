@@ -58,7 +58,7 @@ namespace SwipeJobs.Infrastructure.Migrations
                     b.HasIndex("UserProfileId", "JobId")
                         .IsUnique();
 
-                    b.ToTable("Applications");
+                    b.ToTable("Applications", (string)null);
                 });
 
             modelBuilder.Entity("SwipeJobs.Domain.Entities.AuditLog", b =>
@@ -101,7 +101,7 @@ namespace SwipeJobs.Infrastructure.Migrations
 
                     b.HasIndex("Timestamp");
 
-                    b.ToTable("AuditLogs");
+                    b.ToTable("AuditLogs", (string)null);
                 });
 
             modelBuilder.Entity("SwipeJobs.Domain.Entities.Company", b =>
@@ -171,7 +171,7 @@ namespace SwipeJobs.Infrastructure.Migrations
 
                     b.HasIndex("Status");
 
-                    b.ToTable("Companies");
+                    b.ToTable("Companies", (string)null);
                 });
 
             modelBuilder.Entity("SwipeJobs.Domain.Entities.CompanyFollow", b =>
@@ -202,7 +202,7 @@ namespace SwipeJobs.Infrastructure.Migrations
                     b.HasIndex("UserProfileId", "CompanyId")
                         .IsUnique();
 
-                    b.ToTable("CompanyFollows");
+                    b.ToTable("CompanyFollows", (string)null);
                 });
 
             modelBuilder.Entity("SwipeJobs.Domain.Entities.CompanyMember", b =>
@@ -231,7 +231,7 @@ namespace SwipeJobs.Infrastructure.Migrations
                     b.HasIndex("CompanyId", "UserId")
                         .IsUnique();
 
-                    b.ToTable("CompanyMembers");
+                    b.ToTable("CompanyMembers", (string)null);
                 });
 
             modelBuilder.Entity("SwipeJobs.Domain.Entities.Education", b =>
@@ -276,7 +276,7 @@ namespace SwipeJobs.Infrastructure.Migrations
 
                     b.HasIndex("UserProfileId");
 
-                    b.ToTable("Educations");
+                    b.ToTable("Educations", (string)null);
                 });
 
             modelBuilder.Entity("SwipeJobs.Domain.Entities.Experience", b =>
@@ -320,7 +320,7 @@ namespace SwipeJobs.Infrastructure.Migrations
 
                     b.HasIndex("UserProfileId");
 
-                    b.ToTable("Experiences");
+                    b.ToTable("Experiences", (string)null);
                 });
 
             modelBuilder.Entity("SwipeJobs.Domain.Entities.Job", b =>
@@ -402,7 +402,7 @@ namespace SwipeJobs.Infrastructure.Migrations
 
                     b.HasIndex("SourceId");
 
-                    b.ToTable("Jobs");
+                    b.ToTable("Jobs", (string)null);
                 });
 
             modelBuilder.Entity("SwipeJobs.Domain.Entities.JobTag", b =>
@@ -417,7 +417,7 @@ namespace SwipeJobs.Infrastructure.Migrations
 
                     b.HasIndex("TagId");
 
-                    b.ToTable("JobTags");
+                    b.ToTable("JobTags", (string)null);
                 });
 
             modelBuilder.Entity("SwipeJobs.Domain.Entities.Notification", b =>
@@ -464,7 +464,7 @@ namespace SwipeJobs.Infrastructure.Migrations
 
                     b.HasIndex("UserProfileId", "IsRead", "CreatedAt");
 
-                    b.ToTable("Notifications");
+                    b.ToTable("Notifications", (string)null);
                 });
 
             modelBuilder.Entity("SwipeJobs.Domain.Entities.RefreshToken", b =>
@@ -499,7 +499,7 @@ namespace SwipeJobs.Infrastructure.Migrations
 
                     b.HasIndex("UserId", "ExpiresAt");
 
-                    b.ToTable("RefreshTokens");
+                    b.ToTable("RefreshTokens", (string)null);
                 });
 
             modelBuilder.Entity("SwipeJobs.Domain.Entities.SavedJob", b =>
@@ -530,7 +530,7 @@ namespace SwipeJobs.Infrastructure.Migrations
                     b.HasIndex("UserProfileId", "JobId")
                         .IsUnique();
 
-                    b.ToTable("SavedJobs");
+                    b.ToTable("SavedJobs", (string)null);
                 });
 
             modelBuilder.Entity("SwipeJobs.Domain.Entities.Skill", b =>
@@ -561,7 +561,7 @@ namespace SwipeJobs.Infrastructure.Migrations
 
                     b.HasIndex("UserProfileId");
 
-                    b.ToTable("Skills");
+                    b.ToTable("Skills", (string)null);
                 });
 
             modelBuilder.Entity("SwipeJobs.Domain.Entities.Source", b =>
@@ -595,7 +595,7 @@ namespace SwipeJobs.Infrastructure.Migrations
 
                     b.HasIndex("Type");
 
-                    b.ToTable("Sources");
+                    b.ToTable("Sources", (string)null);
                 });
 
             modelBuilder.Entity("SwipeJobs.Domain.Entities.Tag", b =>
@@ -624,7 +624,7 @@ namespace SwipeJobs.Infrastructure.Migrations
                     b.HasIndex("Slug")
                         .IsUnique();
 
-                    b.ToTable("Tags");
+                    b.ToTable("Tags", (string)null);
                 });
 
             modelBuilder.Entity("SwipeJobs.Domain.Entities.User", b =>
@@ -660,7 +660,7 @@ namespace SwipeJobs.Infrastructure.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("SwipeJobs.Domain.Entities.UserActivity", b =>
@@ -702,7 +702,7 @@ namespace SwipeJobs.Infrastructure.Migrations
 
                     b.HasIndex("UserProfileId", "OccurredAt");
 
-                    b.ToTable("UserActivities");
+                    b.ToTable("UserActivities", (string)null);
                 });
 
             modelBuilder.Entity("SwipeJobs.Domain.Entities.UserInterestProfile", b =>
@@ -746,7 +746,7 @@ namespace SwipeJobs.Infrastructure.Migrations
                     b.HasIndex("UserProfileId")
                         .IsUnique();
 
-                    b.ToTable("UserInterestProfiles");
+                    b.ToTable("UserInterestProfiles", (string)null);
                 });
 
             modelBuilder.Entity("SwipeJobs.Domain.Entities.UserProfile", b =>
@@ -813,7 +813,7 @@ namespace SwipeJobs.Infrastructure.Migrations
                         .IsUnique()
                         .HasFilter("[UserId] IS NOT NULL");
 
-                    b.ToTable("UserProfiles");
+                    b.ToTable("UserProfiles", (string)null);
                 });
 
             modelBuilder.Entity("SwipeJobs.Domain.Entities.Application", b =>

@@ -49,7 +49,14 @@ public class HealthController : ControllerBase
         }
 
         var apiStatus = dbStatus == "healthy" ? "healthy" : "degraded";
-        var includeDiagnostics = dbStatus != "healthy";
+
+        var sourceAudit = _connectionInfo.AllSources
+            .Select(source => new ConnectionSourceHealthInfo(
+                source.SourceName,
+                source.PasswordLength,
+                source.IsSet,
+                source.SourceName == _connectionInfo.Source))
+            .ToList();
 
         return Ok(new HealthResponse(
             apiStatus,
@@ -57,11 +64,15 @@ public class HealthController : ControllerBase
             version,
             dbStatus,
             DateTime.UtcNow,
-            includeDiagnostics ? _connectionInfo.Host : null,
-            includeDiagnostics ? _connectionInfo.Database : null,
-            includeDiagnostics ? _connectionInfo.Username : null,
-            includeDiagnostics ? _connectionInfo.SslMode : null,
-            includeDiagnostics ? databaseError : null));
+            _connectionInfo.Host,
+            _connectionInfo.Database,
+            _connectionInfo.Username,
+            _connectionInfo.SslMode,
+            databaseError,
+            _connectionInfo.Source,
+            _connectionInfo.PasswordLength,
+            _connectionInfo.HasConflictingSources,
+            sourceAudit));
     }
 
     private static string GetDatabaseErrorMessage(Exception ex)

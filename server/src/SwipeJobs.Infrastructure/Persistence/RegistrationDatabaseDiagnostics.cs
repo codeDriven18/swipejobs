@@ -1,6 +1,4 @@
-using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Npgsql;
 using SwipeJobs.Domain.Entities;
@@ -11,45 +9,27 @@ public static class RegistrationDatabaseDiagnostics
 {
     public static void LogConnectionSources(
         ILogger logger,
-        IConfiguration configuration,
-        string contentRootPath)
+        PostgresConnectionRuntimeInfo runtimeInfo)
     {
-        LogSource(logger, "ConnectionStrings:DefaultConnection (IConfiguration)",
-            configuration.GetConnectionString("DefaultConnection"));
+        logger.LogWarning(
+            "Register diagnostics: DbContext winning source={Source}; PasswordLength={PasswordLength}; HasConflictingSources={HasConflictingSources}",
+            runtimeInfo.Source,
+            runtimeInfo.PasswordLength,
+            runtimeInfo.HasConflictingSources);
 
-        LogSource(logger, "ConnectionStrings__DefaultConnection (env)",
-            Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection"));
-
-        LogSource(logger, "CUSTOMCONNSTR_DefaultConnection (env)",
-            Environment.GetEnvironmentVariable("CUSTOMCONNSTR_DefaultConnection"));
-
-        LogSource(logger, "POSTGRESQLCONNSTR_DefaultConnection (env)",
-            Environment.GetEnvironmentVariable("POSTGRESQLCONNSTR_DefaultConnection"));
-
-        var productionPath = Path.Combine(contentRootPath, "appsettings.Production.json");
-        if (!File.Exists(productionPath))
+        foreach (var source in runtimeInfo.AllSources)
         {
-            logger.LogWarning("Register diagnostics: appsettings.Production.json connection: file not found at {Path}", productionPath);
-            return;
-        }
-
-        try
-        {
-            var json = File.ReadAllText(productionPath);
-            using var document = JsonDocument.Parse(json);
-            if (document.RootElement.TryGetProperty("ConnectionStrings", out var connectionStrings)
-                && connectionStrings.TryGetProperty("DefaultConnection", out var defaultConnection))
+            if (!source.IsSet)
             {
-                LogSource(logger, "appsettings.Production.json", defaultConnection.GetString());
+                logger.LogWarning("Register diagnostics: {SourceName}: not set", source.SourceName);
+                continue;
             }
-            else
-            {
-                logger.LogWarning("Register diagnostics: appsettings.Production.json: ConnectionStrings:DefaultConnection not set");
-            }
-        }
-        catch (Exception ex)
-        {
-            logger.LogWarning(ex, "Register diagnostics: failed to read appsettings.Production.json at {Path}", productionPath);
+
+            logger.LogWarning(
+                "Register diagnostics: {SourceName}: PasswordLength={PasswordLength}; IsWinner={IsWinner}",
+                source.SourceName,
+                source.PasswordLength,
+                source.SourceName == runtimeInfo.Source);
         }
     }
 
@@ -132,24 +112,5 @@ public static class RegistrationDatabaseDiagnostics
                     return;
             }
         }
-    }
-
-    private static void LogSource(ILogger logger, string source, string? connectionString)
-    {
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            logger.LogWarning("Register diagnostics: {Source}: not set", source);
-            return;
-        }
-
-        var info = PostgresConnectionStringNormalizer.DescribeRuntime(connectionString, source);
-        logger.LogWarning(
-            "Register diagnostics: {Source}: Host={Host};Database={Database};Username={Username};SSL Mode={SslMode};PasswordLength={PasswordLength}",
-            source,
-            info.Host,
-            info.Database,
-            info.Username,
-            info.SslMode,
-            info.PasswordLength);
     }
 }

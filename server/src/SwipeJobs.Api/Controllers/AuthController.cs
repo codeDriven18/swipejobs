@@ -1,11 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
 using SwipeJobs.Application.Common.Dtos;
 using SwipeJobs.Application.Common.Interfaces;
 using SwipeJobs.Application.Common.Interfaces.Repositories;
 using SwipeJobs.Application.Modules.Auth.Interfaces;
-using SwipeJobs.Infrastructure.Persistence;
+using SwipeJobs.Infrastructure.Auth;
 
 namespace SwipeJobs.Api.Controllers;
 
@@ -16,29 +15,17 @@ public class AuthController : ControllerBase
     private readonly IAuthService _authService;
     private readonly IUserRepository _userRepository;
     private readonly ICurrentUserService _currentUser;
-    private readonly AppDbContext _dbContext;
-    private readonly PostgresConnectionRuntimeInfo _connectionInfo;
-    private readonly IConfiguration _configuration;
-    private readonly IWebHostEnvironment _environment;
     private readonly ILogger<AuthController> _logger;
 
     public AuthController(
         IAuthService authService,
         IUserRepository userRepository,
         ICurrentUserService currentUser,
-        AppDbContext dbContext,
-        PostgresConnectionRuntimeInfo connectionInfo,
-        IConfiguration configuration,
-        IWebHostEnvironment environment,
         ILogger<AuthController> logger)
     {
         _authService = authService;
         _userRepository = userRepository;
         _currentUser = currentUser;
-        _dbContext = dbContext;
-        _connectionInfo = connectionInfo;
-        _configuration = configuration;
-        _environment = environment;
         _logger = logger;
     }
 
@@ -46,34 +33,23 @@ public class AuthController : ControllerBase
     [HttpPost("register")]
     public async Task<IActionResult> Register([FromBody] RegisterDto dto, CancellationToken cancellationToken)
     {
-        _logger.LogWarning("Register diagnostics: Entered Register endpoint for {Email} as {AccountType}", dto.Email, dto.AccountType);
-
-        _logger.LogWarning(
-            "Register diagnostics: Active DbContext source={Source} Host={Host};Database={Database};Username={Username};SSL Mode={SslMode};PasswordLength={PasswordLength}",
-            _connectionInfo.Source,
-            _connectionInfo.Host,
-            _connectionInfo.Database,
-            _connectionInfo.Username,
-            _connectionInfo.SslMode,
-            _connectionInfo.PasswordLength);
-
-        RegistrationDatabaseDiagnostics.LogConnectionSources(_logger, _configuration, _environment.ContentRootPath);
-        await RegistrationDatabaseDiagnostics.LogDatabaseStateAsync(_dbContext, _logger, cancellationToken);
-
-        _logger.LogWarning("Register diagnostics: Before first database query");
+        RegisterFlowDiagnostics.LogPhaseStart(
+            _logger,
+            "controller-register",
+            $"email={dto.Email.Trim()} accountType={dto.AccountType ?? "jobseeker"}");
 
         try
         {
             var result = await _authService.RegisterAsync(dto, cancellationToken);
-            _logger.LogWarning("Register diagnostics: Register completed successfully for {Email}", dto.Email);
+            RegisterFlowDiagnostics.LogPhaseComplete(
+                _logger,
+                "controller-register",
+                $"userId={result.User.Id} role={result.User.Role}");
             return Ok(result);
         }
         catch (Exception ex)
         {
-            RegistrationDatabaseDiagnostics.LogException(
-                _logger,
-                "Register diagnostics: Register failed with exception",
-                ex);
+            RegisterFlowDiagnostics.LogFullExceptionChain(_logger, "AuthController.Register failed", ex);
             throw;
         }
     }

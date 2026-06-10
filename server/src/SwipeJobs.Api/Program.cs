@@ -108,7 +108,7 @@ try
         dbRuntime.SslMode,
         dbRuntime.PasswordLength);
 
-    app.ScheduleDatabaseInitialization();
+    await app.InitializeDatabaseAsync();
 
     if (!app.Environment.IsDevelopment())
     {

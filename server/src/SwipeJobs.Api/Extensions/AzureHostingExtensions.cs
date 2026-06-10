@@ -14,22 +14,4 @@ public static class AzureHostingExtensions
 
         builder.WebHost.UseUrls($"http://0.0.0.0:{port}");
     }
-
-    public static void ScheduleDatabaseInitialization(this WebApplication app)
-    {
-        app.Lifetime.ApplicationStarted.Register(() =>
-        {
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await app.InitializeDatabaseAsync();
-                }
-                catch (Exception ex)
-                {
-                    app.Logger.LogError(ex, "Background database initialization failed.");
-                }
-            });
-        });
-    }
 }
