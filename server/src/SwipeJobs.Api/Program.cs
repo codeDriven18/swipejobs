@@ -139,14 +139,13 @@ try
         });
     }
 
-    app.UseSwipeJobsCorsPreflight();
     app.UseRouting();
     app.UseCors(CorsExtensions.CorsPolicyName);
     app.UseAuthentication();
     app.UseAuthorization();
 
-    app.MapControllers();
-    app.MapHub<NotificationHub>("/hubs/notifications");
+    app.MapControllers().RequireCors(CorsExtensions.CorsPolicyName);
+    app.MapHub<NotificationHub>("/hubs/notifications").RequireCors(CorsExtensions.CorsPolicyName);
 
     app.Run();
 }

@@ -1,4 +1,5 @@
 using System.Net;
+using System.Net.Http.Json;
 using SwipeJobs.Api.Extensions;
 using Xunit;
 
@@ -33,6 +34,7 @@ public class CorsTests : IClassFixture<SwipeJobsWebApplicationFactory>
     [InlineData("/api/tags", "GET", "http://localhost:5173")]
     [InlineData("/api/jobs", "GET", "https://swipejobss.netlify.app")]
     [InlineData("/api/auth/login", "POST", "https://6a267b1a1b64858734149e95--swipejobss.netlify.app")]
+    [InlineData("/hubs/notifications/negotiate", "POST", "https://6a267b1a1b64858734149e95--swipejobss.netlify.app")]
     public async Task Options_Preflight_ReturnsCorsHeaders(string path, string method, string origin)
     {
         var request = new HttpRequestMessage(HttpMethod.Options, path);
@@ -50,6 +52,29 @@ public class CorsTests : IClassFixture<SwipeJobsWebApplicationFactory>
         Assert.True(response.Headers.TryGetValues("Access-Control-Allow-Headers", out var allowedHeaders));
         Assert.Contains("authorization", allowedHeaders, StringComparer.OrdinalIgnoreCase);
         Assert.Equal("true", response.Headers.GetValues("Access-Control-Allow-Credentials").Single());
+    }
+
+    [Fact]
+    public async Task SignalR_Negotiate_Preflight_Allows_X_Requested_With()
+    {
+        const string origin = "https://6a267b1a1b64858734149e95--swipejobss.netlify.app";
+        var request = new HttpRequestMessage(HttpMethod.Options, "/hubs/notifications/negotiate");
+        request.Headers.TryAddWithoutValidation("Origin", origin);
+        request.Headers.TryAddWithoutValidation("Access-Control-Request-Method", "POST");
+        request.Headers.TryAddWithoutValidation(
+            "Access-Control-Request-Headers",
+            "authorization,content-type,x-requested-with,x-signalr-user-agent");
+
+        var response = await _client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(response.Headers.TryGetValues("Access-Control-Allow-Origin", out var origins));
+        Assert.Equal(origin, origins.Single());
+        Assert.True(response.Headers.TryGetValues("Access-Control-Allow-Headers", out var allowedHeaders));
+        var headerList = string.Join(",", allowedHeaders).ToLowerInvariant();
+        Assert.Contains("x-requested-with", headerList);
+        Assert.Contains("authorization", headerList);
+        Assert.Contains("content-type", headerList);
     }
 
     [Fact]

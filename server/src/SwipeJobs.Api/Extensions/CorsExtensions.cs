@@ -29,29 +29,10 @@ public static class CorsExtensions
         return services;
     }
 
-    public static IApplicationBuilder UseSwipeJobsCorsPreflight(this IApplicationBuilder app)
-    {
-        return app.Use(async (context, next) =>
-        {
-            var origin = context.Request.Headers.Origin.ToString();
+    public static IApplicationBuilder UseSwipeJobsCors(this IApplicationBuilder app)
+        => app.UseCors(CorsPolicyName);
 
-            if (HttpMethods.IsOptions(context.Request.Method)
-                && !string.IsNullOrEmpty(origin)
-                && IsAllowedOrigin(origin, AllowedOrigins))
-            {
-                context.Response.Headers["Access-Control-Allow-Origin"] = origin;
-                context.Response.Headers["Access-Control-Allow-Credentials"] = "true";
-                context.Response.Headers["Access-Control-Allow-Headers"] = "Authorization, Content-Type";
-                context.Response.Headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, PATCH, DELETE, OPTIONS";
-                context.Response.StatusCode = StatusCodes.Status200OK;
-                return;
-            }
-
-            await next(context);
-        });
-    }
-
-    internal static bool IsAllowedOrigin(string origin, IReadOnlyList<string> configuredOrigins)
+    public static bool IsAllowedOrigin(string origin, IReadOnlyList<string> configuredOrigins)
     {
         if (configuredOrigins.Contains(origin, StringComparer.OrdinalIgnoreCase))
             return true;
