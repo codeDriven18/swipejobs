@@ -635,14 +635,14 @@ END $EF$;
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260607170756_InitialPostgreSQL') THEN
-    CREATE UNIQUE INDEX "IX_UserProfiles_ExternalUserId" ON "UserProfiles" ("ExternalUserId") WHERE [ExternalUserId] IS NOT NULL;
+    CREATE UNIQUE INDEX "IX_UserProfiles_ExternalUserId" ON "UserProfiles" ("ExternalUserId") WHERE "ExternalUserId" IS NOT NULL;
     END IF;
 END $EF$;
 
 DO $EF$
 BEGIN
     IF NOT EXISTS(SELECT 1 FROM "__EFMigrationsHistory" WHERE "MigrationId" = '20260607170756_InitialPostgreSQL') THEN
-    CREATE UNIQUE INDEX "IX_UserProfiles_UserId" ON "UserProfiles" ("UserId") WHERE [UserId] IS NOT NULL;
+    CREATE UNIQUE INDEX "IX_UserProfiles_UserId" ON "UserProfiles" ("UserId") WHERE "UserId" IS NOT NULL;
     END IF;
 END $EF$;
 

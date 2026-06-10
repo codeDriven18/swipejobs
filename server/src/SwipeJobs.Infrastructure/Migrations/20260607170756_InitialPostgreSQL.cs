@@ -701,14 +701,14 @@ namespace SwipeJobs.Infrastructure.Migrations
                 table: "UserProfiles",
                 column: "ExternalUserId",
                 unique: true,
-                filter: "[ExternalUserId] IS NOT NULL");
+                filter: "\"ExternalUserId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_UserProfiles_UserId",
                 table: "UserProfiles",
                 column: "UserId",
                 unique: true,
-                filter: "[UserId] IS NOT NULL");
+                filter: "\"UserId\" IS NOT NULL");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_Email",

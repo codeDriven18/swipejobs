@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using SwipeJobs.Application.Common.Interfaces;
 using SwipeJobs.Application.Modules.Auth.Interfaces;
 using SwipeJobs.Application.Common.Interfaces.Repositories;
@@ -50,7 +52,11 @@ public static class DependencyInjection
                 npgsql.EnableRetryOnFailure(3, TimeSpan.FromSeconds(5), null);
                 npgsql.CommandTimeout(30);
                 npgsql.MigrationsAssembly(typeof(AppDbContext).Assembly.GetName().Name);
-            }));
+            })
+            .LogTo(
+                message => Console.Error.WriteLine($"[EF SQL] {message}"),
+                [DbLoggerCategory.Database.Command.Name],
+                LogLevel.Information));
 
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<ITokenService, TokenService>();

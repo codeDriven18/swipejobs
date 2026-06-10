@@ -52,6 +52,10 @@ public static class DatabaseMigrationRunner
         catch (Exception ex)
         {
             LogError(logger, "Database.MigrateAsync() failed — startup aborted.", ex);
+            if (ex is PostgresException pg)
+            {
+                Log(logger, $"Failed PostgreSQL statement context: SqlState={pg.SqlState}; Message={pg.MessageText}; Position={pg.Position}");
+            }
             throw;
         }
 

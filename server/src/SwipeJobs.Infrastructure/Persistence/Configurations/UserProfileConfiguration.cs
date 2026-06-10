@@ -17,8 +17,8 @@ public class UserProfileConfiguration : IEntityTypeConfiguration<UserProfile>
         builder.Property(u => u.Location).HasMaxLength(200);
         builder.Property(u => u.ResumeUrl).HasMaxLength(1000);
 
-        builder.HasIndex(u => u.ExternalUserId).IsUnique().HasFilter("[ExternalUserId] IS NOT NULL");
-        builder.HasIndex(u => u.UserId).IsUnique().HasFilter("[UserId] IS NOT NULL");
+        builder.HasIndex(u => u.ExternalUserId).IsUnique().HasFilter("\"ExternalUserId\" IS NOT NULL");
+        builder.HasIndex(u => u.UserId).IsUnique().HasFilter("\"UserId\" IS NOT NULL");
         builder.HasIndex(u => u.Email);
     }
 }

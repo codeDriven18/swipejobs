@@ -807,11 +807,11 @@ namespace SwipeJobs.Infrastructure.Migrations
 
                     b.HasIndex("ExternalUserId")
                         .IsUnique()
-                        .HasFilter("[ExternalUserId] IS NOT NULL");
+                        .HasFilter("\"ExternalUserId\" IS NOT NULL");
 
                     b.HasIndex("UserId")
                         .IsUnique()
-                        .HasFilter("[UserId] IS NOT NULL");
+                        .HasFilter("\"UserId\" IS NOT NULL");
 
                     b.ToTable("UserProfiles", (string)null);
                 });
