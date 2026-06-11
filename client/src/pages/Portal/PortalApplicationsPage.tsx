@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { portalApi } from '@/api/portalApi';
+import { UserAvatar } from '@/components/profile/UserAvatar';
 import { ApplicationStatusLabels } from '@/models/enums';
 import type { PortalApplication } from '@/models/portal';
 import styles from './PortalPage.module.css';
@@ -32,9 +33,20 @@ export function PortalApplicationsPage() {
           {applications.map((app) => (
             <article key={app.id} className={styles.card}>
               <div className={styles.cardHeader}>
-                <div>
-                  <h2 className={styles.cardTitle}>{app.applicantName || 'Applicant'}</h2>
-                  <p className={styles.cardMeta}>{app.applicantEmail}{app.applicantPhone ? ` · ${app.applicantPhone}` : ''}</p>
+                <div className={styles.applicantRow}>
+                  <UserAvatar
+                    profile={{
+                      firstName: app.applicantName.split(' ')[0] ?? '',
+                      lastName: app.applicantName.split(' ').slice(1).join(' ') ?? '',
+                      email: app.applicantEmail,
+                      profileImageUrl: app.applicantProfileImageUrl,
+                    }}
+                    size="md"
+                  />
+                  <div>
+                    <h2 className={styles.cardTitle}>{app.applicantName || 'Applicant'}</h2>
+                    <p className={styles.cardMeta}>{app.applicantEmail}{app.applicantPhone ? ` · ${app.applicantPhone}` : ''}</p>
+                  </div>
                 </div>
                 <span className={styles.badge}>{ApplicationStatusLabels[app.status]}</span>
               </div>

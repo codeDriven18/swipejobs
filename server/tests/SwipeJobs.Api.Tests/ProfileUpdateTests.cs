@@ -41,6 +41,7 @@ public class ProfileUpdateTests : IClassFixture<SwipeJobsWebApplicationFactory>
             email,
             phone = "+15551234567",
             bio = "Ready to work",
+            headline = "Software Developer",
             location = "Remote",
             skills = new[] { new { name = "C#", level = "Expert" } },
             educations = Array.Empty<object>(),

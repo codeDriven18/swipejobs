@@ -7,7 +7,9 @@ export interface Company {
   location: string;
   companySize: string;
   logoUrl?: string;
+  bannerUrl?: string;
   website?: string;
+  linkedInUrl?: string;
   status: import('./operations').CompanyStatus;
   isActive: boolean;
   openJobsCount: number;

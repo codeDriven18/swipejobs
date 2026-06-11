@@ -5,6 +5,7 @@ import { companiesApi } from '@/api/companiesApi';
 import { companyFollowsApi } from '@/api/companyFollowsApi';
 import { jobsApi } from '@/api/jobsApi';
 import { JobCard } from '@/components/jobs/JobCard';
+import { CompanyAvatar } from '@/components/profile/CompanyAvatar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useAuth } from '@/context/AuthContext';
 import { useActivityTracking } from '@/hooks/useActivityTracking';
@@ -81,13 +82,6 @@ export function CompanyPage() {
     );
   }
 
-  const initials = company.name
-    .split(/\s+/)
-    .slice(0, 2)
-    .map((w) => w[0])
-    .join('')
-    .toUpperCase();
-
   return (
     <motion.section
       className={styles.page}
@@ -99,9 +93,15 @@ export function CompanyPage() {
         ← Back
       </button>
 
+      <div
+        className={styles.banner}
+        style={company.bannerUrl ? { backgroundImage: `url(${company.bannerUrl})` } : undefined}
+        aria-hidden
+      />
+
       <div className={styles.hero}>
         <div className={styles.heroTop}>
-          <div className={styles.logo}>{initials}</div>
+          <CompanyAvatar company={company} size="lg" className={styles.logo} />
           <div>
             <h1 className={styles.heroTitle}>{company.name}</h1>
             <p className={styles.heroIndustry}>{company.industry}</p>
@@ -111,11 +111,11 @@ export function CompanyPage() {
         <div className={styles.metaGrid}>
           <div className={styles.metaItem}>
             <span className={styles.metaLabel}>Location</span>
-            <span className={styles.metaValue}>{company.location}</span>
+            <span className={styles.metaValue}>{company.location || '—'}</span>
           </div>
           <div className={styles.metaItem}>
             <span className={styles.metaLabel}>Company size</span>
-            <span className={styles.metaValue}>{company.companySize}</span>
+            <span className={styles.metaValue}>{company.companySize || '—'}</span>
           </div>
         </div>
 
@@ -131,17 +131,19 @@ export function CompanyPage() {
 
       <div className={styles.description}>
         <h2>About</h2>
-        <p>{company.description}</p>
-        {company.website && (
-          <a
-            href={company.website}
-            className={styles.website}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Visit website →
-          </a>
-        )}
+        <p>{company.description || 'This company has not added a description yet.'}</p>
+        <div className={styles.links}>
+          {company.website && (
+            <a href={company.website} className={styles.website} target="_blank" rel="noopener noreferrer">
+              Visit website →
+            </a>
+          )}
+          {company.linkedInUrl && (
+            <a href={company.linkedInUrl} className={styles.website} target="_blank" rel="noopener noreferrer">
+              LinkedIn →
+            </a>
+          )}
+        </div>
       </div>
 
       <div className={styles.jobsSection}>

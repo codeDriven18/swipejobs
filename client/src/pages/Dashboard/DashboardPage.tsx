@@ -11,7 +11,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAuth } from '@/context/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { calculateProfileProgress } from '@/lib/profileProgress';
-import { getLocalResumeName } from '@/lib/userStorage';
+import { profileToFormState } from '@/lib/profileForm';
 import type { UserDashboard } from '@/models/dashboard';
 import styles from './DashboardPage.module.css';
 
@@ -70,18 +70,9 @@ export function DashboardPage() {
 
   const localProgress = useMemo(() => {
     if (!profile) return 0;
-    return calculateProfileProgress({
-      firstName: profile.firstName,
-      lastName: profile.lastName,
-      email: profile.email ?? '',
-      phone: profile.phone ?? '',
-      bio: profile.bio ?? '',
-      location: profile.location ?? '',
-      resumeName: profile.resumeUrl ?? getLocalResumeName() ?? '',
-      educations: profile.educations,
-      skills: profile.skills,
-      experiences: profile.experiences,
-    }).percentage;
+    return calculateProfileProgress(
+      profileToFormState(profile),
+    ).percentage;
   }, [profile]);
 
   useEffect(() => {

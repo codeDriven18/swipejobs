@@ -48,4 +48,15 @@ public record PortalApplicationDto(
     Guid UserProfileId,
     string ApplicantName,
     string ApplicantEmail,
-    string? ApplicantPhone);
+    string? ApplicantPhone,
+    string? ApplicantProfileImageUrl);
+
+public record PortalUpdateCompanyDto(
+    string Description,
+    string Industry,
+    string Location,
+    string CompanySize,
+    string? LogoUrl,
+    string? BannerUrl,
+    string? Website,
+    string? LinkedInUrl);

@@ -2,6 +2,8 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { applicationsApi } from '@/api/applicationsApi';
 import { useAuth } from '@/context/AuthContext';
+import { useProfile } from '@/hooks/useProfile';
+import { UserAvatar } from '@/components/profile/UserAvatar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { CompanyLink } from '@/components/jobs/CompanyLink';
@@ -13,6 +15,7 @@ import styles from './ApplicationsPage.module.css';
 
 export function ApplicationsPage() {
   const { isAuthenticated, isLoading: authLoading } = useAuth();
+  const { profile } = useProfile();
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -67,9 +70,12 @@ export function ApplicationsPage() {
           {applications.map((app) => (
             <article key={app.id} className={styles.card}
               onClick={() => navigate(`/jobs/${app.jobId}`)} role="button" tabIndex={0}>
-              <div className={styles.cardHeader}>
-                <StatusBadge status={app.status} />
-                <span className={styles.date}>{new Date(app.appliedAt).toLocaleDateString()}</span>
+              <div className={styles.cardTop}>
+                <UserAvatar profile={profile} size="sm" />
+                <div className={styles.cardHeader}>
+                  <StatusBadge status={app.status} />
+                  <span className={styles.date}>{new Date(app.appliedAt).toLocaleDateString()}</span>
+                </div>
               </div>
               <h3 className={styles.title}>{app.job?.title ?? 'Job'}</h3>
               <CompanyLink

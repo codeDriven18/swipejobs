@@ -1,0 +1,22 @@
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border);
+}
+
+.fallback {
+  background: linear-gradient(135deg, var(--color-accent), #ffe566);
+  color: #111;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.sm { width: 2rem; height: 2rem; font-size: 0.6875rem; }
+.md { width: 2.75rem; height: 2.75rem; font-size: 0.8125rem; }
+.lg { width: 4.5rem; height: 4.5rem; font-size: 1.125rem; }
+.xl { width: 6.5rem; height: 6.5rem; font-size: 1.5rem; }

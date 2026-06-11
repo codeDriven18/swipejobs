@@ -16,7 +16,9 @@ public class CompanyConfiguration : IEntityTypeConfiguration<Company>
         builder.Property(c => c.Location).HasMaxLength(200);
         builder.Property(c => c.CompanySize).HasMaxLength(80);
         builder.Property(c => c.LogoUrl).HasMaxLength(1000);
+        builder.Property(c => c.BannerUrl).HasMaxLength(1000);
         builder.Property(c => c.Website).HasMaxLength(500);
+        builder.Property(c => c.LinkedInUrl).HasMaxLength(500);
 
         builder.HasIndex(c => c.Slug).IsUnique();
         builder.HasIndex(c => c.Name);

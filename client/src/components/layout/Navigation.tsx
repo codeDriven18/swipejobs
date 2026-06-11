@@ -1,6 +1,8 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { usePwaInstallPrompt } from '@/context/PwaInstallContext';
+import { useProfile } from '@/hooks/useProfile';
+import { UserAvatar } from '@/components/profile/UserAvatar';
 import { UserRole } from '@/models/auth';
 import styles from './Navigation.module.css';
 
@@ -16,11 +18,12 @@ const authBaseItems = [
   { to: '/jobs', label: 'Jobs', icon: '☰' },
   { to: '/swipe', label: 'Swipe', icon: '⚡', featured: true },
   { to: '/saved', label: 'Saved', icon: '♡' },
-  { to: '/profile', label: 'Profile', icon: '◎' },
+  { to: '/profile', label: 'Profile', icon: '◎', avatar: true },
 ] as const;
 
 export function Navigation() {
   const { isAuthenticated, isLoading, user } = useAuth();
+  const { profile } = useProfile();
   const { canInstall, isStandalone, promptInstall } = usePwaInstallPrompt();
 
   if (isLoading) return null;
@@ -46,7 +49,17 @@ export function Navigation() {
             return classes.join(' ');
           }}
         >
-          <span className={styles.icon}>{item.icon}</span>
+          {'avatar' in item && item.avatar ? (
+            user?.role === UserRole.Company ? (
+              <span className={styles.icon}>🏢</span>
+            ) : profile ? (
+              <UserAvatar profile={profile} size="sm" className={styles.navAvatar} />
+            ) : (
+              <span className={styles.icon}>{item.icon}</span>
+            )
+          ) : (
+            <span className={styles.icon}>{item.icon}</span>
+          )}
           <span className={styles.label}>{item.label}</span>
         </NavLink>
       ))}

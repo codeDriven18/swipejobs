@@ -9,7 +9,10 @@ internal sealed record ShowcaseCompanySeed(
     string Industry,
     string Location,
     string CompanySize,
-    string? Website);
+    string? Website,
+    string? LogoUrl,
+    string? BannerUrl,
+    string? LinkedInUrl);
 
 internal sealed record ShowcaseJobSeed(
     string ExternalKey,
@@ -38,7 +41,10 @@ internal static class ShowcaseJobSeedCatalog
             "Software Engineering",
             "Tashkent, Uzbekistan",
             "1,000+ employees",
-            "https://www.epam.com"),
+            "https://www.epam.com",
+            "https://ui-avatars.com/api/?name=EPAM&background=0D47A1&color=fff&size=128&bold=true",
+            "https://ui-avatars.com/api/?name=EPAM&background=0D47A1&color=fff&size=512&bold=true",
+            "https://www.linkedin.com/company/epam-systems"),
         new(
             "tech-startup",
             "Tech Startup",
@@ -46,7 +52,10 @@ internal static class ShowcaseJobSeedCatalog
             "Software / Startup",
             "Remote",
             "11–50 employees",
-            "https://novastack.example.com"),
+            "https://novastack.example.com",
+            "https://ui-avatars.com/api/?name=TS&background=FFD600&color=000&size=128&bold=true",
+            "https://ui-avatars.com/api/?name=Tech+Startup&background=FFD600&color=000&size=512&bold=true",
+            "https://www.linkedin.com/company/tech-startup"),
         new(
             "fintech-solutions",
             "FinTech Solutions",
@@ -54,7 +63,10 @@ internal static class ShowcaseJobSeedCatalog
             "Financial Technology",
             "Tashkent, Uzbekistan",
             "51–200 employees",
-            "https://fintechsolutions.example.com"),
+            "https://fintechsolutions.example.com",
+            "https://ui-avatars.com/api/?name=FS&background=00695C&color=fff&size=128&bold=true",
+            "https://ui-avatars.com/api/?name=FinTech&background=00695C&color=fff&size=512&bold=true",
+            "https://www.linkedin.com/company/fintech-solutions"),
     ];
 
     public static IReadOnlyList<(string Name, string Slug)> Tags { get; } =

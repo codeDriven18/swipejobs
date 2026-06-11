@@ -81,6 +81,8 @@ public class CompanyService : ICompanyService
         company.LogoUrl = dto.LogoUrl;
         company.Website = dto.Website;
         company.IsActive = dto.IsActive;
+        company.BannerUrl = dto.BannerUrl;
+        company.LinkedInUrl = dto.LinkedInUrl;
 
         await _companyRepository.UpdateAsync(company, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

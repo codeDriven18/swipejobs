@@ -14,3 +14,5 @@ export const profilesApi = {
   checkMyCompleteness: () =>
     apiClient<ProfileCompleteness>('/profiles/me/completeness'),
 };
+
+export { uploadProfileAvatar, removeProfileAvatar } from './profileUploadApi';

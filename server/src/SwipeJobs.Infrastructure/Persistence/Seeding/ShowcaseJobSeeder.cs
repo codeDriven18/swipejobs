@@ -118,24 +118,38 @@ public sealed class ShowcaseJobSeeder
     {
         foreach (var companySeed in ShowcaseJobSeedCatalog.Companies)
         {
-            var exists = await _context.Companies
-                .AnyAsync(c => c.Slug == companySeed.Slug, cancellationToken);
+            var existing = await _context.Companies
+                .FirstOrDefaultAsync(c => c.Slug == companySeed.Slug, cancellationToken);
 
-            if (exists)
-                continue;
-
-            _context.Companies.Add(new Company
+            if (existing is null)
             {
-                Name = companySeed.Name,
-                Slug = companySeed.Slug,
-                Description = companySeed.Description,
-                Industry = companySeed.Industry,
-                Location = companySeed.Location,
-                CompanySize = companySeed.CompanySize,
-                Website = companySeed.Website,
-                Status = CompanyStatus.Approved,
-                IsActive = true,
-            });
+                _context.Companies.Add(new Company
+                {
+                    Name = companySeed.Name,
+                    Slug = companySeed.Slug,
+                    Description = companySeed.Description,
+                    Industry = companySeed.Industry,
+                    Location = companySeed.Location,
+                    CompanySize = companySeed.CompanySize,
+                    Website = companySeed.Website,
+                    LogoUrl = companySeed.LogoUrl,
+                    BannerUrl = companySeed.BannerUrl,
+                    LinkedInUrl = companySeed.LinkedInUrl,
+                    Status = CompanyStatus.Approved,
+                    IsActive = true,
+                });
+                continue;
+            }
+
+            existing.Name = companySeed.Name;
+            existing.Description = companySeed.Description;
+            existing.Industry = companySeed.Industry;
+            existing.Location = companySeed.Location;
+            existing.CompanySize = companySeed.CompanySize;
+            existing.Website = companySeed.Website;
+            if (string.IsNullOrWhiteSpace(existing.LogoUrl)) existing.LogoUrl = companySeed.LogoUrl;
+            if (string.IsNullOrWhiteSpace(existing.BannerUrl)) existing.BannerUrl = companySeed.BannerUrl;
+            if (string.IsNullOrWhiteSpace(existing.LinkedInUrl)) existing.LinkedInUrl = companySeed.LinkedInUrl;
         }
 
         await _context.SaveChangesAsync(cancellationToken);

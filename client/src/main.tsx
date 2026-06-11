@@ -4,6 +4,8 @@ import { registerSW } from 'virtual:pwa-register';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 import { AuthProvider } from '@/context/AuthContext';
+import { ProfileProvider } from '@/context/ProfileContext';
+import { ToastProvider } from '@/context/ToastContext';
 import { PwaInstallProvider } from '@/context/PwaInstallContext';
 import { PwaShell } from '@/components/pwa/PwaShell';
 import App from '@/App';
@@ -25,9 +27,13 @@ createRoot(document.getElementById('root')!).render(
       <ThemeProvider>
         <PwaInstallProvider>
           <AuthProvider>
-            <PwaShell>
-              <App />
-            </PwaShell>
+            <ProfileProvider>
+              <ToastProvider>
+                <PwaShell>
+                  <App />
+                </PwaShell>
+              </ToastProvider>
+            </ProfileProvider>
           </AuthProvider>
         </PwaInstallProvider>
       </ThemeProvider>

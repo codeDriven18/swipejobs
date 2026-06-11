@@ -12,7 +12,9 @@ public class Company : BaseEntity
     public string Location { get; set; } = string.Empty;
     public string CompanySize { get; set; } = string.Empty;
     public string? LogoUrl { get; set; }
+    public string? BannerUrl { get; set; }
     public string? Website { get; set; }
+    public string? LinkedInUrl { get; set; }
     public CompanyStatus Status { get; set; } = CompanyStatus.Pending;
     public bool IsActive { get; set; } = true;
 

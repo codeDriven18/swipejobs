@@ -71,4 +71,22 @@ public class CompanyPortalController : ControllerBase
         var companyId = _currentUser.GetRequiredCompanyId();
         return Ok(await _portalService.GetApplicationsAsync(companyId, jobId, cancellationToken));
     }
+
+    [HttpGet("company")]
+    public async Task<IActionResult> Company(CancellationToken cancellationToken)
+    {
+        _currentUser.RequireRole(UserRole.Company, UserRole.Admin);
+        var companyId = _currentUser.GetRequiredCompanyId();
+        var company = await _portalService.GetCompanyAsync(companyId, cancellationToken);
+        return company is null ? NotFound() : Ok(company);
+    }
+
+    [HttpPut("company")]
+    public async Task<IActionResult> UpdateCompany([FromBody] PortalUpdateCompanyDto dto, CancellationToken cancellationToken)
+    {
+        _currentUser.RequireRole(UserRole.Company, UserRole.Admin);
+        var companyId = _currentUser.GetRequiredCompanyId();
+        var company = await _portalService.UpdateCompanyAsync(companyId, dto, cancellationToken);
+        return company is null ? NotFound() : Ok(company);
+    }
 }

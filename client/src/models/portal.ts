@@ -20,6 +20,18 @@ export interface PortalApplication {
   applicantName: string;
   applicantEmail: string;
   applicantPhone?: string;
+  applicantProfileImageUrl?: string;
+}
+
+export interface PortalUpdateCompanyRequest {
+  description: string;
+  industry: string;
+  location: string;
+  companySize: string;
+  logoUrl?: string;
+  bannerUrl?: string;
+  website?: string;
+  linkedInUrl?: string;
 }
 
 export interface PortalCreateJobRequest {

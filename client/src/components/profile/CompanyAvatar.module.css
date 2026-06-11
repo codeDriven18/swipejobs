@@ -1,0 +1,32 @@
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.fallback {
+  background: var(--color-accent);
+  color: #000;
+  font-weight: 900;
+}
+
+.sm {
+  width: 1.75rem;
+  height: 1.75rem;
+  font-size: 0.625rem;
+}
+
+.md {
+  width: 3.5rem;
+  height: 3.5rem;
+  font-size: 1rem;
+}
+
+.lg {
+  width: 4.5rem;
+  height: 4.5rem;
+  font-size: 1.25rem;
+}

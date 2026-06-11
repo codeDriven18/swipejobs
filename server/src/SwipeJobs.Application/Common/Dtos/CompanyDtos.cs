@@ -11,7 +11,9 @@ public record CompanyDto(
     string Location,
     string CompanySize,
     string? LogoUrl,
+    string? BannerUrl,
     string? Website,
+    string? LinkedInUrl,
     CompanyStatus Status,
     bool IsActive,
     int OpenJobsCount,
@@ -36,5 +38,7 @@ public record UpdateCompanyDto(
     string Location,
     string CompanySize,
     string? LogoUrl,
+    string? BannerUrl,
     string? Website,
+    string? LinkedInUrl,
     bool IsActive);

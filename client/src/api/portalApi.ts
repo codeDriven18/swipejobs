@@ -4,6 +4,7 @@ import type {
   PortalCreateJobRequest,
   PortalJob,
   PortalStats,
+  PortalUpdateCompanyRequest,
   PortalUpdateJobRequest,
 } from '@/models/portal';
 
@@ -25,4 +26,9 @@ export const portalApi = {
     const query = jobId ? `?jobId=${jobId}` : '';
     return apiClient<PortalApplication[]>(`/portal/applications${query}`);
   },
+
+  getCompany: () => apiClient<import('@/models/company').Company>('/portal/company'),
+
+  updateCompany: (data: PortalUpdateCompanyRequest) =>
+    apiClient<import('@/models/company').Company>('/portal/company', { method: 'PUT', body: data }),
 };

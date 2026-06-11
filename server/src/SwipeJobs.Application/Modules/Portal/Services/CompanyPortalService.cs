@@ -175,6 +175,37 @@ public class CompanyPortalService : ICompanyPortalService
             a.UserProfileId,
             $"{a.UserProfile?.FirstName} {a.UserProfile?.LastName}".Trim(),
             a.UserProfile?.Email ?? string.Empty,
-            a.UserProfile?.Phone)).ToList();
+            a.UserProfile?.Phone,
+            a.UserProfile?.ProfileImageUrl)).ToList();
+    }
+
+    public async Task<CompanyDto?> GetCompanyAsync(Guid companyId, CancellationToken cancellationToken = default)
+    {
+        var company = await _companyRepository.GetByIdAsync(companyId, cancellationToken);
+        if (company is null) return null;
+        var openJobs = await _companyRepository.CountOpenJobsAsync(companyId, cancellationToken);
+        return CompanyMapper.ToDto(company, openJobs);
+    }
+
+    public async Task<CompanyDto?> UpdateCompanyAsync(
+        Guid companyId, PortalUpdateCompanyDto dto, CancellationToken cancellationToken = default)
+    {
+        var company = await _companyRepository.GetByIdAsync(companyId, cancellationToken);
+        if (company is null) return null;
+
+        company.Description = dto.Description.Trim();
+        company.Industry = dto.Industry.Trim();
+        company.Location = dto.Location.Trim();
+        company.CompanySize = dto.CompanySize.Trim();
+        company.LogoUrl = string.IsNullOrWhiteSpace(dto.LogoUrl) ? company.LogoUrl : dto.LogoUrl.Trim();
+        company.BannerUrl = string.IsNullOrWhiteSpace(dto.BannerUrl) ? company.BannerUrl : dto.BannerUrl.Trim();
+        company.Website = string.IsNullOrWhiteSpace(dto.Website) ? null : dto.Website.Trim();
+        company.LinkedInUrl = string.IsNullOrWhiteSpace(dto.LinkedInUrl) ? null : dto.LinkedInUrl.Trim();
+
+        await _companyRepository.UpdateAsync(company, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        var openJobs = await _companyRepository.CountOpenJobsAsync(companyId, cancellationToken);
+        return CompanyMapper.ToDto(company, openJobs);
     }
 }
