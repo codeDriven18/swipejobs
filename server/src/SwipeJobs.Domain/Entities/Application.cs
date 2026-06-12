@@ -7,6 +7,9 @@ public class Application : BaseEntity
 {
     public ApplicationStatus Status { get; set; } = ApplicationStatus.Pending;
     public DateTime AppliedAt { get; set; } = DateTime.UtcNow;
+    /// <summary>Number of prior applications for the same job (0 = first attempt).</summary>
+    public int ReapplicationCount { get; set; }
+    public string StatusHistoryJson { get; set; } = "[]";
     public string? Notes { get; set; }
 
     public Guid UserProfileId { get; set; }

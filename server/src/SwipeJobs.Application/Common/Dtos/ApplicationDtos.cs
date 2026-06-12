@@ -2,6 +2,10 @@ using SwipeJobs.Domain.Enums;
 
 namespace SwipeJobs.Application.Common.Dtos;
 
+public record ApplicationStatusHistoryDto(
+    ApplicationStatus Status,
+    DateTime ChangedAt);
+
 public record ApplicationDto(
     Guid Id,
     ApplicationStatus Status,
@@ -9,7 +13,10 @@ public record ApplicationDto(
     string? Notes,
     Guid UserProfileId,
     Guid JobId,
-    JobDto? Job);
+    JobDto? Job,
+    int ReapplicationCount,
+    int ApplicationNumber,
+    IReadOnlyList<ApplicationStatusHistoryDto> StatusHistory);
 
 public record CreateApplicationDto(Guid UserProfileId, Guid JobId);
 

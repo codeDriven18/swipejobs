@@ -21,6 +21,8 @@ export interface PortalApplication {
   applicantEmail: string;
   applicantPhone?: string;
   applicantProfileImageUrl?: string;
+  reapplicationCount: number;
+  applicationNumber: number;
 }
 
 export interface PortalUpdateCompanyRequest {

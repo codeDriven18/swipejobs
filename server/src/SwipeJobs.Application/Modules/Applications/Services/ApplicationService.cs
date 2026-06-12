@@ -16,6 +16,7 @@ public class ApplicationService : IApplicationService
     private readonly IUserProfileRepository _profileRepository;
     private readonly IJobRepository _jobRepository;
     private readonly IActivityService _activityService;
+    private readonly INotificationService _notificationService;
     private readonly IUnitOfWork _unitOfWork;
 
     public ApplicationService(
@@ -23,12 +24,14 @@ public class ApplicationService : IApplicationService
         IUserProfileRepository profileRepository,
         IJobRepository jobRepository,
         IActivityService activityService,
+        INotificationService notificationService,
         IUnitOfWork unitOfWork)
     {
         _applicationRepository = applicationRepository;
         _profileRepository = profileRepository;
         _jobRepository = jobRepository;
         _activityService = activityService;
+        _notificationService = notificationService;
         _unitOfWork = unitOfWork;
     }
 
@@ -63,16 +66,23 @@ public class ApplicationService : IApplicationService
         if (!job.IsActive)
             throw new InvalidOperationException("Job is no longer active.");
 
-        var existing = await _applicationRepository.GetByUserProfileIdAsync(dto.UserProfileId, cancellationToken);
-        if (existing.Any(a => a.JobId == dto.JobId))
+        var priorApplications = await _applicationRepository.GetByUserProfileAndJobIdAsync(
+            dto.UserProfileId, dto.JobId, cancellationToken);
+
+        var latest = priorApplications.FirstOrDefault();
+        if (latest is not null && ApplicationWorkflow.BlocksNewApplication(latest.Status))
             throw new InvalidOperationException("You have already applied to this job.");
 
+        var isReapplication = latest is not null;
+        var appliedAt = DateTime.UtcNow;
         var application = new ApplicationEntity
         {
             UserProfileId = dto.UserProfileId,
             JobId = dto.JobId,
             Status = ApplicationStatus.Submitted,
-            AppliedAt = DateTime.UtcNow,
+            AppliedAt = appliedAt,
+            ReapplicationCount = priorApplications.Count,
+            StatusHistoryJson = ApplicationStatusHistorySerializer.CreateInitial(ApplicationStatus.Submitted, appliedAt),
         };
 
         await _applicationRepository.AddAsync(application, cancellationToken);
@@ -80,6 +90,20 @@ public class ApplicationService : IApplicationService
 
         await _activityService.RecordAsync(new RecordActivityDto(
             dto.UserProfileId, ActivityType.JobApplied, dto.JobId, job.CompanyId), cancellationToken);
+
+        if (isReapplication)
+        {
+            var applicantName = $"{profile.FirstName} {profile.LastName}".Trim();
+            if (string.IsNullOrWhiteSpace(applicantName))
+                applicantName = profile.Email;
+
+            await _notificationService.NotifyApplicationReappliedAsync(
+                job.CompanyId,
+                applicantName,
+                job.Title,
+                ApplicationWorkflow.ToApplicationNumber(application.ReapplicationCount),
+                cancellationToken);
+        }
 
         return ProfileMapper.ToDto(application, JobMapper.ToDto(job));
     }
@@ -89,7 +113,14 @@ public class ApplicationService : IApplicationService
         var application = await _applicationRepository.GetByIdAsync(id, cancellationToken);
         if (application is null || application.UserProfileId != userProfileId) return false;
 
+        if (application.Status is ApplicationStatus.Withdrawn or ApplicationStatus.Accepted or ApplicationStatus.Rejected)
+            return false;
+
+        var changedAt = DateTime.UtcNow;
         application.Status = ApplicationStatus.Withdrawn;
+        application.StatusHistoryJson = ApplicationStatusHistorySerializer.Append(
+            application.StatusHistoryJson, ApplicationStatus.Withdrawn, changedAt);
+
         await _applicationRepository.UpdateAsync(application, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         return true;

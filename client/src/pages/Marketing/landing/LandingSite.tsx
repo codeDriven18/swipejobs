@@ -297,7 +297,7 @@ export function LandingSite() {
               <Link to="/privacy">Privacy</Link>
               <Link to="/terms">Terms</Link>
             </div>
-            <div>
+            <div className={`copyable-content ${styles.footerContact}`}>
               <h4>Connect</h4>
               <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">Twitter</a>
               <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer">LinkedIn</a>

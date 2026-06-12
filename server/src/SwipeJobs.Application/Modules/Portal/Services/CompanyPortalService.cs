@@ -1,3 +1,4 @@
+using SwipeJobs.Application.Common;
 using SwipeJobs.Application.Common.Dtos;
 using SwipeJobs.Application.Common.Interfaces;
 using SwipeJobs.Application.Common.Interfaces.Repositories;
@@ -203,6 +204,22 @@ public class CompanyPortalService : ICompanyPortalService
         if (application?.UserProfile is null) return null;
 
         var profile = application.UserProfile;
+        var history = await _applicationRepository.GetByUserProfileAndJobIdAsync(
+            profile.Id, application.JobId, cancellationToken);
+
+        var statusHistory = ApplicationStatusHistorySerializer.Deserialize(application.StatusHistoryJson)
+            .Select(h => new ApplicationStatusHistoryDto(h.Status, h.ChangedAt))
+            .ToList();
+
+        var applicationHistory = history
+            .OrderBy(a => a.AppliedAt)
+            .Select(a => new PortalApplicationSummaryDto(
+                a.Id,
+                a.Status,
+                a.AppliedAt,
+                ApplicationWorkflow.ToApplicationNumber(a.ReapplicationCount)))
+            .ToList();
+
         return new PortalApplicantDetailDto(
             application.Id,
             application.Status,
@@ -222,6 +239,10 @@ public class CompanyPortalService : ICompanyPortalService
             profile.ResumeFileName,
             profile.ResumeFileSize,
             profile.ResumeUploadedAt,
+            application.ReapplicationCount,
+            ApplicationWorkflow.ToApplicationNumber(application.ReapplicationCount),
+            statusHistory,
+            applicationHistory,
             profile.Skills.Select(s => new SkillDto(s.Id, s.Name, s.Level)).ToList(),
             profile.Experiences.Select(e => new ExperienceDto(
                 e.Id, e.Company, e.Title, e.Description, e.StartDate, e.EndDate, e.IsCurrent)).ToList(),
@@ -245,7 +266,10 @@ public class CompanyPortalService : ICompanyPortalService
             throw new InvalidOperationException("Cannot update a withdrawn application.");
 
         var previous = application.Status;
+        var changedAt = DateTime.UtcNow;
         application.Status = status;
+        application.StatusHistoryJson = ApplicationStatusHistorySerializer.Append(
+            application.StatusHistoryJson, status, changedAt);
         await _applicationRepository.UpdateAsync(application, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -329,5 +353,7 @@ public class CompanyPortalService : ICompanyPortalService
         $"{a.UserProfile?.FirstName} {a.UserProfile?.LastName}".Trim(),
         a.UserProfile?.Email ?? string.Empty,
         a.UserProfile?.Phone,
-        a.UserProfile?.ProfileImageUrl);
+        a.UserProfile?.ProfileImageUrl,
+        a.ReapplicationCount,
+        ApplicationWorkflow.ToApplicationNumber(a.ReapplicationCount));
 }

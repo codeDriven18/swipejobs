@@ -9,7 +9,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { CompanyLink } from '@/components/jobs/CompanyLink';
 import { JobCardSkeletonList } from '@/components/ui/Skeleton';
 import { PageHeader } from '@/components/ui/PageHeader';
-import { JobCategoryLabels } from '@/models/enums';
+import { ApplicationStatus, JobCategoryLabels } from '@/models/enums';
 import type { JobApplication } from '@/models/application';
 import styles from './ApplicationsPage.module.css';
 
@@ -68,8 +68,16 @@ export function ApplicationsPage() {
       ) : (
         <div className={styles.list}>
           {applications.map((app) => (
-            <article key={app.id} className={styles.card}
-              onClick={() => navigate(`/jobs/${app.jobId}`)} role="button" tabIndex={0}>
+            <article
+              key={app.id}
+              className={styles.card}
+              onClick={() => navigate(`/jobs/${app.jobId}`)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') navigate(`/jobs/${app.jobId}`);
+              }}
+            >
               <div className={styles.cardTop}>
                 <UserAvatar profile={profile} size="sm" />
                 <div className={styles.cardHeader}>
@@ -77,15 +85,23 @@ export function ApplicationsPage() {
                   <span className={styles.date}>{new Date(app.appliedAt).toLocaleDateString()}</span>
                 </div>
               </div>
+              {app.status === ApplicationStatus.Rejected && (
+                <p className={styles.rejectedBanner}>Application Rejected</p>
+              )}
               <h3 className={styles.title}>{app.job?.title ?? 'Job'}</h3>
               <CompanyLink
                 name={app.job?.company ?? ''}
                 slug={app.job?.companySlug}
                 className={styles.company}
               />
-              {app.job && (
-                <span className={styles.badge}>{JobCategoryLabels[app.job.category]}</span>
-              )}
+              <div className={styles.metaRow}>
+                {app.job && (
+                  <span className={styles.badge}>{JobCategoryLabels[app.job.category]}</span>
+                )}
+                {app.applicationNumber > 1 && (
+                  <span className={styles.attemptBadge}>Application #{app.applicationNumber}</span>
+                )}
+              </div>
             </article>
           ))}
         </div>

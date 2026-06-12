@@ -57,6 +57,9 @@
 
 html {
   color-scheme: light dark;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 html,
@@ -74,6 +77,9 @@ body {
   font-size: var(--text-base);
   -webkit-font-smoothing: antialiased;
   transition: background-color var(--duration-base) var(--ease-out), color var(--duration-base) var(--ease-out);
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 a {
@@ -86,6 +92,9 @@ button {
   cursor: pointer;
   border: none;
   background: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
   transition: transform var(--transition-fast), opacity var(--transition-fast),
     background-color var(--transition-fast), border-color var(--transition-fast);
 }
@@ -99,6 +108,9 @@ select,
 textarea {
   font: inherit;
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
 }
 
 input:focus,
@@ -107,4 +119,25 @@ textarea:focus {
   outline: none;
   border-color: var(--color-accent);
   box-shadow: 0 0 0 3px rgba(255, 214, 0, 0.25);
+}
+
+[contenteditable='true'] {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
+/**
+ * Copyable user content — job/company descriptions, legal pages, contact info.
+ * Apply to containers whose text users may need to read, select, or copy.
+ */
+.copyable-content {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
+.copyable-content a {
+  -webkit-user-select: text;
+  user-select: text;
 }

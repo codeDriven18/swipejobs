@@ -11,6 +11,7 @@ export enum NotificationType {
   RecommendedJob = 1,
   ProfileCompletenessReminder = 2,
   ApplicationStatusChanged = 3,
+  ApplicationReapplied = 4,
 }
 
 export interface AppNotification {

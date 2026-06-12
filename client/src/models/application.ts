@@ -1,6 +1,11 @@
 import type { ApplicationStatus } from './enums';
 import type { Job } from './job';
 
+export interface ApplicationStatusHistoryEntry {
+  status: ApplicationStatus;
+  changedAt: string;
+}
+
 export interface JobApplication {
   id: string;
   status: ApplicationStatus;
@@ -9,6 +14,9 @@ export interface JobApplication {
   userProfileId: string;
   jobId: string;
   job?: Job;
+  reapplicationCount: number;
+  applicationNumber: number;
+  statusHistory: ApplicationStatusHistoryEntry[];
 }
 
 export interface CreateApplicationRequest {

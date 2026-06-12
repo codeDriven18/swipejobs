@@ -90,7 +90,7 @@ export function PortalApplicantPage() {
         <Link to="/portal/applications" className={styles.btn}>← Applications</Link>
         <h1 className={styles.title}>{fullName}</h1>
         <p className={styles.subtitle}>
-          Applied for {applicant.jobTitle} on {new Date(applicant.appliedAt).toLocaleDateString()}
+          Application #{applicant.applicationNumber} · Applied for {applicant.jobTitle} on {new Date(applicant.appliedAt).toLocaleDateString()}
         </p>
       </header>
 
@@ -119,7 +119,7 @@ export function PortalApplicantPage() {
           </div>
         </div>
 
-        {applicant.bio && <p className={styles.cardMeta}>{applicant.bio}</p>}
+        {applicant.bio && <p className={`${styles.cardMeta} copyable-content`}>{applicant.bio}</p>}
 
         <div className={styles.actions}>
           {EMPLOYER_STATUSES.map((status) => (
@@ -145,6 +145,24 @@ export function PortalApplicantPage() {
           )}
         </div>
       </article>
+
+      {applicant.applicationHistory.length > 1 && (
+        <article className={styles.card}>
+          <h3 className={styles.cardTitle}>Application history</h3>
+          <div className={styles.list}>
+            {applicant.applicationHistory.map((entry) => (
+              <div key={entry.applicationId} className={styles.cardMeta}>
+                <strong>Application #{entry.applicationNumber}</strong>
+                {' — '}
+                {ApplicationStatusLabels[entry.status]}
+                {' · '}
+                {new Date(entry.appliedAt).toLocaleDateString()}
+                {entry.applicationId === applicant.applicationId && ' (current)'}
+              </div>
+            ))}
+          </div>
+        </article>
+      )}
 
       {applicant.skills.length > 0 && (
         <article className={styles.card}>

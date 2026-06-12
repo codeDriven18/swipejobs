@@ -1,3 +1,4 @@
+using SwipeJobs.Application.Common;
 using SwipeJobs.Application.Common.Dtos;
 using SwipeJobs.Domain.Entities;
 using ApplicationEntity = SwipeJobs.Domain.Entities.Application;
@@ -170,14 +171,24 @@ public static class ProfileMapper
     private static bool HasResume(UserProfile profile) =>
         !string.IsNullOrWhiteSpace(profile.ResumeUrl) || !string.IsNullOrWhiteSpace(profile.ResumeFileName);
 
-    public static ApplicationDto ToDto(ApplicationEntity application, JobDto? job = null) => new(
-        application.Id,
-        application.Status,
-        application.AppliedAt,
-        application.Notes,
-        application.UserProfileId,
-        application.JobId,
-        job);
+    public static ApplicationDto ToDto(ApplicationEntity application, JobDto? job = null)
+    {
+        var history = ApplicationStatusHistorySerializer.Deserialize(application.StatusHistoryJson)
+            .Select(h => new ApplicationStatusHistoryDto(h.Status, h.ChangedAt))
+            .ToList();
+
+        return new ApplicationDto(
+            application.Id,
+            application.Status,
+            application.AppliedAt,
+            application.Notes,
+            application.UserProfileId,
+            application.JobId,
+            job,
+            application.ReapplicationCount,
+            ApplicationWorkflow.ToApplicationNumber(application.ReapplicationCount),
+            history);
+    }
 
     public static SavedJobDto ToDto(SavedJob savedJob, JobDto? job = null) => new(
         savedJob.Id,

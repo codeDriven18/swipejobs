@@ -20,7 +20,9 @@ public class ApplicationConfiguration : IEntityTypeConfiguration<Domain.Entities
             .HasForeignKey(a => a.JobId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasIndex(a => new { a.UserProfileId, a.JobId }).IsUnique();
+        builder.HasIndex(a => new { a.UserProfileId, a.JobId });
         builder.HasIndex(a => a.Status);
+        builder.Property(a => a.StatusHistoryJson).HasColumnType("text");
+        builder.Property(a => a.ReapplicationCount).HasDefaultValue(0);
     }
 }

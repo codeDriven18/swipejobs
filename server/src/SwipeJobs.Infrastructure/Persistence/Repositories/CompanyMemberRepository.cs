@@ -18,4 +18,13 @@ public class CompanyMemberRepository : Repository<CompanyMember>, ICompanyMember
             .AsNoTracking()
             .Include(m => m.Company)
             .FirstOrDefaultAsync(m => m.UserId == userId, cancellationToken);
+
+    public async Task<IReadOnlyList<Guid>> GetMemberProfileIdsByCompanyIdAsync(
+        Guid companyId, CancellationToken cancellationToken = default)
+        => await DbSet
+            .AsNoTracking()
+            .Where(m => m.CompanyId == companyId)
+            .Select(m => m.User.Profile!.Id)
+            .Where(id => id != Guid.Empty)
+            .ToListAsync(cancellationToken);
 }

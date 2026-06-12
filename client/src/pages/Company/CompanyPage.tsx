@@ -129,7 +129,7 @@ export function CompanyPage() {
         </button>
       </div>
 
-      <div className={styles.description}>
+      <div className={`${styles.description} copyable-content`}>
         <h2>About</h2>
         <p>{company.description || 'This company has not added a description yet.'}</p>
         <div className={styles.links}>

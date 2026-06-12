@@ -164,7 +164,7 @@ export function EmployerProfilePage() {
 
           <article className={styles.sectionCard}>
             <h2 className={styles.sectionTitle}>About the company</h2>
-            <p className={company.description.trim() ? styles.aboutText : styles.placeholderText}>
+            <p className={company.description.trim() ? `${styles.aboutText} copyable-content` : styles.placeholderText}>
               {company.description.trim() || 'Describe your mission, culture, and what makes your team unique.'}
             </p>
           </article>

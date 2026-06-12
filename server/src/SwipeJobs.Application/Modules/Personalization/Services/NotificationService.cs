@@ -12,6 +12,7 @@ public class NotificationService : INotificationService
 {
     private readonly INotificationRepository _notificationRepository;
     private readonly IUserProfileRepository _profileRepository;
+    private readonly ICompanyMemberRepository _companyMemberRepository;
     private readonly ICompanyFollowRepository _companyFollowRepository;
     private readonly IJobRepository _jobRepository;
     private readonly IRecommendationService _recommendationService;
@@ -21,6 +22,7 @@ public class NotificationService : INotificationService
     public NotificationService(
         INotificationRepository notificationRepository,
         IUserProfileRepository profileRepository,
+        ICompanyMemberRepository companyMemberRepository,
         ICompanyFollowRepository companyFollowRepository,
         IJobRepository jobRepository,
         IRecommendationService recommendationService,
@@ -29,6 +31,7 @@ public class NotificationService : INotificationService
     {
         _notificationRepository = notificationRepository;
         _profileRepository = profileRepository;
+        _companyMemberRepository = companyMemberRepository;
         _companyFollowRepository = companyFollowRepository;
         _jobRepository = jobRepository;
         _recommendationService = recommendationService;
@@ -175,17 +178,30 @@ public class NotificationService : INotificationService
         string jobTitle,
         CancellationToken cancellationToken = default)
     {
+        if (status is not (ApplicationStatus.Rejected or ApplicationStatus.Accepted))
+            return;
+
         var statusLabel = status switch
         {
-            ApplicationStatus.UnderReview => "Under review",
             ApplicationStatus.Accepted => "Accepted",
             ApplicationStatus.Rejected => "Rejected",
             _ => status.ToString(),
         };
 
-        var title = $"Application update: {jobTitle}";
-        var message = $"Your application status is now {statusLabel}.";
-        if (await _notificationRepository.ExistsAsync(userProfileId, title, null, cancellationToken))
+        var title = status switch
+        {
+            ApplicationStatus.Accepted => $"Application accepted: {jobTitle}",
+            ApplicationStatus.Rejected => $"Application rejected: {jobTitle}",
+            _ => $"Application update: {jobTitle}",
+        };
+        var message = status switch
+        {
+            ApplicationStatus.Rejected => $"Your application for {jobTitle} was not selected. You can update your profile and apply again when you're ready.",
+            ApplicationStatus.Accepted => $"Congratulations — your application for {jobTitle} was accepted!",
+            _ => $"Your application status is now {statusLabel}.",
+        };
+
+        if (await _notificationRepository.ExistsAsync(userProfileId, title, applicationId, cancellationToken))
             return;
 
         var notification = new Notification
@@ -194,12 +210,51 @@ public class NotificationService : INotificationService
             Type = NotificationType.ApplicationStatusChanged,
             Title = title,
             Message = message,
+            RelatedJobId = applicationId,
             IsRead = false,
         };
 
         await _notificationRepository.AddAsync(notification, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         await _publisher.PublishAsync(userProfileId, ToDto(notification), cancellationToken);
+    }
+
+    public async Task NotifyApplicationReappliedAsync(
+        Guid companyId,
+        string applicantName,
+        string jobTitle,
+        int applicationNumber,
+        CancellationToken cancellationToken = default)
+    {
+        var memberProfileIds = await _companyMemberRepository.GetMemberProfileIdsByCompanyIdAsync(
+            companyId, cancellationToken);
+
+        if (memberProfileIds.Count == 0)
+            return;
+
+        var title = $"Reapplication #{applicationNumber}: {jobTitle}";
+        var message = $"{applicantName} submitted application #{applicationNumber} for {jobTitle}.";
+
+        foreach (var profileId in memberProfileIds)
+        {
+            if (await _notificationRepository.ExistsAsync(profileId, title, companyId, cancellationToken))
+                continue;
+
+            var notification = new Notification
+            {
+                UserProfileId = profileId,
+                Type = NotificationType.ApplicationReapplied,
+                Title = title,
+                Message = message,
+                RelatedCompanyId = companyId,
+                IsRead = false,
+            };
+
+            await _notificationRepository.AddAsync(notification, cancellationToken);
+            await _publisher.PublishAsync(profileId, ToDto(notification), cancellationToken);
+        }
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
     private Task PublishIfNeededAsync(Guid userProfileId, Notification notification, CancellationToken cancellationToken)

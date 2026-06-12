@@ -2,6 +2,9 @@
   position: relative;
   width: 100%;
   height: 100%;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
 }
 
 .stackCard,
@@ -35,6 +38,8 @@
 .topCard {
   touch-action: none;
   user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
   cursor: grab;
   box-shadow: var(--shadow-lg);
 }

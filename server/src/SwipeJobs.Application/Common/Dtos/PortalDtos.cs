@@ -49,9 +49,17 @@ public record PortalApplicationDto(
     string ApplicantName,
     string ApplicantEmail,
     string? ApplicantPhone,
-    string? ApplicantProfileImageUrl);
+    string? ApplicantProfileImageUrl,
+    int ReapplicationCount,
+    int ApplicationNumber);
 
 public record PortalUpdateApplicationStatusDto(ApplicationStatus Status);
+
+public record PortalApplicationSummaryDto(
+    Guid ApplicationId,
+    ApplicationStatus Status,
+    DateTime AppliedAt,
+    int ApplicationNumber);
 
 public record PortalApplicantDetailDto(
     Guid ApplicationId,
@@ -72,6 +80,10 @@ public record PortalApplicantDetailDto(
     string? ResumeFileName,
     long? ResumeFileSize,
     DateTime? ResumeUploadedAt,
+    int ReapplicationCount,
+    int ApplicationNumber,
+    IReadOnlyList<ApplicationStatusHistoryDto> StatusHistory,
+    IReadOnlyList<PortalApplicationSummaryDto> ApplicationHistory,
     IReadOnlyList<SkillDto> Skills,
     IReadOnlyList<ExperienceDto> Experiences,
     IReadOnlyList<EducationDto> Educations);

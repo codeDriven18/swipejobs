@@ -243,6 +243,9 @@
   gap: 1rem;
   color: var(--color-text-muted);
   line-height: 1.7;
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
 }
 
 .prose h2 {

@@ -49,4 +49,10 @@ public interface INotificationService
         ApplicationStatus status,
         string jobTitle,
         CancellationToken cancellationToken = default);
+    Task NotifyApplicationReappliedAsync(
+        Guid companyId,
+        string applicantName,
+        string jobTitle,
+        int applicationNumber,
+        CancellationToken cancellationToken = default);
 }

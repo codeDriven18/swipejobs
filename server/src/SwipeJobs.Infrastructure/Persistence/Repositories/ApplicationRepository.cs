@@ -19,6 +19,16 @@ public class ApplicationRepository : Repository<ApplicationEntity>, IApplication
             .OrderByDescending(a => a.AppliedAt)
             .ToListAsync(cancellationToken);
 
+    public async Task<IReadOnlyList<ApplicationEntity>> GetByUserProfileAndJobIdAsync(
+        Guid userProfileId, Guid jobId, CancellationToken cancellationToken = default)
+        => await DbSet
+            .AsNoTracking()
+            .Include(a => a.Job)
+                .ThenInclude(j => j!.Company)
+            .Where(a => a.UserProfileId == userProfileId && a.JobId == jobId)
+            .OrderByDescending(a => a.AppliedAt)
+            .ToListAsync(cancellationToken);
+
     public async Task<IReadOnlyList<ApplicationEntity>> GetByCompanyIdAsync(
         Guid companyId, Guid? jobId, CancellationToken cancellationToken = default)
     {

@@ -51,7 +51,7 @@ export function PortalApplicationsPage() {
                 <span className={styles.badge}>{ApplicationStatusLabels[app.status]}</span>
               </div>
               <p className={styles.cardMeta}>
-                Applied for <strong>{app.jobTitle}</strong> on {new Date(app.appliedAt).toLocaleDateString()}
+                Application #{app.applicationNumber} · Applied for <strong>{app.jobTitle}</strong> on {new Date(app.appliedAt).toLocaleDateString()}
               </p>
               <div className={styles.actions}>
                 <Link to={`/portal/applications/${app.id}`} className={styles.btnAccent}>Review applicant</Link>

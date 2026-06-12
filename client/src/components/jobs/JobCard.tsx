@@ -93,7 +93,7 @@ export function JobCard({
       )}
 
       {showDescription && description && (
-        <p className={styles.description}>{description}</p>
+        <p className={`${styles.description} copyable-content`}>{description}</p>
       )}
 
       {showActions && (
