@@ -7,8 +7,9 @@ import { applicationsApi } from '@/api/applicationsApi';
 import { jobsApi } from '@/api/jobsApi';
 import { savedJobsApi } from '@/api/savedJobsApi';
 import { tagsApi } from '@/api/tagsApi';
-import { SwipeCard, type SwipeDirection } from '@/components/swipe/SwipeCard';
+import { SwipeCard, type SwipeAction } from '@/components/swipe/SwipeCard';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Skeleton } from '@/components/ui/Skeleton';
 import { FilterDrawer } from '@/components/ui/FilterDrawer';
 import { useJobFilters } from '@/hooks/useJobFilters';
 import { useProfile } from '@/hooks/useProfile';
@@ -16,6 +17,8 @@ import { useActivityTracking } from '@/hooks/useActivityTracking';
 import type { Job } from '@/models/job';
 import type { Tag } from '@/models/tag';
 import styles from './SwipePage.module.css';
+
+const STACK_SIZE = 3;
 
 export function SwipePage() {
   const navigate = useNavigate();
@@ -28,18 +31,18 @@ export function SwipePage() {
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
   const [filterOpen, setFilterOpen] = useState(false);
-  const [exit, setExit] = useState<{ jobId: string; direction: SwipeDirection } | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [exit, setExit] = useState<{ jobId: string; action: SwipeAction } | null>(null);
+  const [toast, setToast] = useState<{ msg: string; tone: 'neutral' | 'success' | 'error' } | null>(null);
   const [fetchPage, setFetchPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const skippedRef = useRef<Set<string>>(new Set());
-  const pendingActionRef = useRef<{ direction: SwipeDirection; job: Job } | null>(null);
+  const pendingActionRef = useRef<{ action: SwipeAction; job: Job } | null>(null);
 
   const loadMore = useCallback(async (page: number, append: boolean) => {
     const result = await jobsApi.search({
       ...filters.query,
       page,
-      pageSize: 20,
+      pageSize: 24,
     });
     const fresh = result.items.filter((j) => !skippedRef.current.has(j.id));
     setQueue((prev) => (append ? [...prev, ...fresh] : fresh));
@@ -59,47 +62,47 @@ export function SwipePage() {
   }, []);
 
   useEffect(() => {
-    if (queue.length <= 3 && hasMore && !loading) {
+    if (queue.length <= STACK_SIZE + 2 && hasMore && !loading) {
       void loadMore(fetchPage + 1, true);
     }
   }, [queue.length, hasMore, loading, fetchPage, loadMore]);
 
-  const showToast = (msg: string) => {
-    setToast(msg);
-    setTimeout(() => setToast(null), 2200);
+  const showToast = (msg: string, tone: 'neutral' | 'success' | 'error' = 'neutral') => {
+    setToast({ msg, tone });
+    setTimeout(() => setToast(null), 2400);
   };
 
-  const startSwipe = (direction: SwipeDirection) => {
+  const triggerAction = (action: SwipeAction) => {
     const job = queue[0];
     if (!job || exit) return;
-    pendingActionRef.current = { direction, job };
-    setExit({ jobId: job.id, direction });
+    pendingActionRef.current = { action, job };
+    setExit({ jobId: job.id, action });
   };
 
   const handleExitComplete = async () => {
     const pending = pendingActionRef.current;
     if (!pending) return;
 
-    const { direction, job } = pending;
+    const { action, job } = pending;
     pendingActionRef.current = null;
     setExit(null);
 
-    if (direction === 'left') {
+    if (action === 'pass') {
       skippedRef.current.add(job.id);
       void trackJobSkip(job.id);
-      showToast('Skipped');
-    } else if (direction === 'right') {
+      showToast('Passed');
+    } else if (action === 'save') {
       if (!isAuthenticated) {
         navigate('/login', { state: { from: '/swipe' } });
         return;
       }
       try {
         await savedJobsApi.save(job.id);
-        showToast('Saved ♥');
+        showToast('Added to your collection', 'success');
       } catch {
-        showToast('Could not save');
+        showToast('Could not save', 'error');
       }
-    } else if (direction === 'up') {
+    } else if (action === 'apply') {
       if (!isAuthenticated) {
         navigate('/login', { state: { from: '/swipe' } });
         return;
@@ -110,16 +113,16 @@ export function SwipePage() {
       }
       try {
         await applicationsApi.apply(job.id);
-        showToast('Quick Apply sent ✓');
+        showToast('Application sent!', 'success');
       } catch (e) {
         if (e instanceof ApiError && e.body && typeof e.body === 'object' && 'error' in e.body) {
           const msg = String((e.body as { error: string }).error);
-          showToast(msg);
+          showToast(msg, 'error');
           if (msg.includes('Profile incomplete') || msg.includes('Profile not found')) {
             navigate('/profile');
           }
         } else {
-          showToast('Apply failed');
+          showToast('Apply failed', 'error');
         }
       }
     }
@@ -127,58 +130,58 @@ export function SwipePage() {
     setQueue((q) => q.filter((j) => j.id !== job.id));
   };
 
-  const visible = queue.slice(0, 2);
+  const visible = queue.slice(0, STACK_SIZE);
+  const topJob = queue[0];
 
   return (
     <section className={styles.page}>
+      <div className={styles.backdrop} aria-hidden />
+      {topJob && <div className={styles.backdropJob} aria-hidden>{topJob.title}</div>}
+
       <header className={styles.header}>
-        <div>
-          <h1 className={styles.title}>Discover</h1>
-          <p className={styles.subtitle}>Swipe to explore jobs</p>
-        </div>
         <button
           type="button"
           className={styles.filterBtn}
           onClick={() => setFilterOpen(true)}
+          aria-label="Filters"
         >
-          Filters
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+            <path d="M4 6h16M7 12h10M10 18h4" strokeLinecap="round" />
+          </svg>
           {filters.activeFilterCount > 0 && (
             <span className={styles.filterCount}>{filters.activeFilterCount}</span>
           )}
         </button>
+        <span className={styles.deckCount}>
+          {loading ? '…' : `${queue.length} left`}
+        </span>
       </header>
-
-      <div className={styles.hints}>
-        <span>← Skip</span>
-        <span>↑ Apply</span>
-        <span>Save →</span>
-      </div>
 
       <div className={styles.stack}>
         {loading && queue.length === 0 ? (
-          <p className={styles.empty}>Loading jobs...</p>
+          <Skeleton variant="swipeCard" className={styles.skeletonCard} />
         ) : queue.length === 0 ? (
           <EmptyState
-            icon="⚡"
-            title="No jobs in your deck"
-            description="You've seen everything matching your filters. Adjust filters or browse the full job list."
+            illustration="swipe"
+            title="You're all caught up"
+            description="Adjust filters or browse collections to keep discovering roles."
             actions={[
               { label: 'Adjust filters', onClick: () => setFilterOpen(true), primary: true },
-              { label: 'Browse all jobs', to: '/jobs' },
+              { label: 'Browse Discover', to: '/jobs' },
             ]}
           />
         ) : (
           [...visible].reverse().map((job, i, arr) => {
-            const index = arr.length - 1 - i;
-            const isTop = index === 0;
+            const stackIndex = arr.length - 1 - i;
+            const isTop = stackIndex === 0;
             return (
               <SwipeCard
                 key={job.id}
                 job={job}
-                index={index}
+                stackIndex={stackIndex}
                 active={isTop}
-                exitDirection={exit?.jobId === job.id ? exit.direction : null}
-                onSwipe={startSwipe}
+                exitAction={exit?.jobId === job.id ? exit.action : null}
+                onAction={triggerAction}
                 onTap={() => navigate(`/jobs/${job.id}`)}
                 onExitComplete={() => void handleExitComplete()}
               />
@@ -188,36 +191,42 @@ export function SwipePage() {
       </div>
 
       {queue.length > 0 && (
-        <div className={styles.actions}>
+        <div className={styles.dock}>
           <motion.button
             type="button"
-            className={`${styles.actionBtn} ${styles.skipBtn}`}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.92 }}
-            onClick={() => startSwipe('left')}
-            aria-label="Skip"
-          >
-            ✕
-          </motion.button>
-          <motion.button
-            type="button"
-            className={`${styles.actionBtn} ${styles.applyBtn}`}
+            className={`${styles.dockBtn} ${styles.rejectBtn}`}
             whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.92 }}
-            onClick={() => startSwipe('up')}
-            aria-label="Quick Apply"
+            whileTap={{ scale: 0.9 }}
+            onClick={() => triggerAction('pass')}
+            aria-label="Pass"
           >
-            ↑
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+              <path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" />
+            </svg>
           </motion.button>
           <motion.button
             type="button"
-            className={`${styles.actionBtn} ${styles.saveBtn}`}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.92 }}
-            onClick={() => startSwipe('right')}
+            className={`${styles.dockBtn} ${styles.saveBtn}`}
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => triggerAction('save')}
             aria-label="Save"
           >
-            ♥
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
+              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </motion.button>
+          <motion.button
+            type="button"
+            className={`${styles.dockBtn} ${styles.applyBtn}`}
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => triggerAction('apply')}
+            aria-label="Apply"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
+              <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
           </motion.button>
         </div>
       )}
@@ -225,13 +234,13 @@ export function SwipePage() {
       <AnimatePresence>
         {toast && (
           <motion.div
-            className={styles.toast}
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
+            className={`${styles.toast} ${styles[`toast_${toast.tone}`]}`}
+            initial={{ opacity: 0, y: 24, scale: 0.92 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 10 }}
-            transition={{ duration: 0.2 }}
+            exit={{ opacity: 0, y: 12, scale: 0.96 }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
           >
-            {toast}
+            {toast.msg}
           </motion.div>
         )}
       </AnimatePresence>

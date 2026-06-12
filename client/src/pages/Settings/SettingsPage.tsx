@@ -1,5 +1,4 @@
 import { useNavigate, Link } from 'react-router-dom';
-import { AppInstallationSection } from '@/components/pwa/AppInstallationSection';
 import { useTheme } from '@/theme/ThemeProvider';
 import { useAuth } from '@/context/AuthContext';
 import { UserRole } from '@/models/auth';
@@ -60,7 +59,15 @@ export function SettingsPage() {
         </Link>
       </div>
 
-      <AppInstallationSection />
+      {isAuthenticated && (
+        <div className={styles.card}>
+          <h2 className={styles.cardTitle}>App</h2>
+          <p className={styles.cardDesc}>Install, version info, and update checks.</p>
+          <Link to="/profile/app" className={styles.btn} style={{ display: 'inline-block', textAlign: 'center' }}>
+            Open app settings
+          </Link>
+        </div>
+      )}
 
       <div className={styles.card}>
         <h2 className={styles.cardTitle}>Onboarding</h2>

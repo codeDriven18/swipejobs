@@ -1,12 +1,12 @@
 import { Link } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import {
-  calculateCompletionPercent,
   dismissSuggestion,
   getDismissedSuggestions,
   getProfileSuggestions,
   type ProfileSuggestionId,
 } from '@/lib/profileSuggestions';
+import { getProfileCompletionPercent, shouldShowMandatoryCompletionPrompts } from '@/lib/profileCompletion';
 import type { UserProfile } from '@/models/userProfile';
 import styles from './ProfileCompletionCard.module.css';
 
@@ -22,9 +22,9 @@ export function ProfileCompletionCard({ profile, onAction }: ProfileCompletionCa
     return getProfileSuggestions(profile).filter((s) => !dismissed.includes(s.id));
   }, [profile, dismissed]);
 
-  const percent = calculateCompletionPercent(profile);
+  const percent = getProfileCompletionPercent(profile);
 
-  if (percent >= 100 || suggestions.length === 0) return null;
+  if (!shouldShowMandatoryCompletionPrompts(profile) || suggestions.length === 0) return null;
 
   const handleDismiss = (id: ProfileSuggestionId) => {
     dismissSuggestion(id);

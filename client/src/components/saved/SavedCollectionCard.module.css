@@ -1,0 +1,115 @@
+.card {
+  padding: var(--space-6);
+  background: var(--color-surface-raised);
+  border-radius: var(--radius-2xl);
+  box-shadow: var(--shadow-md);
+  cursor: pointer;
+}
+
+.top {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.topMeta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.match {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--color-success);
+}
+
+.appliedBadge {
+  align-self: flex-start;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  padding: 0.2rem 0.55rem;
+  background: var(--color-accent);
+  color: #0a0a0a;
+  border-radius: var(--radius-full);
+}
+
+.unsave {
+  flex-shrink: 0;
+  width: 2.25rem;
+  height: 2.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  color: #e53935;
+  background: rgba(229, 57, 53, 0.08);
+}
+
+.unsave svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.title {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-extrabold);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-snug);
+  margin-bottom: var(--space-1);
+}
+
+.company {
+  font-size: var(--text-sm);
+  color: var(--color-text-muted);
+  margin-bottom: var(--space-3);
+}
+
+.salary {
+  font-size: var(--text-md);
+  font-weight: var(--weight-extrabold);
+  letter-spacing: var(--tracking-snug);
+}
+
+.date {
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--color-text-subtle);
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+
+.tag {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  padding: 0.3rem 0.65rem;
+  background: var(--color-bg);
+  border-radius: var(--radius-full);
+  color: var(--color-text-muted);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.sectionTitle {
+  font-size: var(--text-lg);
+  font-weight: var(--weight-extrabold);
+  letter-spacing: var(--tracking-tight);
+}
+
+.grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}

@@ -155,7 +155,8 @@ public static class ProfileMapper
         profile.JobAlerts,
         profile.ProfileVisibility.ToString(),
         profile.ContactVisibility.ToString(),
-        profile.IsProfileComplete,
+        ProfileCompletenessChecker.IsComplete(profile),
+        ProfileCompletenessChecker.CalculatePercentage(profile),
         profile.Educations.Select(e => new EducationDto(
             e.Id, e.Institution, e.Degree, e.FieldOfStudy, e.StartDate, e.EndDate, e.IsCurrent)).ToList(),
         profile.Skills.Select(s => new SkillDto(s.Id, s.Name, s.Level)).ToList(),

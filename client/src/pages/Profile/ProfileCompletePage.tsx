@@ -14,7 +14,7 @@ import {
 } from '@/lib/profileForm';
 import { getApiErrorMessage } from '@/lib/apiErrors';
 import type { ProfileSuggestionId } from '@/lib/profileSuggestions';
-import { calculateCompletionPercent } from '@/lib/profileSuggestions';
+import { getProfileCompletionPercent, isProfileSubstantiallyComplete } from '@/lib/profileCompletion';
 import styles from './ProfilePage.module.css';
 
 const STEPS = ['intro', 'skills', 'experience', 'resume'] as const;
@@ -53,8 +53,15 @@ export function ProfileCompletePage() {
     setForm(profileToFormState(profile));
   }, [profile?.id, profile?.updatedAt]);
 
+  useEffect(() => {
+    if (loading || !profile || !isWelcome) return;
+    if (isProfileSubstantiallyComplete(profile)) {
+      navigate('/profile', { replace: true });
+    }
+  }, [loading, profile, isWelcome, navigate]);
+
   const stepIndex = STEPS.indexOf(step);
-  const percent = useMemo(() => calculateCompletionPercent(profile), [profile]);
+  const percent = useMemo(() => getProfileCompletionPercent(profile), [profile]);
 
   const save = useCallback(async () => {
     if (!form) return;

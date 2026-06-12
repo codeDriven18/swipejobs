@@ -1,12 +1,15 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/context/AuthContext';
+import { AppIcon } from '@/components/brand/AppIcon';
 import styles from './PortalLayout.module.css';
 
 const navItems = [
-  { to: '/portal', label: 'Dashboard', end: true },
+  { to: '/portal', label: 'Overview', end: true },
   { to: '/portal/jobs', label: 'Jobs' },
-  { to: '/portal/applications', label: 'Applications' },
+  { to: '/portal/applications', label: 'Applicants' },
+  { to: '/profile', label: 'Company' },
+  { to: '/account', label: 'Settings' },
 ] as const;
 
 export function PortalLayout() {
@@ -16,19 +19,21 @@ export function PortalLayout() {
     <div className={styles.layout}>
       <aside className={styles.sidebar}>
         <div className={styles.brand}>
-          <span className={styles.logo} />
-          <div>
-            <span className={styles.brandTitle}>Company Portal</span>
+          <AppIcon size="sm" />
+          <div className={styles.brandText}>
+            <span className={styles.brandTitle}>Workspace</span>
             <span className={styles.brandSub}>{user?.companyName ?? 'Your company'}</span>
           </div>
         </div>
-        <nav className={styles.nav} aria-label="Portal navigation">
+        <nav className={styles.sidebarNav} aria-label="Portal navigation">
           {navItems.map((item) => (
             <NavLink
               key={item.to}
               to={item.to}
               end={'end' in item ? item.end : false}
-              className={({ isActive }) => `${styles.link} ${isActive ? styles.active : ''}`}
+              className={({ isActive }) =>
+                [styles.sidebarLink, isActive ? styles.sidebarActive : ''].filter(Boolean).join(' ')
+              }
             >
               {item.label}
             </NavLink>
@@ -36,15 +41,44 @@ export function PortalLayout() {
         </nav>
         <NavLink to="/" className={styles.backLink}>← Back to app</NavLink>
       </aside>
+
       <main className={styles.main}>
         <motion.div
-          initial={{ opacity: 0, y: 8 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.2 }}
+          transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
         >
           <Outlet />
         </motion.div>
       </main>
+
+      <nav className={styles.bottomNav} aria-label="Portal navigation">
+        <div className={styles.bottomInner}>
+          {navItems.map((item) => (
+            <NavLink
+              key={item.to}
+              to={item.to}
+              end={'end' in item ? item.end : false}
+              className={({ isActive }) =>
+                [styles.bottomLink, isActive ? styles.bottomActive : ''].filter(Boolean).join(' ')
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  {isActive && (
+                    <motion.span
+                      layoutId="portal-nav-indicator"
+                      className={styles.bottomIndicator}
+                      transition={{ type: 'spring', stiffness: 420, damping: 32 }}
+                    />
+                  )}
+                  <span className={styles.bottomLabel}>{item.label}</span>
+                </>
+              )}
+            </NavLink>
+          ))}
+        </div>
+      </nav>
     </div>
   );
 }

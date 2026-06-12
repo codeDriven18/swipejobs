@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { EmptyIllustration, type EmptyIllustrationVariant } from './EmptyIllustration';
 import styles from './EmptyState.module.css';
 
 interface EmptyStateAction {
@@ -10,23 +11,34 @@ interface EmptyStateAction {
 }
 
 interface EmptyStateProps {
-  icon: string;
+  icon?: string;
+  illustration?: EmptyIllustrationVariant;
   title: string;
   description: string;
   actions?: EmptyStateAction[];
 }
 
-export function EmptyState({ icon, title, description, actions = [] }: EmptyStateProps) {
+export function EmptyState({
+  icon,
+  illustration,
+  title,
+  description,
+  actions = [],
+}: EmptyStateProps) {
   return (
     <motion.div
       className={styles.wrapper}
-      initial={{ opacity: 0, y: 12 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25 }}
+      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className={styles.iconRing}>
-        <span className={styles.icon}>{icon}</span>
-      </div>
+      {illustration ? (
+        <EmptyIllustration variant={illustration} />
+      ) : (
+        <div className={styles.iconRing}>
+          <span className={styles.icon}>{icon ?? '✦'}</span>
+        </div>
+      )}
       <h3 className={styles.title}>{title}</h3>
       <p className={styles.description}>{description}</p>
       {actions.length > 0 && (

@@ -2,7 +2,6 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Navigation } from './Navigation';
 import { NotificationBell } from './NotificationBell';
-import { InstallAppButton } from '@/components/pwa/InstallAppButton';
 import { AppIcon } from '@/components/brand/AppIcon';
 import { useAuth } from '@/context/AuthContext';
 import { usePwaInstallPrompt } from '@/context/PwaInstallContext';
@@ -31,9 +30,6 @@ export function AppLayout() {
             {isStandalone && isProfileHub && <span className={styles.title}>Profile</span>}
           </div>
           <div className={styles.headerActions}>
-            {!isStandalone && (
-              <InstallAppButton variant="compact" showFallback={false} className={styles.installBtn} />
-            )}
             {isAuthenticated && <NotificationBell />}
           </div>
         </header>
@@ -46,7 +42,7 @@ export function AppLayout() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -6 }}
-            transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
             className={styles.pageContent}
           >
             <Outlet />

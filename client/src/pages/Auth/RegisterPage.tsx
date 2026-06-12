@@ -41,7 +41,7 @@ export function RegisterPage() {
         accountType,
         companyName: accountType === 'company' ? companyName : undefined,
       });
-      navigate(accountType === 'company' ? '/portal' : '/profile/complete?welcome=1', { replace: true });
+      navigate(accountType === 'company' ? '/portal' : '/profile', { replace: true });
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -57,7 +57,7 @@ export function RegisterPage() {
         <p className={styles.subtitle}>
           {accountType === 'company'
             ? 'Register your company to post jobs and review applicants.'
-            : 'Join SwipeJobs to save jobs, apply instantly, and get personalized recommendations.'}
+            : 'Discover roles by swiping — save, apply, and track everything in one place.'}
         </p>
       </div>
 

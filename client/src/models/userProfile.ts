@@ -55,6 +55,7 @@ export interface UserProfile {
   profileVisibility: ProfileVisibilityLevel;
   contactVisibility: ProfileVisibilityLevel;
   isProfileComplete: boolean;
+  completionPercentage: number;
   educations: Education[];
   skills: Skill[];
   experiences: Experience[];

@@ -2,7 +2,7 @@ import styles from './Skeleton.module.css';
 
 interface SkeletonProps {
   className?: string;
-  variant?: 'block' | 'line' | 'lineShort' | 'lineTitle' | 'card' | 'avatar';
+  variant?: 'block' | 'line' | 'lineShort' | 'lineTitle' | 'card' | 'avatar' | 'hero' | 'swipeCard';
 }
 
 export function Skeleton({ className = '', variant = 'block' }: SkeletonProps) {
@@ -33,6 +33,26 @@ export function ProfileSkeleton() {
       <Skeleton variant="lineShort" />
       <Skeleton variant="card" />
       <Skeleton variant="card" />
+    </div>
+  );
+}
+
+export function JobDetailSkeleton() {
+  return (
+    <div className={styles.list} aria-busy="true" aria-label="Loading job">
+      <Skeleton variant="lineShort" />
+      <Skeleton variant="hero" />
+      <Skeleton variant="line" />
+      <Skeleton variant="line" />
+      <Skeleton variant="lineShort" />
+    </div>
+  );
+}
+
+export function SwipeCardSkeleton() {
+  return (
+    <div className={styles.list} aria-busy="true" aria-label="Loading swipe deck">
+      <Skeleton variant="swipeCard" className={styles.swipeCardSkeleton} />
     </div>
   );
 }

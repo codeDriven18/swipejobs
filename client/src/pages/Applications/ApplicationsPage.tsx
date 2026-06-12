@@ -40,12 +40,12 @@ export function ApplicationsPage() {
       <section className={styles.page}>
         <PageHeader title="Applications" subtitle="Track your Quick Apply submissions." />
         <EmptyState
-          icon="✓"
-          title="Sign in to track applications"
-          description="Create an account to Quick Apply and see your submission history."
+          illustration="applications"
+          title="Your next opportunity starts here"
+          description="Create an account to Quick Apply and track every submission."
           actions={[
             { label: 'Sign in', to: '/login', primary: true },
-            { label: 'Explore jobs', to: '/swipe' },
+            { label: 'Start swiping', to: '/swipe' },
           ]}
         />
       </section>
@@ -57,12 +57,12 @@ export function ApplicationsPage() {
       <PageHeader title="Applications" subtitle={`${applications.length} submission${applications.length !== 1 ? 's' : ''}`} />
       {applications.length === 0 ? (
         <EmptyState
-          icon="✓"
-          title="No applications yet"
-          description="Swipe up on a job in Discover mode, or tap Quick Apply on any listing."
+          illustration="applications"
+          title="Your next opportunity starts here"
+          description="Swipe up to apply instantly, or tap Quick Apply on any role you love."
           actions={[
             { label: 'Start swiping', to: '/swipe', primary: true },
-            { label: 'Browse jobs', to: '/jobs' },
+            { label: 'Browse Discover', to: '/jobs' },
           ]}
         />
       ) : (

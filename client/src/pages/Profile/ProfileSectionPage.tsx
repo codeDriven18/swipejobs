@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { InstallAppButton } from '@/components/pwa/InstallAppButton';
+import { ProfileAppPanel } from '@/components/profile/ProfileAppPanel';
 import { ProfileImageUpload } from '@/components/profile/ProfileImageUpload';
 import { ProfileSkeleton } from '@/components/ui/Skeleton';
 import { useToast } from '@/context/ToastContext';
@@ -338,16 +338,10 @@ export function ProfileSectionPage() {
           </>
         )}
 
-        {section === 'app' && (
-          <>
-            <InstallAppButton variant="full" showFallback />
-            <p className={styles.panelHint}>SwipeJobs v{import.meta.env.VITE_APP_VERSION ?? '0.1.0'}</p>
-            <Link to="/settings" className={styles.linkBtn}>Help & settings</Link>
-          </>
-        )}
+        {section === 'app' && <ProfileAppPanel />}
       </div>
 
-      {section !== 'app' && section !== 'resume' && (
+      {section !== 'resume' && (
         <button type="button" className={styles.ghostBtn} onClick={() => navigate('/profile')}>
           Back to profile hub
         </button>

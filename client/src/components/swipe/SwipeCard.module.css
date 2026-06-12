@@ -3,15 +3,18 @@
   inset: 0;
   display: flex;
   flex-direction: column;
-  padding: 1.5rem;
+  padding: var(--space-8);
   background: var(--color-surface-raised);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-2xl);
   touch-action: none;
   user-select: none;
   cursor: grab;
   overflow: hidden;
+  will-change: transform;
+}
+
+.cardActive {
+  cursor: grab;
 }
 
 .card:active {
@@ -20,134 +23,123 @@
 
 .stamp {
   position: absolute;
-  top: 2rem;
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  padding: 0.375rem 0.75rem;
-  border-radius: var(--radius-sm);
+  top: var(--space-10);
+  font-size: var(--text-xl);
+  font-weight: var(--weight-extrabold);
+  letter-spacing: 0.12em;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
   border: 3px solid;
   pointer-events: none;
-  z-index: 2;
+  z-index: 5;
 }
 
-.stampSkip {
-  right: 1.25rem;
+.stampPass {
+  left: var(--space-6);
   color: var(--color-danger);
   border-color: var(--color-danger);
-  transform: rotate(12deg);
-}
-
-.stampSave {
-  left: 1.25rem;
-  color: var(--color-success);
-  border-color: var(--color-success);
   transform: rotate(-12deg);
 }
 
 .stampApply {
-  left: 50%;
-  transform: translateX(-50%);
+  right: var(--space-6);
   color: var(--color-info);
   border-color: var(--color-info);
+  transform: rotate(12deg);
 }
 
 .top {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  align-items: center;
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
 }
 
-.categoryBadge {
-  font-size: 0.6875rem;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 0.3rem 0.65rem;
-  background: var(--color-accent);
-  color: #000;
-  border-radius: 9999px;
-}
-
-.remoteBadge,
-.levelBadge {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  padding: 0.3rem 0.65rem;
-  border: 1px solid var(--color-border);
-  border-radius: 9999px;
-  color: var(--color-text-muted);
-  background: var(--color-bg);
-}
-
-.title {
-  font-size: 1.625rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
-  line-height: 1.15;
-  margin-bottom: 0.375rem;
+.topText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
 .company {
-  font-size: 1rem;
-  font-weight: 500;
-  color: var(--color-text-muted);
-  margin-bottom: 1.25rem;
+  font-size: var(--text-base);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-snug);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.salaryBlock {
+.matchBadge {
+  font-size: var(--text-xs);
+  font-weight: var(--weight-bold);
+  color: var(--color-success);
+  letter-spacing: 0.02em;
+}
+
+.middle {
+  flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  padding: 1rem 1.125rem;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border-subtle);
-  border-radius: var(--radius-md);
-  margin-bottom: 1rem;
+  gap: var(--space-3);
+  min-height: 0;
 }
 
-.salaryLabel {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-text-subtle);
+.title {
+  font-size: var(--text-2xl);
+  font-weight: var(--weight-extrabold);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-tight);
 }
 
 .salary {
-  font-size: 1.375rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
+  font-size: var(--text-xl);
+  font-weight: var(--weight-extrabold);
+  letter-spacing: var(--tracking-snug);
   color: var(--color-text);
 }
 
-.location {
-  font-size: 0.9375rem;
+.metaRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
   color: var(--color-text-muted);
-  margin-bottom: 0.875rem;
+  font-weight: var(--weight-medium);
 }
 
-.description {
-  flex: 1;
-  font-size: 0.9375rem;
-  line-height: 1.55;
-  color: var(--color-text-muted);
-  margin-bottom: 1rem;
+.metaDot {
+  color: var(--color-text-subtle);
+}
+
+.bottom {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  margin-top: auto;
+  padding-top: var(--space-4);
 }
 
 .tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.375rem;
+  gap: var(--space-2);
 }
 
 .tag {
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.25rem 0.625rem;
+  font-size: var(--text-xs);
+  font-weight: var(--weight-semibold);
+  padding: 0.35rem 0.75rem;
   background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: 9999px;
+  border-radius: var(--radius-full);
+  color: var(--color-text-muted);
+}
+
+.preview {
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
   color: var(--color-text-muted);
 }

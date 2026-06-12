@@ -2,42 +2,40 @@
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  max-width: 480px;
+  max-width: var(--page-max);
   margin: 0 auto;
   background: var(--color-bg);
   isolation: isolate;
 }
 
 .header {
-  padding: 1rem 1.25rem;
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-surface-overlay);
-  backdrop-filter: blur(8px);
+  padding: var(--space-5) var(--space-6);
+  background: transparent;
   position: sticky;
   top: 0;
   z-index: 40;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
+  gap: var(--space-4);
 }
 
 .brand {
   display: flex;
   align-items: center;
-  gap: 0.625rem;
+  gap: var(--space-3);
 }
 
 .title {
-  font-size: 1.25rem;
-  font-weight: 800;
-  letter-spacing: -0.03em;
+  font-size: var(--text-xl);
+  font-weight: var(--weight-extrabold);
+  letter-spacing: var(--tracking-tight);
 }
 
 .headerActions {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .installBtn {
@@ -46,17 +44,19 @@
 
 .main {
   flex: 1;
-  padding: 1.25rem;
-  padding-bottom: calc(var(--nav-height) + 0.5rem);
+  padding: 0 var(--space-6) var(--space-6);
+  padding-bottom: calc(var(--nav-height) + var(--space-6));
 }
 
 .mainSwipe {
-  padding-top: 0.875rem;
+  padding: 0;
+  padding-bottom: 0;
+  overflow: hidden;
 }
 
 .mainWelcome {
-  padding-top: 1rem;
-  padding-bottom: calc(var(--nav-height) + 1rem);
+  padding-top: var(--space-4);
+  padding-bottom: calc(var(--nav-height) + var(--space-8));
 }
 
 .pageContent {
@@ -68,5 +68,5 @@
 }
 
 .headerStandalone {
-  padding-top: max(0.75rem, env(safe-area-inset-top));
+  padding-top: max(var(--space-4), env(safe-area-inset-top));
 }

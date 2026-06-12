@@ -3,23 +3,21 @@
   flex-direction: column;
   align-items: center;
   text-align: center;
-  padding: 2.5rem 1.25rem;
+  padding: var(--space-12) var(--space-6);
   background: var(--color-surface-raised);
-  border: 1px dashed var(--color-border);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-sm);
 }
 
 .iconRing {
-  width: 4.5rem;
-  height: 4.5rem;
-  border-radius: 9999px;
+  width: 5rem;
+  height: 5rem;
+  border-radius: var(--radius-full);
   background: var(--color-bg);
-  border: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 1.25rem;
+  margin-bottom: var(--space-6);
   box-shadow: var(--shadow-md);
 }
 
@@ -29,53 +27,58 @@
 }
 
 .title {
-  font-size: 1.125rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  margin-bottom: 0.5rem;
+  font-size: var(--text-lg);
+  font-weight: var(--weight-extrabold);
+  letter-spacing: var(--tracking-tight);
+  margin-bottom: var(--space-2);
 }
 
 .description {
-  font-size: 0.9375rem;
+  font-size: var(--text-base);
   color: var(--color-text-muted);
-  line-height: 1.55;
-  max-width: 18rem;
-  margin-bottom: 1.25rem;
+  line-height: var(--leading-relaxed);
+  max-width: 20rem;
+  margin-bottom: var(--space-6);
 }
 
 .actions {
   display: flex;
   flex-direction: column;
-  gap: 0.625rem;
+  gap: var(--space-3);
   width: 100%;
-  max-width: 16rem;
+  max-width: 18rem;
 }
 
 .primaryBtn,
 .secondaryBtn {
   display: block;
   width: 100%;
-  padding: 0.8125rem 1rem;
-  border-radius: var(--radius-md);
-  font-weight: 700;
-  font-size: 0.9375rem;
+  padding: 0.875rem 1.25rem;
+  border-radius: var(--radius-full);
+  font-weight: var(--weight-bold);
+  font-size: var(--text-base);
   text-align: center;
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
 }
 
 .primaryBtn {
   background: var(--color-accent);
-  color: #000;
-  box-shadow: var(--shadow-md);
+  color: #0a0a0a;
+  box-shadow: var(--shadow-sm);
 }
 
 .secondaryBtn {
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  color: var(--color-text);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-sm);
 }
 
-.primaryBtn:hover,
-.secondaryBtn:hover {
+.primaryBtn:hover {
   transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.secondaryBtn:hover {
+  color: var(--color-text);
 }

@@ -44,7 +44,9 @@ export function LoginPage() {
       <div className={styles.hero}>
         <AppIcon size="lg" className={styles.logoIcon} />
         <h1 className={styles.title}>Welcome back</h1>
-        <p className={styles.subtitle}>Sign in to access your saved jobs, applications, and dashboard.</p>
+        <p className={styles.subtitle}>
+          Pick up where you left off — your saved roles and applications are waiting.
+        </p>
       </div>
 
       <form className={styles.form} onSubmit={(e) => void handleSubmit(e)}>

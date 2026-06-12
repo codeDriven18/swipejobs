@@ -5,7 +5,8 @@ import { savedJobsApi } from '@/api/savedJobsApi';
 import { UserAvatar } from '@/components/profile/UserAvatar';
 import { ProfileSkeleton } from '@/components/ui/Skeleton';
 import { useProfile } from '@/hooks/useProfile';
-import { calculateCompletionPercent, getProfileSuggestions } from '@/lib/profileSuggestions';
+import { getProfileCompletionPercent, shouldShowMandatoryCompletionPrompts } from '@/lib/profileCompletion';
+import { getProfileSuggestions } from '@/lib/profileSuggestions';
 import { getProfileDisplayName } from '@/models/userProfile';
 import styles from './ProfilePage.module.css';
 
@@ -17,16 +18,16 @@ interface HubCard {
 }
 
 const MANAGE_CARDS: HubCard[] = [
-  { to: '/profile/details', title: 'Profile', description: 'Name, headline, about, location, photo', icon: '◎' },
+  { to: '/profile/details', title: 'Personal Information', description: 'Name, headline, about, location, photo', icon: '◎' },
   { to: '/profile/resume', title: 'Resume', description: 'Upload or replace your CV', icon: '📄' },
+  { to: '/profile/skills', title: 'Skills', description: 'Technologies and strengths', icon: '⚡' },
   { to: '/profile/experience', title: 'Experience', description: 'Work history and roles', icon: '💼' },
   { to: '/profile/education', title: 'Education', description: 'Degrees and training', icon: '🎓' },
-  { to: '/profile/skills', title: 'Skills', description: 'Technologies and strengths', icon: '⚡' },
-  { to: '/profile/preferences', title: 'Job preferences', description: 'Salary, locations, remote', icon: '🎯' },
+  { to: '/profile/preferences', title: 'Preferences', description: 'Salary, locations, remote', icon: '🎯' },
   { to: '/profile/notifications', title: 'Notifications', description: 'Email, push, job alerts', icon: '🔔' },
   { to: '/profile/privacy', title: 'Privacy', description: 'Profile and contact visibility', icon: '🔒' },
+  { to: '/profile/app', title: 'App', description: 'Install, version, and updates', icon: '📱' },
   { to: '/account', title: 'Account', description: 'Password and sign out', icon: '👤' },
-  { to: '/profile/app', title: 'App', description: 'Install, version, help', icon: '📱' },
 ];
 
 export function ProfileHubPage() {
@@ -39,7 +40,7 @@ export function ProfileHubPage() {
     savedJobsApi.getMine().then((s) => setSavedCount(s.length)).catch(() => setSavedCount(0));
   }, []);
 
-  const percent = useMemo(() => calculateCompletionPercent(profile), [profile]);
+  const percent = useMemo(() => getProfileCompletionPercent(profile), [profile]);
   const missingCount = useMemo(() => getProfileSuggestions(profile).length, [profile]);
 
   if (loading || !profile) {
@@ -68,7 +69,7 @@ export function ProfileHubPage() {
         </div>
       </header>
 
-      {percent < 100 && (
+      {shouldShowMandatoryCompletionPrompts(profile) && (
         <aside className={styles.completionHubCard} aria-label="Profile completion">
           <div className={styles.completionHubTop}>
             <div>
@@ -105,9 +106,9 @@ export function ProfileHubPage() {
       </div>
 
       <section className={styles.hubSection}>
-        <h2 className={styles.hubSectionTitle}>Account overview</h2>
+        <h2 className={styles.hubSectionTitle}>Your profile</h2>
         <p className={styles.hubSectionHint}>
-          Manage your professional identity and settings. Your name from registration is already on file.
+          Tap a section to update. Each area opens a focused page — no long forms.
         </p>
         <div className={styles.hubGrid}>
           {MANAGE_CARDS.map((card) => (

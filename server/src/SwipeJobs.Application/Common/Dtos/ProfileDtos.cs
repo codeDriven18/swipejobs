@@ -67,6 +67,7 @@ public record UserProfileDto(
     string ProfileVisibility,
     string ContactVisibility,
     bool IsProfileComplete,
+    int CompletionPercentage,
     IReadOnlyList<EducationDto> Educations,
     IReadOnlyList<SkillDto> Skills,
     IReadOnlyList<ExperienceDto> Experiences,

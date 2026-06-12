@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { InstallAppButton } from '@/components/pwa/InstallAppButton';
 import styles from './MarketingPage.module.css';
 
 const stats = [
@@ -45,7 +44,6 @@ export function LandingPage() {
             <Link to="/register" className={styles.btnPrimary}>Create free account</Link>
             <Link to="/swipe" className={styles.btnSecondary}>Try swipe mode</Link>
           </div>
-          <InstallAppButton />
         </motion.div>
         <motion.div
           className={styles.heroVisual}

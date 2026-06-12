@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { portalApi } from '@/api/portalApi';
 import { CompanyAvatar } from '@/components/profile/CompanyAvatar';
-import { InstallAppButton } from '@/components/pwa/InstallAppButton';
+import { ProfileAppPanel } from '@/components/profile/ProfileAppPanel';
 import { useToast } from '@/context/ToastContext';
 import { getApiErrorMessage } from '@/lib/apiErrors';
 import type { Company } from '@/models/company';
@@ -215,8 +215,7 @@ export function EmployerProfilePage() {
       {activeSection === 'app' && (
         <div className={styles.panel}>
           <h2 className={styles.panelTitle}>App</h2>
-          <InstallAppButton variant="full" showFallback />
-          <p className={styles.panelHint}>SwipeJobs v{import.meta.env.VITE_APP_VERSION ?? '0.1.0'}</p>
+          <ProfileAppPanel />
         </div>
       )}
     </section>

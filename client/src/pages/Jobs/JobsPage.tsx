@@ -70,7 +70,7 @@ export function JobsPage() {
 
   return (
     <section className={styles.page}>
-      <PageHeader title="Jobs" subtitle="Browse all opportunities." />
+      <PageHeader title="Discover" subtitle="Find your next role." />
 
       <div className={styles.toolbar}>
         <input
@@ -118,10 +118,11 @@ export function JobsPage() {
         />
       ) : (
         <div className={styles.grid}>
-          {jobs.map((job) => (
+          {jobs.map((job, index) => (
             <JobCard
               key={job.id}
               job={job}
+              index={index}
               saved={savedJobIds.has(job.id)}
               onClick={() => navigate(`/jobs/${job.id}`)}
               onSaveToggle={(e) => void toggleSave(e, job.id)}

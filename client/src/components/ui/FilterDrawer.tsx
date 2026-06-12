@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { registerFloatingPanel, unregisterFloatingPanel } from '@/lib/floatingPanels';
 import { JobCategory } from '@/models/enums';
 import type { Tag } from '@/models/tag';
 import styles from './FilterDrawer.module.css';
@@ -49,6 +50,25 @@ export function FilterDrawer({
     }
   }, [open, category, city, isRemote, salaryMin, selectedTags]);
 
+  useEffect(() => {
+    if (!open) return;
+
+    registerFloatingPanel('filter-drawer', onClose);
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      unregisterFloatingPanel('filter-drawer');
+    };
+  }, [open, onClose]);
+
   const handleApply = () => {
     onApply({
       category: localCategory,
@@ -77,7 +97,7 @@ export function FilterDrawer({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
             onClick={onClose}
           />
           <motion.div
@@ -85,7 +105,7 @@ export function FilterDrawer({
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
-            transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+            transition={{ type: 'spring', damping: 30, stiffness: 340 }}
             role="dialog"
             aria-modal="true"
             aria-label="Filters"

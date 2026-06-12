@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import { registerSW } from 'virtual:pwa-register';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -17,6 +18,14 @@ interface BeforeInstallPromptEvent extends Event {
   }>;
 }
 
+export type PwaUpdateStatus =
+  | 'idle'
+  | 'checking'
+  | 'upToDate'
+  | 'updateAvailable'
+  | 'unsupported'
+  | 'error';
+
 interface PwaInstallContextValue {
   canInstall: boolean;
   isInstalled: boolean;
@@ -24,7 +33,12 @@ interface PwaInstallContextValue {
   isIos: boolean;
   installStatus: string;
   fallbackMessage: string;
+  appVersion: string;
+  offlineReady: boolean;
+  updateStatus: PwaUpdateStatus;
   promptInstall: () => Promise<boolean>;
+  checkForUpdates: () => Promise<void>;
+  applyUpdate: () => Promise<void>;
 }
 
 const PwaInstallContext = createContext<PwaInstallContextValue | null>(null);
@@ -38,8 +52,11 @@ export function isStandaloneDisplayMode(): boolean {
 
 export function PwaInstallProvider({ children }: { children: ReactNode }) {
   const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null);
+  const applyUpdateRef = useRef<(() => Promise<void>) | null>(null);
   const [canInstall, setCanInstall] = useState(false);
   const [isInstalled, setIsInstalled] = useState(() => isStandaloneDisplayMode());
+  const [offlineReady, setOfflineReady] = useState(false);
+  const [updateStatus, setUpdateStatus] = useState<PwaUpdateStatus>('idle');
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -84,6 +101,27 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!import.meta.env.PROD || typeof window === 'undefined') return;
+
+    const updateSW = registerSW({
+      immediate: true,
+      onOfflineReady() {
+        setOfflineReady(true);
+      },
+      onNeedRefresh() {
+        setUpdateStatus('updateAvailable');
+      },
+      onRegisterError(error) {
+        console.error('[PWA] Service worker registration failed:', error);
+      },
+    });
+
+    applyUpdateRef.current = async () => {
+      await updateSW(true);
+    };
+  }, []);
+
   const promptInstall = useCallback(async (): Promise<boolean> => {
     const event = deferredPrompt.current;
     if (!event) {
@@ -106,10 +144,51 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
     return false;
   }, []);
 
+  const checkForUpdates = useCallback(async () => {
+    if (!('serviceWorker' in navigator)) {
+      setUpdateStatus('unsupported');
+      return;
+    }
+
+    setUpdateStatus('checking');
+
+    try {
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (!registration) {
+        setUpdateStatus('unsupported');
+        return;
+      }
+
+      await registration.update();
+
+      if (registration.waiting) {
+        setUpdateStatus('updateAvailable');
+        return;
+      }
+
+      setUpdateStatus('upToDate');
+    } catch {
+      setUpdateStatus('error');
+    }
+  }, []);
+
+  const applyUpdate = useCallback(async () => {
+    if (applyUpdateRef.current) {
+      await applyUpdateRef.current();
+      return;
+    }
+
+    const registration = await navigator.serviceWorker.getRegistration();
+    registration?.waiting?.postMessage({ type: 'SKIP_WAITING' });
+    window.location.reload();
+  }, []);
+
   const isIos =
     typeof navigator !== 'undefined'
     && /iphone|ipad|ipod/i.test(navigator.userAgent)
     && !isStandaloneDisplayMode();
+
+  const appVersion = import.meta.env.VITE_APP_VERSION ?? '0.1.0';
 
   const value = useMemo<PwaInstallContextValue>(
     () => ({
@@ -121,9 +200,24 @@ export function PwaInstallProvider({ children }: { children: ReactNode }) {
       fallbackMessage: isIos
         ? "Tap Share, then 'Add to Home Screen' to install SwipeJobs."
         : "Use the browser menu and choose 'Install app' or 'Install SwipeJobs'.",
+      appVersion,
+      offlineReady,
+      updateStatus,
       promptInstall,
+      checkForUpdates,
+      applyUpdate,
     }),
-    [canInstall, isInstalled, isIos, promptInstall],
+    [
+      canInstall,
+      isInstalled,
+      isIos,
+      appVersion,
+      offlineReady,
+      updateStatus,
+      promptInstall,
+      checkForUpdates,
+      applyUpdate,
+    ],
   );
 
   return <PwaInstallContext.Provider value={value}>{children}</PwaInstallContext.Provider>;

@@ -1,36 +1,65 @@
-import { useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useDismissibleOverlay } from '@/hooks/useDismissibleOverlay';
 import { useAuth } from '@/context/AuthContext';
 import { UserRole } from '@/models/auth';
 import styles from './NotificationBell.module.css';
+
+const PANEL_ID = 'notifications';
 
 export function NotificationBell() {
   const { isAuthenticated, user } = useAuth();
   const { notifications, unreadCount, markRead, markAllRead } = useNotifications();
   const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const close = useCallback(() => setOpen(false), []);
+
+  useDismissibleOverlay({
+    open,
+    onClose: close,
+    containerRef,
+    panelId: PANEL_ID,
+  });
 
   if (!isAuthenticated || user?.role !== UserRole.JobSeeker) return null;
 
+  const handleNotificationNavigate = () => {
+    close();
+  };
+
   return (
-    <div className={styles.wrap}>
+    <div ref={containerRef} className={styles.wrap}>
       <button
         type="button"
         className={styles.bell}
         onClick={() => setOpen((v) => !v)}
         aria-label="Notifications"
+        aria-expanded={open}
+        aria-haspopup="dialog"
       >
         🔔
-        {unreadCount > 0 && <span className={styles.count}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
+        {unreadCount > 0 && (
+          <span className={styles.count}>{unreadCount > 9 ? '9+' : unreadCount}</span>
+        )}
       </button>
 
       <AnimatePresence>
         {open && (
           <>
-            <button type="button" className={styles.backdrop} onClick={() => setOpen(false)} aria-label="Close" />
+            <button
+              type="button"
+              className={styles.backdrop}
+              onClick={close}
+              aria-label="Close notifications"
+              tabIndex={-1}
+            />
             <motion.div
               className={styles.panel}
+              role="dialog"
+              aria-label="Notifications"
               initial={{ opacity: 0, y: -8, scale: 0.98 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -6, scale: 0.98 }}
@@ -61,7 +90,11 @@ export function NotificationBell() {
                       </div>
                       <p className={styles.msg}>{n.message}</p>
                       {n.relatedJobId && (
-                        <Link to={`/jobs/${n.relatedJobId}`} className={styles.link} onClick={() => setOpen(false)}>
+                        <Link
+                          to={`/jobs/${n.relatedJobId}`}
+                          className={styles.link}
+                          onClick={handleNotificationNavigate}
+                        >
                           View job →
                         </Link>
                       )}

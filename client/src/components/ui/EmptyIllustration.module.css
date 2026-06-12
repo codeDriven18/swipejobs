@@ -1,0 +1,39 @@
+.wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-6);
+}
+
+.svg {
+  width: 7.5rem;
+  height: 7.5rem;
+  animation: float 4s ease-in-out infinite;
+}
+
+.bgCircle {
+  fill: var(--color-bg);
+}
+
+.accent {
+  fill: none;
+  color: var(--color-accent);
+}
+
+.check {
+  fill: none;
+  color: var(--color-success);
+}
+
+.dot {
+  fill: var(--color-accent);
+}
+
+.line {
+  color: var(--color-text-muted);
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
