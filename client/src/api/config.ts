@@ -9,12 +9,16 @@ function normalizeApiBaseUrl(url: string): string {
 }
 
 function resolveApiUrl(): string {
+  const fromEnv = import.meta.env.VITE_API_URL?.trim();
+  if (fromEnv) {
+    return normalizeApiBaseUrl(fromEnv);
+  }
+
   if (import.meta.env.PROD) {
     return PRODUCTION_API_URL;
   }
 
-  const fromEnv = import.meta.env.VITE_API_URL?.trim();
-  return normalizeApiBaseUrl(fromEnv ?? DEVELOPMENT_API_URL);
+  return normalizeApiBaseUrl(DEVELOPMENT_API_URL);
 }
 
 const apiUrl = resolveApiUrl();

@@ -503,7 +503,7 @@ jobs:
         run: |
           set -euo pipefail
           BASE="https://swipejobs-afexcuape8ecexdk.eastasia-01.azurewebsites.net"
-          ORIGIN="https://swipejobss.netlify.app"
+          ORIGIN="https://swipejobs-khaki.vercel.app"
 
           for attempt in $(seq 1 12); do
             echo "--- verify attempt $attempt ---"
@@ -556,7 +556,7 @@ jobs:
             echo "::warning::CORS preflight missing Access-Control-Allow-Origin for $ORIGIN"
           }
 
-          PREVIEW_ORIGIN="https://6a267b1a1b64858734149e95--swipejobss.netlify.app"
+          PREVIEW_ORIGIN="https://swipejobs-git-main-example.vercel.app"
           SIGNALR_CORS=$(curl -sS -D - -o /dev/null -X OPTIONS "$BASE/hubs/notifications/negotiate" \
             -H "Origin: $PREVIEW_ORIGIN" \
             -H "Access-Control-Request-Method: POST" \

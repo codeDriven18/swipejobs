@@ -8,15 +8,15 @@ namespace SwipeJobs.Api.Tests;
 public class CorsOriginPolicyTests
 {
     [Theory]
-    [InlineData("https://swipejobss.netlify.app", true)]
-    [InlineData("https://6a267b1a1b64858734149e95--swipejobss.netlify.app", true)]
-    [InlineData("https://other-site.netlify.app", true)]
+    [InlineData("https://swipejobs-khaki.vercel.app", true)]
+    [InlineData("https://swipejobs-git-main-example.vercel.app", true)]
+    [InlineData("https://other-project.vercel.app", true)]
     [InlineData("http://localhost:5173", true)]
     [InlineData("https://localhost:5173", true)]
     [InlineData("https://evil.example.com", false)]
     public void IsAllowedOrigin_matches_expected_hosts(string origin, bool expected)
     {
-        var configured = new[] { "https://swipejobss.netlify.app" };
+        var configured = new[] { "https://swipejobs-khaki.vercel.app" };
         Assert.Equal(expected, CorsExtensions.IsAllowedOrigin(origin, configured));
     }
 }
@@ -32,9 +32,9 @@ public class CorsTests : IClassFixture<SwipeJobsWebApplicationFactory>
 
     [Theory]
     [InlineData("/api/tags", "GET", "http://localhost:5173")]
-    [InlineData("/api/jobs", "GET", "https://swipejobss.netlify.app")]
-    [InlineData("/api/auth/login", "POST", "https://6a267b1a1b64858734149e95--swipejobss.netlify.app")]
-    [InlineData("/hubs/notifications/negotiate", "POST", "https://6a267b1a1b64858734149e95--swipejobss.netlify.app")]
+    [InlineData("/api/jobs", "GET", "https://swipejobs-khaki.vercel.app")]
+    [InlineData("/api/auth/login", "POST", "https://swipejobs-khaki.vercel.app")]
+    [InlineData("/hubs/notifications/negotiate", "POST", "https://swipejobs-git-main-example.vercel.app")]
     public async Task Options_Preflight_ReturnsCorsHeaders(string path, string method, string origin)
     {
         var request = new HttpRequestMessage(HttpMethod.Options, path);
@@ -57,7 +57,7 @@ public class CorsTests : IClassFixture<SwipeJobsWebApplicationFactory>
     [Fact]
     public async Task SignalR_Negotiate_Preflight_Allows_X_Requested_With()
     {
-        const string origin = "https://6a267b1a1b64858734149e95--swipejobss.netlify.app";
+        const string origin = "https://swipejobs-khaki.vercel.app";
         var request = new HttpRequestMessage(HttpMethod.Options, "/hubs/notifications/negotiate");
         request.Headers.TryAddWithoutValidation("Origin", origin);
         request.Headers.TryAddWithoutValidation("Access-Control-Request-Method", "POST");
@@ -78,13 +78,13 @@ public class CorsTests : IClassFixture<SwipeJobsWebApplicationFactory>
     }
 
     [Fact]
-    public async Task Login_WithNetlifyOrigin_IncludesAccessControlAllowOrigin()
+    public async Task Login_WithVercelOrigin_IncludesAccessControlAllowOrigin()
     {
         var request = new HttpRequestMessage(HttpMethod.Post, "/api/auth/login")
         {
             Content = JsonContent.Create(new { email = "missing@test.local", password = "Password123!" }),
         };
-        request.Headers.TryAddWithoutValidation("Origin", "https://swipejobss.netlify.app");
+        request.Headers.TryAddWithoutValidation("Origin", "https://swipejobs-khaki.vercel.app");
 
         var response = await _client.SendAsync(request);
 
@@ -92,6 +92,6 @@ public class CorsTests : IClassFixture<SwipeJobsWebApplicationFactory>
             response.StatusCode is HttpStatusCode.OK or HttpStatusCode.Unauthorized or HttpStatusCode.BadRequest,
             $"Unexpected status: {response.StatusCode}");
         Assert.True(response.Headers.TryGetValues("Access-Control-Allow-Origin", out var origins));
-        Assert.Equal("https://swipejobss.netlify.app", origins.Single());
+        Assert.Equal("https://swipejobs-khaki.vercel.app", origins.Single());
     }
 }

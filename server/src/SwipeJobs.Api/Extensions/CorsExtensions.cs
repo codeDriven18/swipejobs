@@ -46,10 +46,10 @@ public static class CorsExtensions
         if (IsLocalDevOrigin(uri))
             return true;
 
-        if (uri.Host.Equals("swipejobss.netlify.app", StringComparison.OrdinalIgnoreCase))
+        if (uri.Host.Equals("swipejobs-khaki.vercel.app", StringComparison.OrdinalIgnoreCase))
             return true;
 
-        if (uri.Host.EndsWith(".netlify.app", StringComparison.OrdinalIgnoreCase))
+        if (uri.Host.EndsWith(".vercel.app", StringComparison.OrdinalIgnoreCase))
             return true;
 
         return false;
@@ -78,8 +78,7 @@ public static class CorsExtensions
 
         return
         [
-            "https://swipejobss.netlify.app",
-            "https://6a267b1a1b64858734149e95--swipejobss.netlify.app",
+            "https://swipejobs-khaki.vercel.app",
             "http://localhost:5173",
             "https://localhost:5173",
         ];
