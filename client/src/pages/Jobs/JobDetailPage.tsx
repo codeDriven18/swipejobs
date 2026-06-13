@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { IconChevronLeft } from '@/components/icons/Icons';
 import { JobShareMenu } from '@/components/jobs/JobShareMenu';
 import { JobHeroImage } from '@/components/jobs/JobHeroImage';
 import { SourceBadge } from '@/components/jobs/SourceBadge';
@@ -135,7 +136,7 @@ export function JobDetailPage() {
   const applyButtonLabel = () => {
     if (applying) return 'Submitting…';
     if (isRejected || isWithdrawn) return 'Apply Again';
-    if (isBlocked) return 'Applied ✓';
+    if (isBlocked) return 'Applied';
     return 'Quick Apply';
   };
 
@@ -181,7 +182,7 @@ export function JobDetailPage() {
   return (
     <section className={styles.page}>
       <button type="button" className={styles.back} onClick={() => navigate(-1)}>
-        ← Back
+        <IconChevronLeft size={18} /> Back
       </button>
 
       <header className={styles.hero}>

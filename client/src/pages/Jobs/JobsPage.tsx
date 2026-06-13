@@ -1,3 +1,4 @@
+import { IconSearch } from '@/components/icons/Icons';
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
@@ -139,7 +140,7 @@ export function JobsPage() {
         <JobCardSkeletonList count={4} />
       ) : jobs.length === 0 ? (
         <EmptyState
-          icon="🔍"
+          icon={<IconSearch size={28} />}
           title="No jobs found"
           description="Try clearing filters or broadening your search. We have gigs and IT roles across Germany."
           actions={[

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { IconCheck, IconChevronRight, IconCircle } from '@/components/icons/Icons';
 import { applicationsApi } from '@/api/applicationsApi';
 import { savedJobsApi } from '@/api/savedJobsApi';
 import { ProfileShareMenu } from '@/components/profile/ProfileShareMenu';
@@ -76,7 +77,7 @@ export function ProfileHubPage() {
 
       {shouldShowMandatoryCompletionPrompts(profile) && (
         <Link to="/profile/complete" className={styles.completionHubCard}>
-          Complete your profile to unlock Quick Apply everywhere →
+          Complete your profile to unlock Quick Apply everywhere <IconChevronRight size={18} />
         </Link>
       )}
 
@@ -90,7 +91,9 @@ export function ProfileHubPage() {
           <span className={styles.quickLinkLabel}>Saved jobs</span>
         </Link>
         <Link to="/profile/resume" className={styles.quickLinkCard}>
-          <span className={styles.quickLinkValue}>{profile.resumeFileName ? '✓' : '—'}</span>
+          <span className={styles.quickLinkValue}>
+            {profile.resumeFileName ? <IconCheck size={20} /> : '—'}
+          </span>
           <span className={styles.quickLinkLabel}>Resume</span>
         </Link>
       </div>
@@ -112,7 +115,10 @@ export function ProfileHubPage() {
         <ul className={styles.verificationList}>
           {signals.map((signal) => (
             <li key={signal.id} className={signal.met ? styles.verificationMet : styles.verificationPending}>
-              {signal.met ? '✓' : '○'} {signal.label}
+              <span className={styles.verificationIcon} aria-hidden>
+                {signal.met ? <IconCheck size={16} /> : <IconCircle size={16} />}
+              </span>
+              {signal.label}
             </li>
           ))}
         </ul>

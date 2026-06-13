@@ -1,3 +1,4 @@
+import { IconChevronLeft, IconFile } from '@/components/icons/Icons';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ProfileAppPanel } from '@/components/profile/ProfileAppPanel';
@@ -99,7 +100,9 @@ export function ProfileSectionPage() {
   return (
     <section className={styles.page}>
       <header className={styles.sectionPageHeader}>
-        <Link to="/profile" className={styles.backLink}>← Profile</Link>
+        <Link to="/profile" className={styles.backLink}>
+          <IconChevronLeft size={18} /> Profile
+        </Link>
         <h1 className={styles.sectionPageTitle}>{title}</h1>
       </header>
 
@@ -159,7 +162,7 @@ export function ProfileSectionPage() {
           <>
             {profile.resumeFileName ? (
               <div className={styles.resumeStatus}>
-                <span className={styles.resumeIcon} aria-hidden>📄</span>
+                <span className={styles.resumeIcon} aria-hidden><IconFile size={22} /></span>
                 <div>
                   <p className={styles.resumeName}>{profile.resumeFileName}</p>
                   {profile.resumeUploadedAt && (

@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { UserAvatar } from '@/components/profile/UserAvatar';
 import { UserRole } from '@/models/auth';
+import { closeActiveFloatingPanel } from '@/lib/floatingPanels';
 import {
   IconApplications,
   IconDiscover,
@@ -51,6 +52,7 @@ export function Navigation() {
             key={item.to}
             to={item.to}
             end={item.end}
+            onClick={() => closeActiveFloatingPanel()}
             className={({ isActive }) =>
               [styles.link, isActive ? styles.active : ''].filter(Boolean).join(' ')
             }

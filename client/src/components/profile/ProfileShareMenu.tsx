@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { getProfileShareUrl } from '@/lib/shareUrls';
+import { useFloatingOverlay } from '@/hooks/useFloatingOverlay';
 import styles from '@/components/jobs/JobShareMenu.module.css';
 
 interface ProfileShareMenuProps {
@@ -16,22 +17,17 @@ export function ProfileShareMenu({ profileId, displayName, open, onClose }: Prof
   const url = getProfileShareUrl(profileId);
   const text = `${displayName} on SwipeJobs`;
 
+  useFloatingOverlay({
+    open,
+    onClose,
+    panelId: 'profile-share-menu',
+    panelRef,
+    closeOnScroll: true,
+  });
+
   useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    const onPointer = (e: PointerEvent) => {
-      if (panelRef.current?.contains(e.target as Node)) return;
-      onClose();
-    };
-    document.addEventListener('keydown', onKey);
-    document.addEventListener('pointerdown', onPointer, true);
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      document.removeEventListener('pointerdown', onPointer, true);
-    };
-  }, [open, onClose]);
+    if (!open) setCopied(false);
+  }, [open]);
 
   const copyLink = useCallback(async () => {
     try {
@@ -57,14 +53,20 @@ export function ProfileShareMenu({ profileId, displayName, open, onClose }: Prof
   if (!open) return null;
 
   return createPortal(
-    <div className={styles.backdrop} role="presentation">
-      <div ref={panelRef} className={styles.sheet} role="dialog" aria-label="Share profile">
+    <div className={styles.backdrop} role="presentation" onClick={onClose}>
+      <div
+        ref={panelRef}
+        className={styles.sheet}
+        role="dialog"
+        aria-label="Share profile"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className={styles.handle} aria-hidden />
         <h3 className={styles.title}>Share profile</h3>
         <p className={styles.subtitle}>{displayName}</p>
         <div className={styles.actions}>
           <button type="button" className={styles.action} onClick={() => void copyLink()}>
-            {copied ? 'Copied!' : 'Copy link'}
+            {copied ? 'Link copied!' : 'Copy link'}
           </button>
           <a
             className={styles.action}

@@ -1,3 +1,4 @@
+import { IconMapPin } from '@/components/icons/Icons';
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { portalApi } from '@/api/portalApi';
@@ -102,7 +103,15 @@ export function EmployerProfilePage() {
         <div className={employerStyles.identityBody}>
           <h1 className={styles.name}>{company.name}</h1>
           <p className={styles.headline}>{company.industry || 'Add your industry'}</p>
-          <p className={styles.meta}>{company.location ? `📍 ${company.location}` : 'Add location'}</p>
+          <p className={styles.meta}>
+            {company.location ? (
+              <>
+                <IconMapPin size={16} className={employerStyles.metaIcon} /> {company.location}
+              </>
+            ) : (
+              'Add location'
+            )}
+          </p>
           <div className={employerStyles.actions}>
             <button type="button" className={styles.editBtn} onClick={() => setEditing((v) => !v)}>
               {editing ? 'Close editor' : 'Edit company'}

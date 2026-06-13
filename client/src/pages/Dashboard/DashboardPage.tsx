@@ -14,6 +14,7 @@ import { useDiscoveryCollections, getTimeGreeting } from '@/hooks/useDiscoveryCo
 import { UserRole } from '@/models/auth';
 import { getProfileCompletionPercent, shouldShowMandatoryCompletionPrompts } from '@/lib/profileCompletion';
 import { mergeDashboardWithEmpty } from '@/lib/emptyDashboard';
+import { IconApplications, IconBolt, IconBookmark, IconChevronRight, IconUser } from '@/components/icons/Icons';
 import { parseUserRole } from '@/lib/userRole';
 import type { UserDashboard } from '@/models/dashboard';
 import styles from './DashboardPage.module.css';
@@ -109,7 +110,7 @@ export function DashboardPage() {
           <Link to="/swipe" className={styles.heroCta}>
             <span className={styles.heroCtaTitle}>Start swiping</span>
             <span className={styles.heroCtaSub}>The fastest way to explore roles</span>
-            <span className={styles.heroCtaArrow}>→</span>
+            <span className={styles.heroCtaArrow} aria-hidden><IconChevronRight size={22} /></span>
           </Link>
         </motion.div>
 
@@ -188,7 +189,7 @@ export function DashboardPage() {
         <p className={styles.greetingTime}>{greeting}, {firstName}</p>
         <h1 className={styles.heroTitle}>Discover your next role</h1>
         <Link to="/swipe" className={styles.heroCtaInline}>
-          Start swiping →
+          Start swiping <IconChevronRight size={18} className={styles.inlineIcon} />
         </Link>
         <div className={styles.statRow}>
           <div className={styles.statPill}>
@@ -288,26 +289,26 @@ export function DashboardPage() {
 
       <motion.div className={styles.quickGrid} variants={item}>
         <Link to="/swipe" className={styles.quickActionFeatured}>
-          <span className={styles.quickActionIcon}>⚡</span>
+          <span className={styles.quickActionIcon} aria-hidden><IconBolt size={20} /></span>
           <span className={styles.quickActionLabel}>Continue Swiping</span>
         </Link>
         <Link to="/saved" className={styles.quickAction}>
-          <span className={styles.quickActionIcon}>♡</span>
+          <span className={styles.quickActionIcon} aria-hidden><IconBookmark size={20} /></span>
           <span className={styles.quickActionLabel}>Saved Jobs</span>
         </Link>
         <Link to="/applications" className={styles.quickAction}>
-          <span className={styles.quickActionIcon}>✓</span>
+          <span className={styles.quickActionIcon} aria-hidden><IconApplications size={20} /></span>
           <span className={styles.quickActionLabel}>Applications</span>
         </Link>
         {shouldShowMandatoryCompletionPrompts(profile) ? (
           <Link to="/profile/complete" className={styles.quickAction}>
-            <span className={styles.quickActionIcon}>◎</span>
+            <span className={styles.quickActionIcon} aria-hidden><IconUser size={20} /></span>
             <span className={styles.quickActionLabel}>Complete Profile</span>
             <span className={styles.quickActionMeta}>{profilePct}%</span>
           </Link>
         ) : (
           <Link to="/profile" className={styles.quickAction}>
-            <span className={styles.quickActionIcon}>◎</span>
+            <span className={styles.quickActionIcon} aria-hidden><IconUser size={20} /></span>
             <span className={styles.quickActionLabel}>Profile</span>
           </Link>
         )}

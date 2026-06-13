@@ -1,3 +1,4 @@
+import { IconChevronLeft } from '@/components/icons/Icons';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { portalApi } from '@/api/portalApi';
@@ -96,7 +97,9 @@ export function PortalApplicantPage() {
   return (
     <section className={styles.page}>
       <header className={styles.header}>
-        <Link to="/portal/applications" className={styles.btn}>← Applications</Link>
+        <Link to="/portal/applications" className={styles.btn}>
+          <IconChevronLeft size={16} /> Applications
+        </Link>
         <h1 className={styles.title}>{fullName}</h1>
         <CandidateTrustBadge
           level={applicant.candidateTrustLevel}

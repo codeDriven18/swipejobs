@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { IconBuilding, IconCheck, IconChevronLeft, IconChevronRight, IconList } from '@/components/icons/Icons';
 import { companiesApi } from '@/api/companiesApi';
 import { companyFollowsApi } from '@/api/companyFollowsApi';
 import { jobsApi } from '@/api/jobsApi';
@@ -73,7 +74,7 @@ export function CompanyPage() {
       <section className={styles.page}>
         <p className={styles.error}>Company not found.</p>
         <EmptyState
-          icon="⌂"
+          icon={<IconBuilding size={28} />}
           title="Unknown company"
           description="This company page doesn't exist or was removed."
           actions={[{ label: 'Browse jobs', to: '/jobs', primary: true }]}
@@ -90,7 +91,7 @@ export function CompanyPage() {
       transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
     >
       <button type="button" className={styles.back} onClick={() => navigate(-1)}>
-        ← Back
+        <IconChevronLeft size={18} /> Back
       </button>
 
       <div
@@ -125,7 +126,13 @@ export function CompanyPage() {
           disabled={followLoading}
           onClick={() => void toggleFollow()}
         >
-          {following ? 'Following ✓' : '+ Follow company'}
+          {following ? (
+            <>
+              <IconCheck size={16} /> Following
+            </>
+          ) : (
+            '+ Follow company'
+          )}
         </button>
       </div>
 
@@ -135,12 +142,12 @@ export function CompanyPage() {
         <div className={styles.links}>
           {company.website && (
             <a href={company.website} className={styles.website} target="_blank" rel="noopener noreferrer">
-              Visit website →
+              Visit website <IconChevronRight size={16} />
             </a>
           )}
           {company.linkedInUrl && (
             <a href={company.linkedInUrl} className={styles.website} target="_blank" rel="noopener noreferrer">
-              LinkedIn →
+              LinkedIn <IconChevronRight size={16} />
             </a>
           )}
         </div>
@@ -154,7 +161,7 @@ export function CompanyPage() {
 
         {jobs.length === 0 ? (
           <EmptyState
-            icon="☰"
+            icon={<IconList size={28} />}
             title="No open jobs"
             description="This company has no active listings right now. Check back later."
             actions={[{ label: 'Browse all jobs', to: '/jobs', primary: true }]}

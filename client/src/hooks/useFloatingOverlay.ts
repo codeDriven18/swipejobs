@@ -2,43 +2,36 @@ import { useEffect, type RefObject } from 'react';
 import { useLocation } from 'react-router-dom';
 import { registerFloatingPanel, unregisterFloatingPanel } from '@/lib/floatingPanels';
 
-interface UseDismissibleOverlayOptions {
+interface UseFloatingOverlayOptions {
   open: boolean;
   onClose: () => void;
-  /** Root element — clicks inside (trigger + panel) do not dismiss. */
-  containerRef: RefObject<HTMLElement | null>;
-  /** Unique id for single-panel coordination. */
-  panelId?: string;
-  /** Close when the route changes. Default true. */
+  panelId: string;
+  panelRef?: RefObject<HTMLElement | null>;
   closeOnRouteChange?: boolean;
   closeOnScroll?: boolean;
 }
 
 /**
- * Standard dismiss behavior for dropdowns/overlays:
- * pointer down outside, Escape, route change, and single-panel coordination.
+ * Single-overlay dismiss: outside tap, Escape, route change, scroll, panel coordination.
  */
-export function useDismissibleOverlay({
+export function useFloatingOverlay({
   open,
   onClose,
-  containerRef,
   panelId,
+  panelRef,
   closeOnRouteChange = true,
   closeOnScroll = true,
-}: UseDismissibleOverlayOptions): void {
+}: UseFloatingOverlayOptions): void {
   const location = useLocation();
 
   useEffect(() => {
     if (!open) return;
 
-    if (panelId) {
-      registerFloatingPanel(panelId, onClose);
-    }
+    registerFloatingPanel(panelId, onClose);
 
     const onPointerDown = (event: PointerEvent) => {
-      const root = containerRef.current;
-      if (!root) return;
-      if (root.contains(event.target as Node)) return;
+      const target = event.target as Node;
+      if (panelRef?.current?.contains(target)) return;
       onClose();
     };
 
@@ -63,14 +56,12 @@ export function useDismissibleOverlay({
       if (closeOnScroll) {
         window.removeEventListener('scroll', onScroll, true);
       }
-      if (panelId) {
-        unregisterFloatingPanel(panelId);
-      }
+      unregisterFloatingPanel(panelId);
     };
-  }, [open, onClose, containerRef, panelId, closeOnScroll]);
+  }, [open, onClose, panelId, panelRef, closeOnScroll]);
 
   useEffect(() => {
     if (!open || !closeOnRouteChange) return;
     onClose();
-  }, [location.pathname, location.search, location.hash]); // eslint-disable-line react-hooks/exhaustive-deps -- close on navigation only
+  }, [location.pathname, location.search, location.hash]); // eslint-disable-line react-hooks/exhaustive-deps
 }

@@ -7,7 +7,7 @@
   margin: calc(-1 * var(--space-6));
   margin-bottom: calc(-1 * (var(--nav-height) + var(--space-6)));
   padding: var(--space-4) var(--space-5) 0;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .backdrop {
@@ -79,6 +79,7 @@
   min-height: 0;
   z-index: 1;
   margin-bottom: var(--space-3);
+  overflow: visible;
 }
 
 .skeletonCard {
@@ -153,6 +154,13 @@
   height: 1.75rem;
 }
 
+.toastWrap {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  pointer-events: none;
+}
+
 .toast {
   position: fixed;
   bottom: calc(var(--nav-height) + 7.5rem);
@@ -163,7 +171,7 @@
   font-weight: var(--weight-semibold);
   font-size: var(--text-sm);
   box-shadow: var(--shadow-float);
-  z-index: 100;
+  pointer-events: auto;
   max-width: 90%;
   text-align: center;
   backdrop-filter: blur(16px);

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ApiError } from '@/api/client';
 import { applicationsApi } from '@/api/applicationsApi';
@@ -11,6 +11,7 @@ import {
   type PremiumSwipeDeckHandle,
   type SwipeDirection,
 } from '@/components/swipe/PremiumSwipeDeck';
+import { IconArrowRight, IconBookmark, IconFilter, IconX } from '@/components/icons/Icons';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/Skeleton';
 import { FilterDrawer } from '@/components/ui/FilterDrawer';
@@ -18,6 +19,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useJobFilters } from '@/hooks/useJobFilters';
 import { useProfile } from '@/hooks/useProfile';
 import { useActivityTracking } from '@/hooks/useActivityTracking';
+import { closeActiveFloatingPanel, registerFloatingPanel, unregisterFloatingPanel } from '@/lib/floatingPanels';
 import type { Job } from '@/models/job';
 import type { Tag } from '@/models/tag';
 import styles from './SwipePage.module.css';
@@ -37,6 +39,25 @@ export function SwipePage() {
   const [loading, setLoading] = useState(true);
   const [filterOpen, setFilterOpen] = useState(false);
   const [toast, setToast] = useState<{ msg: string; tone: 'neutral' | 'success' | 'error' } | null>(null);
+  const toastRef = useRef<HTMLDivElement>(null);
+  const closeToast = useCallback(() => setToast(null), []);
+  const location = useLocation();
+
+  useEffect(() => {
+    if (!toast) return;
+    registerFloatingPanel('swipe-toast', closeToast);
+    const onScroll = () => closeToast();
+    window.addEventListener('scroll', onScroll, { capture: true, passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll, true);
+      unregisterFloatingPanel('swipe-toast');
+    };
+  }, [toast, closeToast]);
+
+  useEffect(() => {
+    closeToast();
+  }, [location.pathname, closeToast]);
+
   const [fetchPage, setFetchPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const skippedRef = useRef<Set<string>>(new Set());
@@ -71,8 +92,15 @@ export function SwipePage() {
   }, [queue.length, hasMore, loading, fetchPage, loadMore]);
 
   const showToast = (msg: string, tone: 'neutral' | 'success' | 'error' = 'neutral') => {
+    closeActiveFloatingPanel();
     setToast({ msg, tone });
     window.setTimeout(() => setToast(null), 2400);
+  };
+
+  const openFilters = () => {
+    closeToast();
+    closeActiveFloatingPanel();
+    setFilterOpen(true);
   };
 
   const handleDismiss = useCallback(async (job: Job, direction: SwipeDirection) => {
@@ -129,12 +157,10 @@ export function SwipePage() {
         <button
           type="button"
           className={styles.filterBtn}
-          onClick={() => setFilterOpen(true)}
+          onClick={openFilters}
           aria-label="Filters"
         >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-            <path d="M4 6h16M7 12h10M10 18h4" strokeLinecap="round" />
-          </svg>
+          <IconFilter size={20} />
           {filters.activeFilterCount > 0 && (
             <span className={styles.filterCount}>{filters.activeFilterCount}</span>
           )}
@@ -172,53 +198,49 @@ export function SwipePage() {
           <motion.button
             type="button"
             className={`${styles.dockBtn} ${styles.passBtn}`}
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.92 }}
+            whileTap={{ scale: 0.94 }}
             onClick={() => deckRef.current?.dismiss('pass')}
             aria-label="Pass"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
-              <path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" />
-            </svg>
+            <IconX size={24} />
           </motion.button>
           <motion.button
             type="button"
             className={`${styles.dockBtn} ${styles.saveBtn}`}
-            whileHover={{ scale: 1.06 }}
-            whileTap={{ scale: 0.92 }}
+            whileTap={{ scale: 0.94 }}
             onClick={() => deckRef.current?.dismiss('save')}
             aria-label="Save"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden>
-              <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <IconBookmark size={22} />
           </motion.button>
           <motion.button
             type="button"
             className={`${styles.dockBtn} ${styles.applyBtn}`}
-            whileHover={{ scale: 1.08 }}
-            whileTap={{ scale: 0.92 }}
+            whileTap={{ scale: 0.94 }}
             onClick={() => deckRef.current?.dismiss('apply')}
             aria-label="Apply"
           >
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
-              <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
+            <IconArrowRight size={28} />
           </motion.button>
         </div>
       )}
 
       <AnimatePresence>
         {toast && (
-          <motion.div
-            className={`${styles.toast} ${styles[`toast_${toast.tone}`]}`}
-            initial={{ opacity: 0, y: 24, scale: 0.92 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: 12, scale: 0.96 }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
-          >
-            {toast.msg}
-          </motion.div>
+          <div className={styles.toastWrap} aria-live="polite">
+            <motion.div
+              ref={toastRef}
+              className={`${styles.toast} ${styles[`toast_${toast.tone}`]}`}
+              initial={{ opacity: 0, y: 16 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              onClick={closeToast}
+              role="status"
+            >
+              {toast.msg}
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
 

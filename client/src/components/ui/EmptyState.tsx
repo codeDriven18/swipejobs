@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { IconSpark } from '@/components/icons/Icons';
 import { EmptyIllustration, type EmptyIllustrationVariant } from './EmptyIllustration';
 import styles from './EmptyState.module.css';
+import type { ReactNode } from 'react';
 
 interface EmptyStateAction {
   label: string;
@@ -11,7 +13,7 @@ interface EmptyStateAction {
 }
 
 interface EmptyStateProps {
-  icon?: string;
+  icon?: ReactNode;
   illustration?: EmptyIllustrationVariant;
   title: string;
   description: string;
@@ -36,7 +38,7 @@ export function EmptyState({
         <EmptyIllustration variant={illustration} />
       ) : (
         <div className={styles.iconRing}>
-          <span className={styles.icon}>{icon ?? '✦'}</span>
+          <span className={styles.icon}>{icon ?? <IconSpark size={28} />}</span>
         </div>
       )}
       <h3 className={styles.title}>{title}</h3>

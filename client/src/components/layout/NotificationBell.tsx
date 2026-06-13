@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { IconBell, IconCheck, IconChevronRight } from '@/components/icons/Icons';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useDismissibleOverlay } from '@/hooks/useDismissibleOverlay';
 import { useAuth } from '@/context/AuthContext';
@@ -40,7 +41,7 @@ export function NotificationBell() {
         aria-expanded={open}
         aria-haspopup="dialog"
       >
-        🔔
+        <IconBell size={22} className={styles.bellIcon} />
         {unreadCount > 0 && (
           <span className={styles.count}>{unreadCount > 9 ? '9+' : unreadCount}</span>
         )}
@@ -83,8 +84,8 @@ export function NotificationBell() {
                       <div className={styles.itemTop}>
                         <strong>{n.title}</strong>
                         {!n.isRead && (
-                          <button type="button" className={styles.readBtn} onClick={() => void markRead(n.id)}>
-                            ✓
+                          <button type="button" className={styles.readBtn} onClick={() => void markRead(n.id)} aria-label="Mark read">
+                            <IconCheck size={16} />
                           </button>
                         )}
                       </div>
@@ -95,7 +96,7 @@ export function NotificationBell() {
                           className={styles.link}
                           onClick={handleNotificationNavigate}
                         >
-                          View job →
+                          View job <IconChevronRight size={14} />
                         </Link>
                       )}
                     </li>

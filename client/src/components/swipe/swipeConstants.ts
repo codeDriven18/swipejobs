@@ -1,25 +1,26 @@
-/** Horizontal distance (px) to commit pass / apply on slow drag */
-export const SWIPE_THRESHOLD_X = 72;
+/** Horizontal distance (px) to commit pass / apply — position only, no velocity */
+export const SWIPE_THRESHOLD_X = 88;
 
-/** Upward distance (px) to commit save on slow drag */
-export const SWIPE_THRESHOLD_Y = 64;
+/** Upward distance (px) to commit save — position only */
+export const SWIPE_THRESHOLD_Y = 72;
 
-/** Flick velocity (px/s) — fast swipe commits immediately */
-export const SWIPE_VELOCITY = 320;
+export const SWIPE_EXIT_X = typeof window !== 'undefined' ? window.innerWidth * 1.15 : 640;
+export const SWIPE_EXIT_Y = typeof window !== 'undefined' ? window.innerHeight * 0.9 : 520;
 
-export const SWIPE_EXIT_X = typeof window !== 'undefined' ? window.innerWidth * 1.2 : 640;
-export const SWIPE_EXIT_Y = typeof window !== 'undefined' ? window.innerHeight * 0.95 : 520;
-
-/** Fast exit — no linger, no snap-back before removal */
-export const SWIPE_EXIT = { duration: 0.14, ease: [0.4, 0, 0.2, 1] as const };
-export const SWIPE_SNAP_BACK = { duration: 0.16, ease: 'easeOut' as const };
+/** Fixed-duration exit — no velocity, no acceleration */
+export const SWIPE_EXIT = { duration: 0.18, ease: [0.4, 0, 1, 1] as const };
+export const SWIPE_SNAP_BACK = { duration: 0.2, ease: [0.25, 0.1, 0.25, 1] as const };
 
 export const STACK_LAYERS = 3;
 
+/** Stack peek — scaled cards sit below, never clipped */
 export const STACK_STYLE = [
   { scale: 1, y: 0, opacity: 1 },
-  { scale: 0.965, y: 12, opacity: 0.95 },
-  { scale: 0.93, y: 24, opacity: 0.88 },
+  { scale: 0.96, y: 14, opacity: 0.92 },
+  { scale: 0.92, y: 28, opacity: 0.82 },
 ] as const;
 
-export const SWIPE_ROTATE_RANGE = 12;
+export const SWIPE_ROTATE_RANGE = 8;
+
+/** Minimum drag (px) before suppressing tap */
+export const SWIPE_TAP_SLOP = 12;

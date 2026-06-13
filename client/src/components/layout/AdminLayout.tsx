@@ -1,20 +1,35 @@
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import {
+  IconActivity,
+  IconApplications,
+  IconBell,
+  IconBuilding,
+  IconChart,
+  IconChevronLeft,
+  IconClipboard,
+  IconFileText,
+  IconGrid,
+  IconList,
+  IconSettings,
+  IconUser,
+} from '@/components/icons/Icons';
+import type { ReactNode } from 'react';
 import styles from './AdminLayout.module.css';
 
-const navItems = [
-  { to: '/admin', label: 'Dashboard', icon: '▣', end: true },
-  { to: '/admin/jobs', label: 'Jobs', icon: '☰' },
-  { to: '/admin/companies', label: 'Companies', icon: '🏢' },
-  { to: '/admin/company-approvals', label: 'Approvals', icon: '✓' },
-  { to: '/admin/users', label: 'Users', icon: '◎' },
-  { to: '/admin/applications', label: 'Applications', icon: '📋' },
-  { to: '/admin/reports', label: 'Reports', icon: '📊' },
-  { to: '/admin/audit', label: 'Audit Logs', icon: '📝' },
-  { to: '/admin/system', label: 'System', icon: '◉' },
-  { to: '/admin/notifications', label: 'Notifications', icon: '🔔' },
-  { to: '/admin/settings', label: 'Settings', icon: '⚙' },
-] as const;
+const navItems: { to: string; label: string; icon: ReactNode; end?: boolean }[] = [
+  { to: '/admin', label: 'Dashboard', icon: <IconGrid size={18} />, end: true },
+  { to: '/admin/jobs', label: 'Jobs', icon: <IconList size={18} /> },
+  { to: '/admin/companies', label: 'Companies', icon: <IconBuilding size={18} /> },
+  { to: '/admin/company-approvals', label: 'Approvals', icon: <IconApplications size={18} /> },
+  { to: '/admin/users', label: 'Users', icon: <IconUser size={18} /> },
+  { to: '/admin/applications', label: 'Applications', icon: <IconClipboard size={18} /> },
+  { to: '/admin/reports', label: 'Reports', icon: <IconChart size={18} /> },
+  { to: '/admin/audit', label: 'Audit Logs', icon: <IconFileText size={18} /> },
+  { to: '/admin/system', label: 'System', icon: <IconActivity size={18} /> },
+  { to: '/admin/notifications', label: 'Notifications', icon: <IconBell size={18} /> },
+  { to: '/admin/settings', label: 'Settings', icon: <IconSettings size={18} /> },
+];
 
 const pageTitles: Record<string, string> = {
   '/admin': 'Admin Dashboard',
@@ -51,7 +66,7 @@ export function AdminLayout() {
             <NavLink
               key={item.to}
               to={item.to}
-              end={'end' in item ? item.end : false}
+              end={item.end ?? false}
               className={({ isActive }) =>
                 `${styles.navLink} ${isActive ? styles.navActive : ''}`
               }
@@ -63,7 +78,10 @@ export function AdminLayout() {
         </nav>
 
         <div className={styles.sidebarFooter}>
-          <NavLink to="/" className={styles.footerLink}>← Back to app</NavLink>
+          <NavLink to="/" className={styles.footerLink}>
+            <IconChevronLeft size={16} />
+            Back to app
+          </NavLink>
         </div>
       </aside>
 

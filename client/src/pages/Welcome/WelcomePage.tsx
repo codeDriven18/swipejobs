@@ -1,12 +1,14 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { IconArrowUp, IconChevronLeft, IconChevronRight } from '@/components/icons/Icons';
 import { setOnboardingComplete } from '@/lib/onboardingStorage';
 import styles from './WelcomePage.module.css';
+import type { ReactNode } from 'react';
 
-const gestures = [
-  { dir: '←', label: 'Skip', desc: 'Not interested? Swipe left to pass.', className: styles.skip },
-  { dir: '→', label: 'Save', desc: 'Like it? Swipe right to bookmark for later.', className: styles.save },
-  { dir: '↑', label: 'Quick Apply', desc: 'Great match? Swipe up to apply instantly.', className: styles.apply },
+const gestures: { icon: ReactNode; label: string; desc: string; className: string }[] = [
+  { icon: <IconChevronLeft size={22} />, label: 'Skip', desc: 'Not interested? Swipe left to pass.', className: styles.skip },
+  { icon: <IconChevronRight size={22} />, label: 'Save', desc: 'Like it? Swipe right to bookmark for later.', className: styles.save },
+  { icon: <IconArrowUp size={22} />, label: 'Quick Apply', desc: 'Great match? Swipe up to apply instantly.', className: styles.apply },
 ];
 
 export function WelcomePage() {
@@ -48,7 +50,7 @@ export function WelcomePage() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.15 + i * 0.08 }}
             >
-              <span className={`${styles.gestureIcon} ${g.className}`}>{g.dir}</span>
+              <span className={`${styles.gestureIcon} ${g.className}`}>{g.icon}</span>
               <div>
                 <strong>{g.label}</strong>
                 <p>{g.desc}</p>
@@ -69,7 +71,7 @@ export function WelcomePage() {
           Set up profile first
         </button>
         <button type="button" className={styles.secondaryBtn} onClick={() => finish('/swipe')}>
-          Start swiping →
+          Start swiping <IconChevronRight size={18} />
         </button>
       </motion.div>
     </section>

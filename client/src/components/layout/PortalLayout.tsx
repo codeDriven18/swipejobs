@@ -1,5 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { IconChevronLeft } from '@/components/icons/Icons';
 import { useAuth } from '@/context/AuthContext';
 import { AppIcon } from '@/components/brand/AppIcon';
 import styles from './PortalLayout.module.css';
@@ -39,7 +40,9 @@ export function PortalLayout() {
             </NavLink>
           ))}
         </nav>
-        <NavLink to="/" className={styles.backLink}>← Back to app</NavLink>
+        <NavLink to="/" className={styles.backLink}>
+          <IconChevronLeft size={16} /> Back to app
+        </NavLink>
       </aside>
 
       <main className={styles.main}>

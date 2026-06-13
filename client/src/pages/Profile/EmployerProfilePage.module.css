@@ -31,6 +31,12 @@
   padding-top: 1rem;
 }
 
+.metaIcon {
+  display: inline-block;
+  vertical-align: -0.15em;
+  margin-right: 0.25rem;
+}
+
 .actions {
   display: flex;
   flex-wrap: wrap;

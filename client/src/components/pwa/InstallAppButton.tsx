@@ -1,3 +1,4 @@
+import { IconSmartphone } from '@/components/icons/Icons';
 import { usePwaInstallPrompt } from '@/context/PwaInstallContext';
 import styles from './PwaInstall.module.css';
 
@@ -30,7 +31,7 @@ export function InstallAppButton({
       className={`${styles.button} ${variant === 'compact' ? styles.compact : ''} ${variant === 'full' ? styles.block : ''} ${className}`.trim()}
       onClick={() => void promptInstall()}
     >
-      <span className={styles.icon} aria-hidden="true">📱</span>
+      <span className={styles.icon} aria-hidden="true"><IconSmartphone size={18} /></span>
       <span>Install SwipeJobs</span>
     </button>
   );
