@@ -27,10 +27,8 @@ export function AppLayout() {
     <div className={`${styles.layout} ${isStandalone ? styles.layoutStandalone : ''}`}>
       {!hideHeader && (
         <header className={`${styles.header} ${isStandalone ? styles.headerStandalone : ''}`}>
-          <motion.div className={styles.brand}>
-            <motion.div style={{ opacity: brandOpacity }}>
-              <AppIcon size="sm" />
-            </motion.div>
+          <motion.div className={styles.brand} style={{ opacity: brandOpacity }}>
+            <AppIcon size="sm" />
             {!isStandalone && <span className={styles.title}>SwipeJobs</span>}
             {isStandalone && isProfileHub && <span className={styles.title}>Profile</span>}
           </motion.div>
