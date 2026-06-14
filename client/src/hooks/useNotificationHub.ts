@@ -13,26 +13,88 @@ function logSignalR(message: string, detail?: unknown) {
   }
 }
 
-interface UseNotificationHubOptions {
+function mapHubState(state: signalR.HubConnectionState): HubConnectionState {
+  switch (state) {
+    case signalR.HubConnectionState.Connected:
+      return 'connected';
+    case signalR.HubConnectionState.Reconnecting:
+      return 'reconnecting';
+    case signalR.HubConnectionState.Connecting:
+    case signalR.HubConnectionState.Disconnecting:
+      return 'connecting';
+    default:
+      return 'disconnected';
+  }
+}
+
+function canStart(state: signalR.HubConnectionState): boolean {
+  return state === signalR.HubConnectionState.Disconnected;
+}
+
+function canStop(state: signalR.HubConnectionState): boolean {
+  return (
+    state === signalR.HubConnectionState.Connected
+    || state === signalR.HubConnectionState.Connecting
+    || state === signalR.HubConnectionState.Reconnecting
+  );
+}
+
+interface HubSubscriber {
   onReceived: (notification: AppNotification) => void;
   onStateChange?: (state: HubConnectionState) => void;
 }
 
-export function useNotificationHub({ onReceived, onStateChange }: UseNotificationHubOptions) {
-  const { isAuthenticated, user } = useAuth();
-  const onStateChangeRef = useRef(onStateChange);
-  onStateChangeRef.current = onStateChange;
+/** Single shared hub connection for the app — avoids duplicate starts from remounts. */
+class NotificationHubConnection {
+  private static instance: NotificationHubConnection | null = null;
 
-  useEffect(() => {
-    if (!isAuthenticated || !user?.profileId) {
-      onStateChangeRef.current?.('disconnected');
-      return;
+  private connection: signalR.HubConnection | null = null;
+  private startPromise: Promise<void> | null = null;
+  private starting = false;
+  private stopping = false;
+  private refCount = 0;
+  private subscribers = new Map<number, HubSubscriber>();
+  private nextSubscriberId = 0;
+
+  static getInstance(): NotificationHubConnection {
+    NotificationHubConnection.instance ??= new NotificationHubConnection();
+    return NotificationHubConnection.instance;
+  }
+
+  subscribe(subscriber: HubSubscriber): () => void {
+    const id = this.nextSubscriberId++;
+    this.subscribers.set(id, subscriber);
+    this.refCount += 1;
+
+    const connection = this.connection;
+    if (connection && connection.state !== signalR.HubConnectionState.Disconnected) {
+      subscriber.onStateChange?.(mapHubState(connection.state));
     }
 
-    const setState = (state: HubConnectionState) => {
-      onStateChangeRef.current?.(state);
-    };
+    void this.ensureStarted();
 
+    return () => {
+      this.subscribers.delete(id);
+      this.refCount = Math.max(0, this.refCount - 1);
+      if (this.refCount === 0) {
+        void this.stopSafely();
+      }
+    };
+  }
+
+  private notifyState(state: HubConnectionState) {
+    this.subscribers.forEach((subscriber) => {
+      subscriber.onStateChange?.(state);
+    });
+  }
+
+  private broadcastNotification(notification: AppNotification) {
+    this.subscribers.forEach((subscriber) => {
+      subscriber.onReceived(notification);
+    });
+  }
+
+  private createConnection(): signalR.HubConnection {
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(HUB_CONFIG.notificationsUrl, {
         accessTokenFactory: () => getAccessToken() ?? '',
@@ -48,17 +110,17 @@ export function useNotificationHub({ onReceived, onStateChange }: UseNotificatio
       .build();
 
     connection.on('NotificationReceived', (notification: AppNotification) => {
-      onReceived(notification);
+      this.broadcastNotification(notification);
     });
 
     connection.onreconnecting((error) => {
       logSignalR('Reconnecting...', error?.message);
-      setState('reconnecting');
+      this.notifyState('reconnecting');
     });
 
     connection.onreconnected((connectionId) => {
       logSignalR('Reconnected', connectionId);
-      setState('connected');
+      this.notifyState('connected');
     });
 
     connection.onclose((error) => {
@@ -67,32 +129,133 @@ export function useNotificationHub({ onReceived, onStateChange }: UseNotificatio
       } else {
         logSignalR('Connection closed');
       }
-      setState('disconnected');
+
+      this.startPromise = null;
+      this.starting = false;
+      this.notifyState('disconnected');
+
+      if (this.stopping || this.refCount === 0) return;
+
+      // Reconnect after an unexpected drop while subscribers remain active.
+      this.connection = null;
+      void this.ensureStarted();
     });
 
-    let cancelled = false;
-    setState('connecting');
+    return connection;
+  }
 
-    void (async () => {
-      try {
-        logSignalR('Starting connection', HUB_CONFIG.notificationsUrl);
-        await connection.start();
-        if (!cancelled) {
-          logSignalR('Connected', connection.state);
-          setState('connected');
-        }
-      } catch (error) {
-        if (!cancelled) {
-          logSignalR('Failed to start notification hub', error);
-          setState('disconnected');
-        }
+  private getOrCreateConnection(): signalR.HubConnection {
+    this.connection ??= this.createConnection();
+    return this.connection;
+  }
+
+  private async ensureStarted(): Promise<void> {
+    if (this.refCount === 0 || this.stopping) return;
+
+    const connection = this.getOrCreateConnection();
+    const state = connection.state;
+
+    if (
+      state === signalR.HubConnectionState.Connected
+      || state === signalR.HubConnectionState.Reconnecting
+    ) {
+      this.notifyState(mapHubState(state));
+      return;
+    }
+
+    if (this.starting || state === signalR.HubConnectionState.Connecting) {
+      await this.startPromise?.catch(() => undefined);
+      if (this.refCount > 0 && connection.state === signalR.HubConnectionState.Connected) {
+        this.notifyState('connected');
       }
-    })();
+      return;
+    }
 
-    return () => {
-      cancelled = true;
-      setState('disconnected');
-      void connection.stop();
-    };
-  }, [isAuthenticated, user?.profileId, onReceived]);
+    if (!canStart(state)) return;
+
+    this.starting = true;
+    this.notifyState('connecting');
+    logSignalR('Starting connection', HUB_CONFIG.notificationsUrl);
+
+    this.startPromise = connection.start();
+    try {
+      await this.startPromise;
+      if (this.refCount === 0) {
+        await this.stopSafely();
+        return;
+      }
+      logSignalR('Connected', connection.state);
+      this.notifyState('connected');
+    } catch (error) {
+      if (this.refCount > 0) {
+        logSignalR('Failed to start notification hub', error);
+        this.notifyState('disconnected');
+      }
+    } finally {
+      this.starting = false;
+      this.startPromise = null;
+    }
+  }
+
+  private async stopSafely(): Promise<void> {
+    if (this.refCount > 0 || this.stopping) return;
+
+    this.stopping = true;
+    this.notifyState('disconnected');
+
+    const connection = this.connection;
+    if (!connection) {
+      this.stopping = false;
+      return;
+    }
+
+    try {
+      if (this.startPromise) {
+        await this.startPromise.catch(() => undefined);
+      }
+
+      const state = connection.state;
+      if (canStop(state)) {
+        await connection.stop();
+      }
+    } catch (error) {
+      logSignalR('Error stopping notification hub', error);
+    } finally {
+      if (this.refCount === 0) {
+        this.connection = null;
+        this.startPromise = null;
+        this.starting = false;
+      }
+      this.stopping = false;
+    }
+  }
+}
+
+interface UseNotificationHubOptions {
+  onReceived: (notification: AppNotification) => void;
+  onStateChange?: (state: HubConnectionState) => void;
+}
+
+export function useNotificationHub({ onReceived, onStateChange }: UseNotificationHubOptions) {
+  const { isAuthenticated, user } = useAuth();
+  const onReceivedRef = useRef(onReceived);
+  const onStateChangeRef = useRef(onStateChange);
+  onReceivedRef.current = onReceived;
+  onStateChangeRef.current = onStateChange;
+
+  useEffect(() => {
+    if (!isAuthenticated || !user?.profileId) {
+      onStateChangeRef.current?.('disconnected');
+      return;
+    }
+
+    return NotificationHubConnection.getInstance().subscribe({
+      onReceived: (notification) => {
+        onReceivedRef.current(notification);
+      },
+      onStateChange: (state) => {
+        onStateChangeRef.current?.(state);
+      },
+    });
+  }, [isAuthenticated, user?.profileId]);
 }
