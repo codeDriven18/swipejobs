@@ -10,8 +10,9 @@ namespace SwipeJobs.Api.HostedServices;
 public sealed class AiExtractionQueueHostedService : BackgroundService
 {
     private readonly QueuedAiExtractionService _queue;
-    private readonly IGeminiExtractionClient _gemini;
+    private readonly IJobExtractionProvider _provider;
     private readonly AiExtractionQueueMetrics _metrics;
+    private readonly AiExtractionDiagnosticsState _diagnostics;
     private readonly AiOptions _options;
     private readonly ILogger<AiExtractionQueueHostedService> _logger;
     private readonly SemaphoreSlim _concurrency;
@@ -20,14 +21,16 @@ public sealed class AiExtractionQueueHostedService : BackgroundService
 
     public AiExtractionQueueHostedService(
         QueuedAiExtractionService queue,
-        IGeminiExtractionClient gemini,
+        IJobExtractionProvider provider,
         AiExtractionQueueMetrics metrics,
+        AiExtractionDiagnosticsState diagnostics,
         IOptions<AiOptions> options,
         ILogger<AiExtractionQueueHostedService> logger)
     {
         _queue = queue;
-        _gemini = gemini;
+        _provider = provider;
         _metrics = metrics;
+        _diagnostics = diagnostics;
         _options = options.Value;
         _logger = logger;
         _concurrency = new SemaphoreSlim(Math.Max(1, _options.MaxConcurrentRequests));
@@ -36,7 +39,8 @@ public sealed class AiExtractionQueueHostedService : BackgroundService
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation(
-            "AI extraction queue started. MaxConcurrent={MaxConcurrent}, MinIntervalMs={MinIntervalMs}, MaxRetries={MaxRetries}",
+            "AI extraction queue started. Provider={Provider}, MaxConcurrent={MaxConcurrent}, MinIntervalMs={MinIntervalMs}, MaxRetries={MaxRetries}",
+            _provider.ProviderName,
             _options.MaxConcurrentRequests,
             _options.MinRequestIntervalMs,
             _options.MaxRetryAttempts);
@@ -57,11 +61,20 @@ public sealed class AiExtractionQueueHostedService : BackgroundService
         {
             var result = await ExecuteWithRateLimitAsync(item, stoppingToken);
             if (result.Success)
+            {
                 _metrics.IncrementCompleted();
+                _diagnostics.RecordSuccess();
+            }
             else if (result.IsRateLimited)
+            {
                 _metrics.IncrementRateLimited();
+                _diagnostics.RecordFailure(result.ErrorMessage);
+            }
             else
+            {
                 _metrics.IncrementFailed();
+                _diagnostics.RecordFailure(result.ErrorMessage);
+            }
 
             item.Completion.TrySetResult(result);
         }
@@ -73,6 +86,7 @@ public sealed class AiExtractionQueueHostedService : BackgroundService
         {
             _logger.LogError(ex, "Unexpected extraction queue failure.");
             _metrics.IncrementFailed();
+            _diagnostics.RecordFailure(ex.Message);
             item.Completion.TrySetException(ex);
         }
         finally
@@ -98,7 +112,7 @@ public sealed class AiExtractionQueueHostedService : BackgroundService
             try
             {
                 await EnforceMinIntervalAsync(stoppingToken);
-                lastResult = await _gemini.ExtractJobAsync(item.RawMessage, stoppingToken);
+                lastResult = await _provider.ExtractJobAsync(item.RawMessage, stoppingToken);
 
                 if (lastResult.Success)
                     return lastResult;
@@ -109,7 +123,8 @@ public sealed class AiExtractionQueueHostedService : BackgroundService
                 var delay = ComputeBackoffDelay(attempt, lastResult);
                 _metrics.SetCooldownUntil(DateTime.UtcNow.Add(delay));
                 _logger.LogWarning(
-                    "Gemini rate limited (attempt {Attempt}/{MaxAttempts}). Retrying in {DelayMs}ms.",
+                    "{Provider} rate limited (attempt {Attempt}/{MaxAttempts}). Retrying in {DelayMs}ms.",
+                    _provider.ProviderName,
                     attempt,
                     maxAttempts,
                     (int)delay.TotalMilliseconds);
@@ -126,7 +141,7 @@ public sealed class AiExtractionQueueHostedService : BackgroundService
         }
 
         return lastResult ?? new AiExtractionResponse(
-            null, "Gemini", string.Empty, "Gemini", false,
+            null, _provider.ProviderName, string.Empty, _provider.ProviderName, false,
             "Extraction failed.", 0, 429, true);
     }
 

@@ -1,9 +1,10 @@
-using SwipeJobs.Application.Modules.Ingestion.Interfaces;
 using SwipeJobs.Application.Modules.Ingestion.Models;
 
 namespace SwipeJobs.Application.Modules.Ingestion.Services;
 
-public interface IGeminiExtractionClient
+public interface IJobExtractionProvider
 {
+    string ProviderName { get; }
+
     Task<AiExtractionResponse> ExtractJobAsync(string rawMessage, CancellationToken cancellationToken = default);
 }

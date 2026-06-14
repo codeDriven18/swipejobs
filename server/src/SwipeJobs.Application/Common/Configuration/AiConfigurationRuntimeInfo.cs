@@ -23,7 +23,7 @@ public static class AiConfigurationDiagnostics
 
         return new AiConfigurationRuntimeInfo
         {
-            Provider = string.IsNullOrWhiteSpace(provider) ? "Gemini" : provider.Trim(),
+            Provider = provider?.Trim() ?? string.Empty,
             ProviderSource = providerSource,
             Model = model?.Trim() ?? string.Empty,
             ModelSource = modelSource,

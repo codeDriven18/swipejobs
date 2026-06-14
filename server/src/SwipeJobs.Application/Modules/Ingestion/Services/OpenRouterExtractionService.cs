@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
@@ -8,14 +9,13 @@ using Microsoft.Extensions.Options;
 using SwipeJobs.Application.Common.Configuration;
 using SwipeJobs.Application.Modules.Ingestion.Models;
 
-// AiProviderExtractionException, AiProviderErrorClassifier
 using SwipeJobs.Application.Modules.Ingestion;
 
 namespace SwipeJobs.Application.Modules.Ingestion.Services;
 
-public sealed class GeminiExtractionService : IJobExtractionProvider
+public sealed class OpenRouterExtractionService : IJobExtractionProvider
 {
-    private const string Provider = "Gemini";
+    private const string Provider = "OpenRouter";
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -26,13 +26,13 @@ public sealed class GeminiExtractionService : IJobExtractionProvider
     private readonly HttpClient _httpClient;
     private readonly AiOptions _options;
     private readonly AiConfigurationRuntimeInfo _runtimeInfo;
-    private readonly ILogger<GeminiExtractionService> _logger;
+    private readonly ILogger<OpenRouterExtractionService> _logger;
 
-    public GeminiExtractionService(
+    public OpenRouterExtractionService(
         HttpClient httpClient,
         IOptions<AiOptions> options,
         AiConfigurationRuntimeInfo runtimeInfo,
-        ILogger<GeminiExtractionService> logger)
+        ILogger<OpenRouterExtractionService> logger)
     {
         _httpClient = httpClient;
         _options = options.Value;
@@ -64,7 +64,7 @@ public sealed class GeminiExtractionService : IJobExtractionProvider
             try
             {
                 var (responseText, statusCode, requestBytes) =
-                    await CallGeminiAsync(rawMessage, model, cancellationToken);
+                    await CallOpenRouterAsync(rawMessage, model, cancellationToken);
 
                 var parsed = JobExtractionJsonParser.Parse(responseText);
 
@@ -136,7 +136,7 @@ public sealed class GeminiExtractionService : IJobExtractionProvider
             }
         }
 
-        return lastResult ?? Failed(model, "Gemini extraction failed.", stopwatch.ElapsedMilliseconds);
+        return lastResult ?? Failed(model, "OpenRouter extraction failed.", stopwatch.ElapsedMilliseconds);
     }
 
     private string RequireConfiguredModel()
@@ -151,54 +151,47 @@ public sealed class GeminiExtractionService : IJobExtractionProvider
         return model;
     }
 
-    private async Task<(string Text, int StatusCode, int RequestBytes)> CallGeminiAsync(
+    private async Task<(string Text, int StatusCode, int RequestBytes)> CallOpenRouterAsync(
         string rawMessage,
         string model,
         CancellationToken cancellationToken)
     {
-        var url = $"v1beta/models/{Uri.EscapeDataString(model)}:generateContent";
+        const string endpoint = "chat/completions";
 
         _logger.LogInformation(
             "{Provider} request preparing. Model={Model}, Endpoint={Endpoint}, ConfigSource={ConfigSource}",
             Provider,
             model,
-            url,
+            endpoint,
             _runtimeInfo.ModelSource);
 
-        var request = new GeminiGenerateContentRequest
+        var request = new OpenRouterChatRequest
         {
-            SystemInstruction = new GeminiContent
-            {
-                Parts = [new GeminiPart { Text = JobExtractionPrompt.SystemPrompt }],
-            },
-            Contents =
+            Model = model,
+            Messages =
             [
-                new GeminiContent
-                {
-                    Role = "user",
-                    Parts = [new GeminiPart { Text = rawMessage }],
-                },
+                new OpenRouterMessage { Role = "system", Content = JobExtractionPrompt.SystemPrompt },
+                new OpenRouterMessage { Role = "user", Content = rawMessage },
             ],
-            GenerationConfig = new GeminiGenerationConfig
-            {
-                Temperature = 0.1,
-                ResponseMimeType = "application/json",
-            },
+            Temperature = 0.1,
+            ResponseFormat = new OpenRouterResponseFormat { Type = "json_object" },
         };
 
         var requestJson = JsonSerializer.Serialize(request, JsonOptions);
         var requestBytes = Encoding.UTF8.GetByteCount(requestJson);
 
-        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, url);
-        httpRequest.Headers.Add("x-goog-api-key", _options.ApiKey);
+        using var httpRequest = new HttpRequestMessage(HttpMethod.Post, endpoint);
+        httpRequest.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _options.ApiKey);
+        httpRequest.Headers.TryAddWithoutValidation("HTTP-Referer", "https://swipejobs.app");
+        httpRequest.Headers.TryAddWithoutValidation("X-Title", "SwipeJobs");
         httpRequest.Content = JsonContent.Create(request);
 
         _logger.LogInformation(
-            "{Provider} request sending. Model={Model}, RequestBytes={RequestBytes}, Url={Url}",
+            "{Provider} request sending. Model={Model}, RequestBytes={RequestBytes}, Endpoint={Endpoint}",
             Provider,
             model,
             requestBytes,
-            url);
+            endpoint);
 
         using var response = await _httpClient.SendAsync(httpRequest, cancellationToken);
         var body = await response.Content.ReadAsStringAsync(cancellationToken);
@@ -225,15 +218,13 @@ public sealed class GeminiExtractionService : IJobExtractionProvider
                 retryAfter.HasValue ? TimeSpan.FromSeconds(retryAfter.Value) : null);
         }
 
-        var geminiResponse = JsonSerializer.Deserialize<GeminiGenerateContentResponse>(body, JsonOptions)
-            ?? throw new InvalidOperationException("Gemini returned an empty response envelope.");
+        var openRouterResponse = JsonSerializer.Deserialize<OpenRouterChatResponse>(body, JsonOptions)
+            ?? throw new InvalidOperationException("OpenRouter returned an empty response envelope.");
 
-        var text = geminiResponse.Candidates?
+        var text = openRouterResponse.Choices?
             .FirstOrDefault()?
-            .Content?
-            .Parts?
-            .FirstOrDefault(p => !string.IsNullOrWhiteSpace(p.Text))?
-            .Text;
+            .Message?
+            .Content;
 
         if (string.IsNullOrWhiteSpace(text))
         {
@@ -242,7 +233,7 @@ public sealed class GeminiExtractionService : IJobExtractionProvider
                 Provider,
                 model,
                 AiHttpExtractionHelpers.Truncate(body, 1000));
-            throw new InvalidOperationException("Gemini returned no text content.");
+            throw new InvalidOperationException("OpenRouter returned no text content.");
         }
 
         return (text, statusCode, requestBytes);
@@ -251,51 +242,45 @@ public sealed class GeminiExtractionService : IJobExtractionProvider
     private AiExtractionResponse Failed(string model, string error, long elapsedMs) =>
         new(null, _options.Provider, model, Provider, false, error, elapsedMs);
 
-    private sealed class GeminiGenerateContentRequest
+    private sealed class OpenRouterChatRequest
     {
-        [JsonPropertyName("systemInstruction")]
-        public GeminiContent? SystemInstruction { get; set; }
+        [JsonPropertyName("model")]
+        public string Model { get; set; } = string.Empty;
 
-        [JsonPropertyName("contents")]
-        public List<GeminiContent> Contents { get; set; } = [];
+        [JsonPropertyName("messages")]
+        public List<OpenRouterMessage> Messages { get; set; } = [];
 
-        [JsonPropertyName("generationConfig")]
-        public GeminiGenerationConfig? GenerationConfig { get; set; }
-    }
-
-    private sealed class GeminiGenerationConfig
-    {
         [JsonPropertyName("temperature")]
         public double Temperature { get; set; }
 
-        [JsonPropertyName("responseMimeType")]
-        public string? ResponseMimeType { get; set; }
+        [JsonPropertyName("response_format")]
+        public OpenRouterResponseFormat? ResponseFormat { get; set; }
     }
 
-    private sealed class GeminiContent
+    private sealed class OpenRouterMessage
     {
         [JsonPropertyName("role")]
-        public string? Role { get; set; }
+        public string Role { get; set; } = string.Empty;
 
-        [JsonPropertyName("parts")]
-        public List<GeminiPart> Parts { get; set; } = [];
-    }
-
-    private sealed class GeminiPart
-    {
-        [JsonPropertyName("text")]
-        public string? Text { get; set; }
-    }
-
-    private sealed class GeminiGenerateContentResponse
-    {
-        [JsonPropertyName("candidates")]
-        public List<GeminiCandidate>? Candidates { get; set; }
-    }
-
-    private sealed class GeminiCandidate
-    {
         [JsonPropertyName("content")]
-        public GeminiContent? Content { get; set; }
+        public string Content { get; set; } = string.Empty;
+    }
+
+    private sealed class OpenRouterResponseFormat
+    {
+        [JsonPropertyName("type")]
+        public string Type { get; set; } = "json_object";
+    }
+
+    private sealed class OpenRouterChatResponse
+    {
+        [JsonPropertyName("choices")]
+        public List<OpenRouterChoice>? Choices { get; set; }
+    }
+
+    private sealed class OpenRouterChoice
+    {
+        [JsonPropertyName("message")]
+        public OpenRouterMessage? Message { get; set; }
     }
 }

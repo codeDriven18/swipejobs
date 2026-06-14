@@ -40,6 +40,7 @@ import { AdminCompanyApprovalsPage } from '@/pages/Admin/AdminCompanyApprovalsPa
 import { AdminModerationPage } from '@/pages/Admin/AdminModerationPage';
 import { AdminSourcesPage } from '@/pages/Admin/AdminSourcesPage';
 import { AdminSystemPage } from '@/pages/Admin/AdminSystemPage';
+import { AdminAiPage } from '@/pages/Admin/AdminAiPage';
 import { PortalDashboardPage } from '@/pages/Portal/PortalDashboardPage';
 import { PortalJobsPage } from '@/pages/Portal/PortalJobsPage';
 import { PortalApplicationsPage } from '@/pages/Portal/PortalApplicationsPage';
@@ -78,6 +79,7 @@ export function AppRouter() {
           <Route path="audit" element={<AdminAuditPage />} />
           <Route path="company-approvals" element={<AdminCompanyApprovalsPage />} />
           <Route path="system" element={<AdminSystemPage />} />
+          <Route path="system/ai" element={<AdminAiPage />} />
           <Route path="notifications" element={<AdminNotificationsPage />} />
           <Route path="settings" element={<AdminSettingsPage />} />
         </Route>

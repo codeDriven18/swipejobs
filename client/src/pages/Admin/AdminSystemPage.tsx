@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { adminApi } from '@/api/adminApi';
 import type { AdminSystemHealth } from '@/models/admin';
 import styles from './AdminPage.module.css';
@@ -28,6 +29,9 @@ export function AdminSystemPage() {
             Last checked {new Date(health.checkedAt).toLocaleString()}
           </p>
         </div>
+        <Link to="/admin/system/ai" className={styles.btnPrimary}>
+          AI Diagnostics
+        </Link>
       </header>
 
       <div className={styles.healthGrid}>

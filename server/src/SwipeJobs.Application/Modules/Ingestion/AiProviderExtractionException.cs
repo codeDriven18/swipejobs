@@ -1,8 +1,9 @@
 namespace SwipeJobs.Application.Modules.Ingestion;
 
-public sealed class GeminiExtractionException : Exception
+public sealed class AiProviderExtractionException : Exception
 {
-    public GeminiExtractionException(
+    public AiProviderExtractionException(
+        string providerName,
         int statusCode,
         string message,
         string responseBody,
@@ -11,12 +12,14 @@ public sealed class GeminiExtractionException : Exception
         Exception? inner = null)
         : base(message, inner)
     {
+        ProviderName = providerName;
         StatusCode = statusCode;
         ResponseBody = responseBody;
         RequestBytes = requestBytes;
         RetryAfter = retryAfter;
     }
 
+    public string ProviderName { get; }
     public int StatusCode { get; }
     public string ResponseBody { get; }
     public int RequestBytes { get; }
