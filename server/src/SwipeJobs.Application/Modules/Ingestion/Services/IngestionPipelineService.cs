@@ -156,11 +156,12 @@ public class IngestionPipelineService
 
                 if (aiResponse.IsRateLimited)
                 {
-                    await MarkMessageFailed(message, IngestionErrorSummarizer.ForDisplay(error), cancellationToken);
-                    await MarkSourceRateLimited(source, cancellationToken);
+                    await Log(source.Id, "extraction", "Warning", "Waiting for AI quota.", aiResponse.Model, cancellationToken);
+                    await MarkMessageWaitingForQuota(message, cancellationToken);
+                    await MarkSourceWaitingForQuota(source, cancellationToken);
                     throw new IngestionPipelineException(
                         IngestionErrorCodes.GeminiRateLimited,
-                        "Gemini rate limit exceeded. Extraction will retry automatically.");
+                        "Waiting for AI quota. Extraction will retry automatically.");
                 }
 
                 await MarkMessageFailed(message, IngestionErrorSummarizer.ForDisplay(error), cancellationToken);
@@ -323,14 +324,22 @@ public class IngestionPipelineService
         return IngestionErrorCodes.GeminiExtractionFailed;
     }
 
-    private async Task MarkSourceRateLimited(Source source, CancellationToken cancellationToken)
+    private async Task MarkSourceWaitingForQuota(Source source, CancellationToken cancellationToken)
     {
-        source.LastSyncStatus = "Rate Limited";
-        source.LastIngestionError = "Rate limit exceeded.";
+        source.LastSyncStatus = "Waiting for AI quota";
+        source.LastIngestionError = "Waiting for AI quota.";
         source.SourceLastCheckedAt = DateTime.UtcNow;
         await _sourceRepository.UpdateAsync(source, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-        await Log(source.Id, "rate-limit", "Warning", "Gemini rate limit exceeded.", null, cancellationToken);
+        await Log(source.Id, "quota-wait", "Warning", "Waiting for AI quota.", null, cancellationToken);
+    }
+
+    private async Task MarkMessageWaitingForQuota(IngestionMessage message, CancellationToken cancellationToken)
+    {
+        message.Status = IngestionMessageStatus.Processing;
+        message.ProcessingError = "Waiting for AI quota";
+        await _messageRepository.UpdateAsync(message, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
     private async Task MarkMessageFailed(IngestionMessage message, string error, CancellationToken cancellationToken)

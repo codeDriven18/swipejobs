@@ -159,14 +159,14 @@ export function AdminSourcesPage() {
     }
   };
 
-  const handleDelete = async (source: AdminSource) => {
-    if (!window.confirm(`Disable source "${source.name}"?`)) return;
+  const handleDeactivate = async (source: AdminSource) => {
+    if (!window.confirm(`Deactivate source "${source.name}"? It will stop ingesting and be hidden from active lists.`)) return;
     try {
       await sourcesApi.remove(source.id);
-      setMessage('Source disabled.');
+      setMessage('Source deactivated.');
       void refresh();
     } catch {
-      setMessage('Could not disable source.');
+      setMessage('Could not deactivate source.');
     }
   };
 
@@ -219,7 +219,7 @@ export function AdminSourcesPage() {
           <div><strong>{queueMetrics.processing}</strong><span>Processing</span></div>
           <div><strong>{queueMetrics.completed}</strong><span>Completed</span></div>
           <div><strong>{queueMetrics.failed}</strong><span>Failed</span></div>
-          <div><strong>{queueMetrics.rateLimited}</strong><span>Rate limited</span></div>
+          <div><strong>{queueMetrics.rateLimited}</strong><span>Quota wait</span></div>
           {queueMetrics.isInCooldown && (
             <div className={styles.queueCooldown}>
               Cooldown until {queueMetrics.cooldownUntilUtc
@@ -308,8 +308,8 @@ export function AdminSourcesPage() {
                   {source.ingestionEnabled ? 'Disable' : 'Enable'}
                 </button>
                 <button type="button" className={adminStyles.btn} onClick={() => void handleViewLogs(source)}>View logs</button>
-                <button type="button" className={adminStyles.btnDanger} onClick={() => void handleDelete(source)}>
-                  Delete
+                <button type="button" className={adminStyles.btn} onClick={() => void handleDeactivate(source)}>
+                  Deactivate
                 </button>
               </div>
             </article>

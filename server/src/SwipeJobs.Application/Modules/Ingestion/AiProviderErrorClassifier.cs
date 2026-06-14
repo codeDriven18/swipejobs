@@ -13,9 +13,7 @@ public static class AiProviderErrorClassifier
                 : "Invalid Gemini API key.";
 
         if (statusCode == 429 || lower.Contains("rate limit") || lower.Contains("quota") || lower.Contains("resource_exhausted"))
-            return provider.Equals("OpenRouter", StringComparison.OrdinalIgnoreCase)
-                ? "OpenRouter rate limit exceeded."
-                : "Gemini rate limit exceeded.";
+            return "Waiting for AI quota.";
 
         if (statusCode == 404 || (lower.Contains("not found") && lower.Contains("model")))
             return "Model not available.";

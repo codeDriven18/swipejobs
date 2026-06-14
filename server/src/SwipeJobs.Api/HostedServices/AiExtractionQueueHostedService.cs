@@ -59,24 +59,37 @@ public sealed class AiExtractionQueueHostedService : BackgroundService
         _metrics.IncrementProcessing();
         try
         {
-            var result = await ExecuteWithRateLimitAsync(item, stoppingToken);
-            if (result.Success)
+            while (!stoppingToken.IsCancellationRequested)
             {
-                _metrics.IncrementCompleted();
-                _diagnostics.RecordSuccess();
-            }
-            else if (result.IsRateLimited)
-            {
-                _metrics.IncrementRateLimited();
-                _diagnostics.RecordFailure(result.ErrorMessage);
-            }
-            else
-            {
+                item.CancellationToken.ThrowIfCancellationRequested();
+
+                var result = await ExecuteWithRateLimitAsync(item, stoppingToken);
+                if (result.Success)
+                {
+                    _metrics.IncrementCompleted();
+                    _diagnostics.RecordSuccess();
+                    item.Completion.TrySetResult(result);
+                    return;
+                }
+
+                if (result.IsRateLimited)
+                {
+                    _metrics.IncrementRateLimited();
+                    _logger.LogWarning(
+                        "{Provider} quota exhausted. Re-queuing extraction after cooldown.",
+                        _provider.ProviderName);
+
+                    await WaitForGlobalCooldownAsync(stoppingToken);
+                    continue;
+                }
+
                 _metrics.IncrementFailed();
                 _diagnostics.RecordFailure(result.ErrorMessage);
+                item.Completion.TrySetResult(result);
+                return;
             }
 
-            item.Completion.TrySetResult(result);
+            item.Completion.TrySetCanceled(stoppingToken);
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {

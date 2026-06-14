@@ -11,8 +11,8 @@ public static class SourceHealthResolver
         if (!source.IsActive || !source.IngestionEnabled)
             return "Disabled";
 
-        if (IsRateLimited(source, queueMetrics))
-            return "Rate Limited";
+        if (IsWaitingForAiQuota(source, queueMetrics))
+            return "Waiting for AI quota";
 
         if (IsExtractionFailed(source))
             return "Extraction Failed";
@@ -38,17 +38,22 @@ public static class SourceHealthResolver
         };
     }
 
-    private static bool IsRateLimited(Source source, AiExtractionQueueMetrics? queueMetrics)
+    private static bool IsWaitingForAiQuota(Source source, AiExtractionQueueMetrics? queueMetrics)
     {
+        if (string.Equals(source.LastSyncStatus, "Waiting for AI quota", StringComparison.OrdinalIgnoreCase))
+            return true;
+
         if (string.Equals(source.LastSyncStatus, "Rate Limited", StringComparison.OrdinalIgnoreCase))
             return true;
 
         var error = source.LastIngestionError?.ToLowerInvariant() ?? string.Empty;
-        if (error.Contains("rate limit") || error.Contains("quota"))
+        if (error.Contains("waiting for ai quota"))
             return true;
 
-        return queueMetrics?.IsInCooldown == true &&
-               (error.Contains("rate") || error.Contains("429"));
+        if (error.Contains("rate limit") || error.Contains("quota") || error.Contains("429"))
+            return true;
+
+        return queueMetrics?.IsInCooldown == true;
     }
 
     private static bool IsExtractionFailed(Source source)
@@ -57,9 +62,18 @@ public static class SourceHealthResolver
             return true;
 
         var error = source.LastIngestionError?.ToLowerInvariant() ?? string.Empty;
+        if (error.Contains("waiting for ai quota") ||
+            error.Contains("rate limit") ||
+            error.Contains("quota") ||
+            error.Contains("429"))
+        {
+            return false;
+        }
+
         return error.Contains("extraction failed") ||
                error.Contains("invalid ai") ||
-               (error.Contains("gemini") && !error.Contains("rate limit") && !error.Contains("quota"));
+               (error.Contains("openrouter") && error.Contains("failed")) ||
+               (error.Contains("gemini") && error.Contains("failed"));
     }
 
     private static bool IsSyncing(Source source, AiExtractionQueueMetrics? queueMetrics)

@@ -3,6 +3,7 @@ export type SourceHealthStatus =
   | 'Connected'
   | 'Disabled'
   | 'Syncing'
+  | 'Waiting for AI quota'
   | 'Rate Limited'
   | 'Extraction Failed'
   | 'Missing URL'
@@ -29,8 +30,9 @@ export function resolveSourceStatusBadge(
       return { label: 'Disabled', tone: 'muted' };
     case 'Syncing':
       return { label: 'Syncing', tone: 'syncing' };
+    case 'Waiting for AI quota':
     case 'Rate Limited':
-      return { label: 'Rate Limited', tone: 'rateLimited' };
+      return { label: 'Waiting for AI quota', tone: 'rateLimited' };
     case 'Extraction Failed':
       return { label: 'Extraction Failed', tone: 'failed' };
     default:
@@ -55,7 +57,9 @@ export function formatRelativeTime(iso?: string | null): string {
 
 export function getStatusDetailLabel(healthStatus?: string | null): string | undefined {
   if (!healthStatus) return undefined;
-  if (healthStatus === 'Rate Limited') return 'Details available in logs.';
+  if (healthStatus === 'Waiting for AI quota' || healthStatus === 'Rate Limited') {
+    return 'AI quota cooldown — extraction will resume automatically.';
+  }
   if (healthStatus === 'Extraction Failed') return 'Details available in logs.';
   return undefined;
 }

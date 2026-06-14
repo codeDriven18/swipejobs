@@ -8,7 +8,7 @@ const INGESTION_ERROR_MESSAGES: Record<string, string> = {
   invalid_telegram_message_id: 'Telegram message ID is required.',
   channel_not_found: 'Telegram channel not found or URL is missing.',
   gemini_extraction_failed: 'Gemini extraction failed.',
-  gemini_rate_limited: 'Gemini rate limit exceeded. Extraction will retry automatically.',
+  gemini_rate_limited: 'Waiting for AI quota. Extraction will retry automatically.',
   invalid_ai_response: 'Invalid response from AI.',
   candidate_persistence_failed: 'Candidate persistence failed. Check database migrations.',
   duplicate_channel_url: 'A source with this channel URL already exists.',

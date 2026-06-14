@@ -1,7 +1,9 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { AdminGlobalSearch, useAdminSearchShortcut } from '@/components/admin/AdminGlobalSearch';
+import { HeaderThemeToggle } from '@/components/theme/HeaderThemeToggle';
+import { useDismissOnInteractOutside } from '@/hooks/useDismissOnInteractOutside';
 import {
   IconActivity,
   IconApplications,
@@ -62,9 +64,11 @@ export function AdminLayout() {
   const navigate = useNavigate();
   const [searchOpen, setSearchOpen] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const userMenuRef = useRef<HTMLDivElement>(null);
 
   const openSearch = useCallback(() => setSearchOpen(true), []);
   useAdminSearchShortcut(openSearch);
+  useDismissOnInteractOutside(menuOpen, () => setMenuOpen(false), userMenuRef);
 
   const pageTitle = pageTitles[location.pathname] ?? 'Admin';
 
@@ -138,10 +142,11 @@ export function AdminLayout() {
             <Link to="/admin/moderation" className={styles.quickBtnAccent}>
               Moderation
             </Link>
+            <HeaderThemeToggle />
             <Link to="/admin/notifications" className={styles.iconBtn} aria-label="Notifications">
               <IconBell size={18} />
             </Link>
-            <div className={styles.userMenuWrap}>
+            <div className={styles.userMenuWrap} ref={userMenuRef}>
               <button
                 type="button"
                 className={styles.userMenuBtn}

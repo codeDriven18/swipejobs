@@ -8,12 +8,12 @@ public static class IngestionErrorSummarizer
             return "Ingestion failed.";
 
         var lower = raw.ToLowerInvariant();
-        if (lower.Contains("openrouter rate limit"))
-            return "OpenRouter rate limit exceeded.";
+        if (lower.Contains("openrouter rate limit") || lower.Contains("waiting for ai quota"))
+            return "Waiting for AI quota.";
         if (lower.Contains("gemini rate limit"))
-            return "Gemini rate limit exceeded.";
+            return "Waiting for AI quota.";
         if (lower.Contains("429") || lower.Contains("quota") || lower.Contains("rate limit") || lower.Contains("resource_exhausted"))
-            return "Rate limit exceeded.";
+            return "Waiting for AI quota.";
         if (lower.Contains("invalid openrouter api key"))
             return "Invalid OpenRouter API key.";
         if (lower.Contains("invalid gemini api key"))

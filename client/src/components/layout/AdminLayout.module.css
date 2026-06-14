@@ -159,12 +159,6 @@
   border: 1px solid var(--color-border-subtle);
 }
 
-.headerRight {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
 .quickBtn,
 .quickBtnAccent,
 .iconBtn,
@@ -195,6 +189,12 @@
   justify-content: center;
   border: 1px solid var(--color-border-subtle);
   background: var(--color-bg);
+}
+
+.headerRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
 }
 
 .userMenuWrap {
