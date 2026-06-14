@@ -33,6 +33,80 @@ public record UpdateSourceDto(
     int TrustScore,
     bool IsActive);
 
+public record AdminSourceMetricsDto(
+    int MessagesScanned,
+    int JobsExtracted,
+    int PendingModeration,
+    string ConnectionStatus);
+
+public record AdminSourceDto(
+    Guid Id,
+    string Name,
+    SourceType Type,
+    string? ExternalIdentifier,
+    string? ChannelName,
+    string? ChannelUrl,
+    string? LogoUrl,
+    int TrustScore,
+    SourceTrustLevel TrustLevel,
+    bool IsActive,
+    bool IngestionEnabled,
+    SourceMonitorStatus MonitorStatus,
+    DateTime? SourceLastCheckedAt,
+    int DefaultExpirationDays,
+    AdminSourceMetricsDto Metrics,
+    DateTime CreatedAt);
+
+public record CreateAdminSourceDto(
+    string Name,
+    SourceType Type,
+    string? ChannelUrl,
+    string? ChannelName,
+    string? ExternalIdentifier,
+    string? LogoUrl,
+    int TrustScore = 50,
+    int DefaultExpirationDays = 30,
+    bool IngestionEnabled = true);
+
+public record UpdateAdminSourceDto(
+    string Name,
+    SourceType Type,
+    string? ChannelUrl,
+    string? ChannelName,
+    string? ExternalIdentifier,
+    string? LogoUrl,
+    int TrustScore,
+    int DefaultExpirationDays,
+    bool IsActive,
+    bool IngestionEnabled);
+
+public record SourceConnectionTestResultDto(
+    bool Success,
+    string ConnectionStatus,
+    string? ChannelName,
+    string? ChannelId,
+    int RecentMessagesCount,
+    string? Message);
+
+public record AdminDashboardIngestionDto(
+    int PendingModeration,
+    int SourcesActive,
+    int MessagesScannedToday,
+    int JobsExtractedToday,
+    int DuplicatesRemoved,
+    double AverageAiConfidence);
+
+public record AdminSearchResultItemDto(
+    string Id,
+    string Type,
+    string Title,
+    string? Subtitle,
+    string Url);
+
+public record AdminSearchResultDto(
+    IReadOnlyList<AdminSearchResultItemDto> Results,
+    int TotalCount);
+
 /// <summary>Normalized job payload for external ingestion pipelines (Telegram, APIs).</summary>
 public record IngestionJobDto(
     string Title,

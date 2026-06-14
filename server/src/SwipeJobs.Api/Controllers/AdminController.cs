@@ -14,15 +14,18 @@ namespace SwipeJobs.Api.Controllers;
 public class AdminController : ControllerBase
 {
     private readonly IAdminService _adminService;
+    private readonly IAdminSearchService _adminSearchService;
     private readonly ICompanyService _companyService;
     private readonly ICurrentUserService _currentUser;
 
     public AdminController(
         IAdminService adminService,
+        IAdminSearchService adminSearchService,
         ICompanyService companyService,
         ICurrentUserService currentUser)
     {
         _adminService = adminService;
+        _adminSearchService = adminSearchService;
         _companyService = companyService;
         _currentUser = currentUser;
     }
@@ -176,5 +179,12 @@ public class AdminController : ControllerBase
     {
         _currentUser.RequireRole(UserRole.Admin);
         return Ok(await _adminService.GetSystemHealthAsync(cancellationToken));
+    }
+
+    [HttpGet("search")]
+    public async Task<IActionResult> Search([FromQuery] string q, CancellationToken cancellationToken = default)
+    {
+        _currentUser.RequireRole(UserRole.Admin);
+        return Ok(await _adminSearchService.SearchAsync(q ?? string.Empty, cancellationToken));
     }
 }

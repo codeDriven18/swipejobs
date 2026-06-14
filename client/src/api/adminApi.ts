@@ -111,4 +111,7 @@ export const adminApi = {
     apiClient<AdminAnalytics>(`/admin/analytics?days=${days}`),
 
   getSystemHealth: () => apiClient<AdminSystemHealth>('/admin/system'),
+
+  search: (q: string) =>
+    apiClient<import('@/models/source').AdminSearchResult>(`/admin/search?q=${encodeURIComponent(q)}`),
 };

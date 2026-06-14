@@ -38,6 +38,7 @@ import { AdminSettingsPage } from '@/pages/Admin/AdminSettingsPage';
 import { AdminAuditPage } from '@/pages/Admin/AdminAuditPage';
 import { AdminCompanyApprovalsPage } from '@/pages/Admin/AdminCompanyApprovalsPage';
 import { AdminModerationPage } from '@/pages/Admin/AdminModerationPage';
+import { AdminSourcesPage } from '@/pages/Admin/AdminSourcesPage';
 import { AdminSystemPage } from '@/pages/Admin/AdminSystemPage';
 import { PortalDashboardPage } from '@/pages/Portal/PortalDashboardPage';
 import { PortalJobsPage } from '@/pages/Portal/PortalJobsPage';
@@ -70,6 +71,7 @@ export function AppRouter() {
           <Route path="users" element={<AdminUsersPage />} />
           <Route path="companies" element={<AdminCompaniesPage />} />
           <Route path="moderation" element={<AdminModerationPage />} />
+          <Route path="sources" element={<AdminSourcesPage />} />
           <Route path="jobs" element={<AdminJobsPage />} />
           <Route path="applications" element={<AdminApplicationsPage />} />
           <Route path="reports" element={<AdminReportsPage />} />

@@ -22,6 +22,12 @@ public class IngestionMessageRepository : Repository<IngestionMessage>, IIngesti
 
     public Task<int> CountAsync(CancellationToken cancellationToken = default)
         => DbSet.CountAsync(cancellationToken);
+
+    public Task<int> CountSinceAsync(DateTime sinceUtc, CancellationToken cancellationToken = default)
+        => DbSet.CountAsync(m => m.CreatedAt >= sinceUtc, cancellationToken);
+
+    public Task<int> CountBySourceAsync(Guid sourceId, CancellationToken cancellationToken = default)
+        => DbSet.CountAsync(m => m.SourceId == sourceId, cancellationToken);
 }
 
 public class JobCandidateRepository : Repository<JobCandidate>, IJobCandidateRepository
@@ -77,6 +83,47 @@ public class JobCandidateRepository : Repository<JobCandidate>, IJobCandidateRep
 
     public Task<int> CountAsync(CancellationToken cancellationToken = default)
         => DbSet.CountAsync(cancellationToken);
+
+    public Task<int> CountSinceAsync(DateTime sinceUtc, CancellationToken cancellationToken = default)
+        => DbSet.CountAsync(c => c.CreatedAt >= sinceUtc, cancellationToken);
+
+    public Task<int> CountBySourceAsync(Guid sourceId, CancellationToken cancellationToken = default)
+        => DbSet.CountAsync(c => c.SourceId == sourceId, cancellationToken);
+
+    public Task<int> CountPendingBySourceAsync(Guid sourceId, CancellationToken cancellationToken = default)
+        => DbSet.CountAsync(
+            c => c.SourceId == sourceId && c.Status == CandidateJobStatus.PendingReview,
+            cancellationToken);
+
+    public Task<int> CountDuplicatesMergedAsync(CancellationToken cancellationToken = default)
+        => DbSet.CountAsync(
+            c => c.MessageLinks.Count > 1,
+            cancellationToken);
+
+    public async Task<double> GetAverageConfidenceAsync(CancellationToken cancellationToken = default)
+    {
+        if (!await DbSet.AnyAsync(cancellationToken))
+            return 0;
+
+        return await DbSet.AverageAsync(c => (double)c.ExtractionConfidence, cancellationToken);
+    }
+
+    public async Task<IReadOnlyList<JobCandidate>> SearchAsync(
+        string query,
+        int limit,
+        CancellationToken cancellationToken = default)
+    {
+        var q = query.Trim().ToLower();
+        return await DbSet
+            .AsNoTracking()
+            .Include(c => c.Source)
+            .Where(c =>
+                (c.Title != null && c.Title.ToLower().Contains(q)) ||
+                (c.CompanyName != null && c.CompanyName.ToLower().Contains(q)))
+            .OrderByDescending(c => c.CreatedAt)
+            .Take(limit)
+            .ToListAsync(cancellationToken);
+    }
 
     public async Task<IReadOnlyList<JobCandidate>> GetByDuplicateGroupIdAsync(
         Guid groupId,

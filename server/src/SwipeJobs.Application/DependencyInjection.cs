@@ -38,6 +38,7 @@ public static class DependencyInjection
         services.AddScoped<ICompanyService, CompanyService>();
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IAdminService, AdminService>();
+        services.AddScoped<IAdminSearchService, AdminSearchService>();
         services.AddScoped<ICompanyPortalService, CompanyPortalService>();
         services.AddScoped<IJobService, JobService>();
         services.AddScoped<IUserProfileService, UserProfileService>();
@@ -45,6 +46,7 @@ public static class DependencyInjection
         services.AddScoped<ISavedJobService, SavedJobService>();
         services.AddScoped<ITagService, TagService>();
         services.AddScoped<ISourceService, SourceService>();
+        services.AddScoped<IAdminSourceService, AdminSourceService>();
         services.AddScoped<JobExtractionService>();
         services.AddScoped<JobNormalizer>();
         services.AddScoped<JobQualityScoringService>();
