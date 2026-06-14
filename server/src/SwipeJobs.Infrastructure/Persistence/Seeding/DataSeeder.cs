@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using SwipeJobs.Domain.Entities;
 using SwipeJobs.Domain.Enums;
+using SwipeJobs.Infrastructure.Auth;
 
 namespace SwipeJobs.Infrastructure.Persistence.Seeding;
 
@@ -242,29 +243,12 @@ public class DataSeeder : IDataSeeder
 
     private async Task EnsureAdminUserAsync(CancellationToken cancellationToken)
     {
-        var email = _configuration["Admin:Email"]?.Trim().ToLower();
-        var password = _configuration["Admin:Password"];
-
-        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
-        {
-            _logger.LogWarning("Admin credentials not configured. Skipping admin seed.");
-            return;
-        }
-
-        if (await _context.Users.AnyAsync(u => u.Email == email, cancellationToken))
-        {
-            _logger.LogInformation("Admin user already exists. Skipping admin seed.");
-            return;
-        }
-
-        _context.Users.Add(new User
-        {
-            Email = email,
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword(password),
-            Role = UserRole.Admin,
-        });
-        await _context.SaveChangesAsync(cancellationToken);
-        _logger.LogInformation("Seeded admin user {Email}", email);
+        await ConfiguredAdminUserEnsurer.EnsureAsync(
+            _context.Users,
+            _configuration,
+            _logger,
+            () => _context.SaveChangesAsync(cancellationToken),
+            cancellationToken);
     }
 
     private void AddTags(Guid jobId, Dictionary<string, Tag> tags, string[] slugs)

@@ -6,6 +6,7 @@ using SwipeJobs.Application.Common.Interfaces;
 using SwipeJobs.Application.Common.Interfaces.Repositories;
 using SwipeJobs.Application.Modules.Auth.Interfaces;
 using SwipeJobs.Infrastructure.Auth;
+using System.Security.Claims;
 using System.Text.Json;
 
 namespace SwipeJobs.Api.Controllers;
@@ -90,6 +91,11 @@ public class AuthController : ControllerBase
         try
         {
             var result = await _authService.LoginAsync(dto, cancellationToken);
+            _logger.LogInformation(
+                "AuthController.Login succeeded userId={UserId} email={Email} role={Role}",
+                result.User.Id,
+                result.User.Email,
+                result.User.Role);
             return Ok(result);
         }
         catch (UnauthorizedAccessException ex)
@@ -169,5 +175,28 @@ public class AuthController : ControllerBase
             user.CompanyMembership?.CompanyId,
             user.CompanyMembership?.Company?.Name,
             user.CompanyMembership?.Company?.Status));
+    }
+
+    /// <summary>Diagnostic endpoint for verifying JWT role claims vs database role after login.</summary>
+    [Authorize]
+    [HttpGet("session-info")]
+    public async Task<IActionResult> SessionInfo(CancellationToken cancellationToken)
+    {
+        var userId = _currentUser.GetRequiredUserId();
+        var user = await _userRepository.GetByIdWithMembershipAsync(userId, cancellationToken);
+        if (user is null) return NotFound();
+
+        var tokenRole = User.FindFirstValue("role")
+            ?? User.FindFirstValue(ClaimTypes.Role);
+
+        return Ok(new
+        {
+            userId = user.Id,
+            email = user.Email,
+            roleFromDatabase = user.Role.ToString(),
+            roleFromToken = tokenRole,
+            resolvedRole = _currentUser.Role?.ToString(),
+            claims = User.Claims.Select(c => new { type = c.Type, value = c.Value }).ToList(),
+        });
     }
 }

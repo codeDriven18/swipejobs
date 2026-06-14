@@ -1,3 +1,5 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -52,6 +54,8 @@ try
                 ValidAudience = builder.Configuration["Jwt:Audience"],
                 IssuerSigningKey = signingKey,
                 ClockSkew = TimeSpan.FromMinutes(1),
+                NameClaimType = JwtRegisteredClaimNames.Sub,
+                RoleClaimType = "role",
             };
             options.Events = new JwtBearerEvents
             {

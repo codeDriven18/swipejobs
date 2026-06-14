@@ -70,6 +70,9 @@ public class AuthService : IAuthService
                     if (!IsValidEmail(normalized))
                         throw new InvalidOperationException("Invalid email address.");
 
+                    if (ConfiguredAdminUserEnsurer.IsConfiguredAdminEmail(_configuration, normalized))
+                        throw new InvalidOperationException("This email is reserved for administration.");
+
                     var isCompany = string.Equals(dto.AccountType, "company", StringComparison.OrdinalIgnoreCase);
                     if (isCompany && string.IsNullOrWhiteSpace(dto.CompanyName))
                         throw new InvalidOperationException("Company name is required for employer accounts.");
@@ -194,6 +197,15 @@ public class AuthService : IAuthService
         if (user is null || !BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash))
             throw new UnauthorizedAccessException("Invalid email or password.");
 
+        if (ConfiguredAdminUserEnsurer.IsConfiguredAdminEmail(_configuration, email) && user.Role != UserRole.Admin)
+        {
+            _logger.LogWarning(
+                "Configured admin email {Email} logged in with role {Role}; promoting to Admin.",
+                email,
+                user.Role);
+            user.Role = UserRole.Admin;
+        }
+
         user.LastLoginAt = DateTime.UtcNow;
         await _userRepository.UpdateAsync(user, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -207,7 +219,7 @@ public class AuthService : IAuthService
             actorEmail: email,
             cancellationToken: cancellationToken);
 
-        _logger.LogInformation("User login: {Email}", email);
+        _logger.LogInformation("User login: {Email} role={Role}", email, user.Role);
 
         var fullUser = await _userRepository.GetByIdWithMembershipAsync(user.Id, cancellationToken)
             ?? throw new UnauthorizedAccessException("User not found.");
