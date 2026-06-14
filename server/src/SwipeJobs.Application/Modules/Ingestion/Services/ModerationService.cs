@@ -3,6 +3,7 @@ using SwipeJobs.Application.Common.Dtos;
 using SwipeJobs.Application.Common.Interfaces;
 using SwipeJobs.Application.Common.Interfaces.Repositories;
 using SwipeJobs.Application.Common.Mapping;
+using SwipeJobs.Application.Modules.Ingestion;
 using SwipeJobs.Domain.Entities;
 using SwipeJobs.Domain.Enums;
 
@@ -74,10 +75,31 @@ public class ModerationService : IModerationService
         CancellationToken cancellationToken = default)
     {
         var candidate = await _candidateRepository.GetByIdWithDetailsAsync(candidateId, cancellationToken)
-            ?? throw new InvalidOperationException("Candidate not found.");
+            ?? throw new ModerationException(ModerationErrorCodes.CandidateNotFound, "Candidate not found.");
 
         if (candidate.Status is CandidateJobStatus.Rejected or CandidateJobStatus.Published)
-            throw new InvalidOperationException("Candidate cannot be approved.");
+            throw new ModerationException(
+                ModerationErrorCodes.CandidateNotApprovable,
+                $"Candidate cannot be approved while status is {candidate.Status}.");
+
+        if (string.IsNullOrWhiteSpace(candidate.Title))
+            throw new ModerationException(
+                ModerationErrorCodes.ApproveMissingTitle,
+                "Job title is required before approval. Edit the candidate or re-ingest with clearer text.");
+
+        if (string.IsNullOrWhiteSpace(candidate.CompanyName))
+        {
+            candidate.CompanyName = candidate.Source.ChannelName ?? candidate.Source.Name;
+            if (string.IsNullOrWhiteSpace(candidate.CompanyName))
+            {
+                throw new ModerationException(
+                    ModerationErrorCodes.ApproveMissingCompany,
+                    "Company name is required before approval. Edit the candidate or ensure the source has a channel name.");
+            }
+
+            await _candidateRepository.UpdateAsync(candidate, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
 
         candidate.Status = CandidateJobStatus.Approved;
         candidate.ApprovedByUserId = moderatorUserId;
@@ -85,7 +107,22 @@ public class ModerationService : IModerationService
         await _candidateRepository.UpdateAsync(candidate, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return await _publishService.PublishCandidateAsync(candidateId, moderatorUserId, cancellationToken);
+        try
+        {
+            return await _publishService.PublishCandidateAsync(candidateId, moderatorUserId, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            candidate.Status = CandidateJobStatus.PendingReview;
+            candidate.ApprovedByUserId = null;
+            candidate.ApprovedAt = null;
+            await _candidateRepository.UpdateAsync(candidate, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            throw new ModerationException(
+                ModerationErrorCodes.PublishFailed,
+                ex.Message,
+                ex);
+        }
     }
 
     public async Task<bool> RejectAsync(

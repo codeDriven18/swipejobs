@@ -7,6 +7,7 @@ public interface IIngestionMessageRepository : IRepository<IngestionMessage>
 {
     Task<IngestionMessage?> GetByExternalKeyAsync(Guid sourceId, string externalSourceKey, CancellationToken cancellationToken = default);
     Task<int> CountAsync(CancellationToken cancellationToken = default);
+    Task<int> CountByStatusAsync(IngestionMessageStatus status, CancellationToken cancellationToken = default);
     Task<int> CountSinceAsync(DateTime sinceUtc, CancellationToken cancellationToken = default);
     Task<int> CountBySourceAsync(Guid sourceId, CancellationToken cancellationToken = default);
 }

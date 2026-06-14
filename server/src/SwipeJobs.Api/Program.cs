@@ -22,7 +22,7 @@ try
 
     builder.ConfigureAzureListening();
 
-    builder.Services.AddApplication();
+    builder.Services.AddApplication(builder.Configuration);
     builder.Services.AddAiExtraction(builder.Configuration);
     builder.Services.AddInfrastructure(builder.Configuration);
     builder.Services.AddMemoryCache();
@@ -30,6 +30,7 @@ try
     builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
     builder.Services.AddSingleton<INotificationPublisher, SignalRNotificationPublisher>();
     builder.Services.AddHostedService<JobExpirationHostedService>();
+    builder.Services.AddHostedService<TelegramIngestionHostedService>();
 
     builder.Services.AddResponseCompression(options =>
     {

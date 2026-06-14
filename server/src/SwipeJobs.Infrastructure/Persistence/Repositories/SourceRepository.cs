@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SwipeJobs.Application.Common.Interfaces.Repositories;
+using SwipeJobs.Application.Modules.Ingestion;
 using SwipeJobs.Domain.Entities;
 using SwipeJobs.Domain.Enums;
 
@@ -28,11 +29,19 @@ public class SourceRepository : Repository<Source>, ISourceRepository
         => DbSet.CountAsync(s => s.IsActive && s.IngestionEnabled, cancellationToken);
 
     public async Task<Source?> GetByChannelUrlAsync(string normalizedChannelUrl, CancellationToken cancellationToken = default)
-        => await DbSet
+    {
+        var canonical = TelegramChannelUrlNormalizer.Normalize(normalizedChannelUrl);
+        if (canonical is null)
+            return null;
+
+        var sources = await DbSet
             .AsNoTracking()
-            .FirstOrDefaultAsync(
-                s => s.ChannelUrl != null && s.ChannelUrl.ToLower() == normalizedChannelUrl,
-                cancellationToken);
+            .Where(s => s.ChannelUrl != null)
+            .ToListAsync(cancellationToken);
+
+        return sources.FirstOrDefault(s =>
+            TelegramChannelUrlNormalizer.AreEquivalent(s.ChannelUrl, canonical));
+    }
 
     public async Task<IReadOnlyList<SourceMetricsSnapshot>> GetMetricsSnapshotAsync(
         CancellationToken cancellationToken = default)

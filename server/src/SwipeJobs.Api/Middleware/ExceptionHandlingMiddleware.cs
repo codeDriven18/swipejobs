@@ -43,6 +43,13 @@ public class ExceptionHandlingMiddleware
                 return;
             throw;
         }
+        catch (ModerationException ex)
+        {
+            LogCaughtException(context, ex, StatusCodes.Status400BadRequest);
+            if (await TryWriteErrorAsync(context, StatusCodes.Status400BadRequest, ex.Message, ex.Code))
+                return;
+            throw;
+        }
         catch (IngestionPipelineException ex)
         {
             LogCaughtException(context, ex, StatusCodes.Status422UnprocessableEntity);

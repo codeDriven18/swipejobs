@@ -9,6 +9,7 @@ import type {
 } from '@/models/source';
 import { SourceTypeLabels } from '@/models/source';
 import { SourceTrustLevel, SourceTrustLevelLabels, SourceType } from '@/models/enums';
+import { getIngestionErrorMessage } from '@/lib/ingestionErrors';
 import adminStyles from './AdminPage.module.css';
 import styles from './AdminSourcesPage.module.css';
 
@@ -31,10 +32,13 @@ function statusClass(status: string) {
   return styles.statusWarn;
 }
 
+const POLL_INTERVAL_MS = 20_000;
+
 export function AdminSourcesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [sources, setSources] = useState<AdminSource[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<AdminSource | null>(null);
@@ -45,17 +49,29 @@ export function AdminSourcesPage() {
   const [logs, setLogs] = useState<SourceIngestionLogEntry[]>([]);
   const [logsLoading, setLogsLoading] = useState(false);
 
-  const load = useCallback(() => {
-    setLoading(true);
-    sourcesApi.list()
+  const refresh = useCallback((silent = false) => {
+    if (!silent) setRefreshing(true);
+    return sourcesApi.list()
       .then(setSources)
-      .catch(() => setSources([]))
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (!silent) setSources([]);
+      })
+      .finally(() => {
+        setInitialLoading(false);
+        if (!silent) setRefreshing(false);
+      });
   }, []);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    void refresh();
+  }, [refresh]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      void refresh(true);
+    }, POLL_INTERVAL_MS);
+    return () => window.clearInterval(timer);
+  }, [refresh]);
 
   const openCreate = useCallback((prefillUrl?: string) => {
     setEditing(null);
@@ -108,9 +124,9 @@ export function AdminSourcesPage() {
         setMessage('Source created.');
       }
       setFormOpen(false);
-      load();
-    } catch {
-      setMessage('Could not save source.');
+      void refresh();
+    } catch (err) {
+      setMessage(getIngestionErrorMessage(err));
     } finally {
       setSaving(false);
     }
@@ -119,7 +135,7 @@ export function AdminSourcesPage() {
   const handleToggle = async (source: AdminSource) => {
     try {
       await sourcesApi.setEnabled(source.id, !source.ingestionEnabled);
-      load();
+      void refresh(true);
     } catch {
       setMessage('Could not update source status.');
     }
@@ -130,7 +146,7 @@ export function AdminSourcesPage() {
     try {
       await sourcesApi.remove(source.id);
       setMessage('Source disabled.');
-      load();
+      void refresh();
     } catch {
       setMessage('Could not disable source.');
     }
@@ -141,7 +157,7 @@ export function AdminSourcesPage() {
     try {
       const result = await sourcesApi.testConnection(source.id);
       setTestResult(result);
-      load();
+      void refresh(true);
     } catch {
       setMessage('Connection test failed.');
     }
@@ -159,7 +175,7 @@ export function AdminSourcesPage() {
     }
   };
 
-  if (loading) return <p className={adminStyles.status}>Loading sources...</p>;
+  if (initialLoading) return <p className={adminStyles.status}>Loading sources...</p>;
 
   return (
     <section className={adminStyles.page}>
@@ -169,6 +185,7 @@ export function AdminSourcesPage() {
           <h2 className={adminStyles.pageTitle}>Sources</h2>
           <p className={adminStyles.pageSubtitle}>
             Manage Telegram channels and external feeds before they enter moderation.
+            {refreshing ? ' Refreshing…' : ''}
           </p>
         </div>
         <div className={adminStyles.actions}>

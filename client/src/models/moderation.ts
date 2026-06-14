@@ -125,3 +125,32 @@ export interface EditJobCandidateRequest {
   applyTelegram?: string;
   applyPhone?: string;
 }
+
+export interface SourcePipelineDiagnostics {
+  sourceId: string;
+  sourceName: string;
+  channelUrl?: string;
+  latestChannelMessageId?: string;
+  lastScannedMessageId?: string;
+  messagesDiscovered: number;
+  messagesSkipped: number;
+  messagesImported: number;
+  pendingModeration: number;
+  lastError?: string;
+  lastSyncStatus?: string;
+}
+
+export interface IngestionPipelineDiagnostics {
+  telegramSourcesActive: number;
+  messagesTotal: number;
+  messagesProcessed: number;
+  messagesFailed: number;
+  messagesProcessing: number;
+  candidatesTotal: number;
+  candidatesPending: number;
+  candidatesApproved: number;
+  candidatesPublished: number;
+  candidatesRejected: number;
+  jobsPublished: number;
+  sources: SourcePipelineDiagnostics[];
+}

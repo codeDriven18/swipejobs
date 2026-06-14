@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using SwipeJobs.Application.Common;
 using SwipeJobs.Application.Common.Dtos;
 using SwipeJobs.Application.Common.Interfaces;
@@ -13,10 +12,6 @@ namespace SwipeJobs.Application.Modules.Sources.Services;
 
 public class AdminSourceService : IAdminSourceService
 {
-    private static readonly Regex TelegramChannelRegex = new(
-        @"(?:https?://)?(?:t\.me|telegram\.me)/(?:\+|joinchat/)?([a-zA-Z0-9_+-]+)",
-        RegexOptions.IgnoreCase | RegexOptions.Compiled);
-
     private readonly ISourceRepository _sourceRepository;
     private readonly IIngestionMessageRepository _messageRepository;
     private readonly IJobCandidateRepository _candidateRepository;
@@ -67,14 +62,17 @@ public class AdminSourceService : IAdminSourceService
         if (!string.IsNullOrWhiteSpace(channelUrl))
         {
             var normalizedUrl = NormalizeChannelUrl(channelUrl);
-            var duplicate = await _sourceRepository.GetByChannelUrlAsync(normalizedUrl, cancellationToken);
-            if (duplicate is not null)
+            if (normalizedUrl is not null)
             {
-                throw new IngestionPipelineException(
-                    IngestionErrorCodes.DuplicateChannelUrl,
-                    $"A source already exists for channel URL {channelUrl}.");
+                var duplicate = await _sourceRepository.GetByChannelUrlAsync(normalizedUrl, cancellationToken);
+                if (duplicate is not null)
+                {
+                    throw new IngestionPipelineException(
+                        IngestionErrorCodes.DuplicateChannelUrl,
+                        $"A source already exists for channel URL {channelUrl}.");
+                }
+                channelUrl = normalizedUrl;
             }
-            channelUrl = normalizedUrl;
         }
 
         var source = new Source
@@ -109,14 +107,17 @@ public class AdminSourceService : IAdminSourceService
         if (!string.IsNullOrWhiteSpace(channelUrl))
         {
             var normalizedUrl = NormalizeChannelUrl(channelUrl);
-            var duplicate = await _sourceRepository.GetByChannelUrlAsync(normalizedUrl, cancellationToken);
-            if (duplicate is not null && duplicate.Id != id)
+            if (normalizedUrl is not null)
             {
-                throw new IngestionPipelineException(
-                    IngestionErrorCodes.DuplicateChannelUrl,
-                    $"Another source already uses channel URL {channelUrl}.");
+                var duplicate = await _sourceRepository.GetByChannelUrlAsync(normalizedUrl, cancellationToken);
+                if (duplicate is not null && duplicate.Id != id)
+                {
+                    throw new IngestionPipelineException(
+                        IngestionErrorCodes.DuplicateChannelUrl,
+                        $"Another source already uses channel URL {channelUrl}.");
+                }
+                channelUrl = normalizedUrl;
             }
-            channelUrl = normalizedUrl;
         }
 
         source.Name = dto.Name.Trim();
@@ -208,7 +209,7 @@ public class AdminSourceService : IAdminSourceService
             messageCount,
             string.IsNullOrWhiteSpace(handle)
                 ? "Could not parse a Telegram channel from the URL."
-                : "Channel URL parsed. Full Telegram sync requires the ingestion worker.");
+                : "Channel URL parsed. Automatic polling checks t.me/s preview every minute for new posts.");
     }
 
     public async Task<AdminDashboardIngestionDto> GetDashboardIngestionAsync(CancellationToken cancellationToken = default)
@@ -269,9 +270,6 @@ public class AdminSourceService : IAdminSourceService
 
     private static string ResolveConnectionStatus(Source source)
     {
-        if (!string.IsNullOrWhiteSpace(source.LastSyncStatus))
-            return source.LastSyncStatus;
-
         if (!source.IsActive || !source.IngestionEnabled)
             return "Disabled";
         if (source.Type == SourceType.Telegram && string.IsNullOrWhiteSpace(source.ChannelUrl))
@@ -287,8 +285,8 @@ public class AdminSourceService : IAdminSourceService
         };
     }
 
-    private static string NormalizeChannelUrl(string channelUrl)
-        => channelUrl.Trim().TrimEnd('/').ToLowerInvariant();
+    private static string? NormalizeChannelUrl(string? channelUrl)
+        => TelegramChannelUrlNormalizer.Normalize(channelUrl);
 
     private static (string? ChannelName, string? ChannelUrl, string? ExternalId) NormalizeTelegramFields(
         SourceType type,
@@ -299,16 +297,13 @@ public class AdminSourceService : IAdminSourceService
         if (type != SourceType.Telegram)
             return (channelName?.Trim(), channelUrl?.Trim(), externalIdentifier?.Trim());
 
-        var url = string.IsNullOrWhiteSpace(channelUrl) ? null : NormalizeChannelUrl(channelUrl);
-        var handle = string.IsNullOrWhiteSpace(url) ? null : ExtractTelegramHandle(url);
+        var url = NormalizeChannelUrl(channelUrl);
+        var handle = TelegramChannelUrlNormalizer.ExtractHandle(url ?? channelUrl);
         var name = string.IsNullOrWhiteSpace(channelName) ? handle : channelName.Trim();
         var externalId = string.IsNullOrWhiteSpace(externalIdentifier) ? handle : externalIdentifier.Trim();
         return (name, url, externalId);
     }
 
     private static string? ExtractTelegramHandle(string channelUrl)
-    {
-        var match = TelegramChannelRegex.Match(channelUrl);
-        return match.Success ? match.Groups[1].Value : null;
-    }
+        => TelegramChannelUrlNormalizer.ExtractHandle(channelUrl);
 }

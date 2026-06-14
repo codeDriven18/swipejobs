@@ -45,6 +45,11 @@ export const moderationApi = {
   getAnalytics: () =>
     apiClient<IngestionAnalytics>('/admin/moderation/analytics'),
 
+  getPipelineDiagnostics: () =>
+    apiClient<import('@/models/moderation').IngestionPipelineDiagnostics>(
+      '/admin/moderation/pipeline-diagnostics',
+    ),
+
   ingestTelegram: (data: {
     sourceId: string;
     telegramMessageId: string;

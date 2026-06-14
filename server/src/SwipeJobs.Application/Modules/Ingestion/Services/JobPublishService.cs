@@ -5,6 +5,7 @@ using SwipeJobs.Application.Common.Dtos;
 using SwipeJobs.Application.Common.Interfaces;
 using SwipeJobs.Application.Common.Interfaces.Repositories;
 using SwipeJobs.Application.Common.Mapping;
+using SwipeJobs.Application.Modules.Ingestion;
 using SwipeJobs.Domain.Entities;
 using SwipeJobs.Domain.Enums;
 
@@ -43,10 +44,24 @@ public class JobPublishService : IJobPublishService
         CancellationToken cancellationToken = default)
     {
         var candidate = await _candidateRepository.GetByIdWithDetailsAsync(candidateId, cancellationToken)
-            ?? throw new InvalidOperationException("Candidate not found.");
+            ?? throw new ModerationException(ModerationErrorCodes.CandidateNotFound, "Candidate not found.");
 
-        if (string.IsNullOrWhiteSpace(candidate.Title) || string.IsNullOrWhiteSpace(candidate.CompanyName))
-            throw new InvalidOperationException("Title and company are required to publish.");
+        var companyName = candidate.CompanyName?.Trim();
+        if (string.IsNullOrWhiteSpace(companyName))
+        {
+            var sourceMeta = await _sourceRepository.GetByIdAsync(candidate.SourceId, cancellationToken);
+            companyName = sourceMeta?.ChannelName ?? sourceMeta?.Name;
+        }
+
+        if (string.IsNullOrWhiteSpace(candidate.Title))
+            throw new ModerationException(
+                ModerationErrorCodes.ApproveMissingTitle,
+                "Job title is required to publish.");
+
+        if (string.IsNullOrWhiteSpace(companyName))
+            throw new ModerationException(
+                ModerationErrorCodes.ApproveMissingCompany,
+                "Company name is required to publish.");
 
         if (candidate.PublishedJobId.HasValue)
         {
@@ -57,7 +72,7 @@ public class JobPublishService : IJobPublishService
         var source = await _sourceRepository.GetByIdAsync(candidate.SourceId, cancellationToken)
             ?? throw new InvalidOperationException("Source not found.");
 
-        var company = await ResolveCompanyAsync(candidate.CompanyName!, cancellationToken);
+        var company = await ResolveCompanyAsync(companyName!, cancellationToken);
         var primaryMessage = candidate.MessageLinks.FirstOrDefault(l => l.IsPrimary)?.IngestionMessage
             ?? candidate.MessageLinks.FirstOrDefault()?.IngestionMessage;
 

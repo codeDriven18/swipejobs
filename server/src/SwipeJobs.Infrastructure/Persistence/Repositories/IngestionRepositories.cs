@@ -23,6 +23,9 @@ public class IngestionMessageRepository : Repository<IngestionMessage>, IIngesti
     public Task<int> CountAsync(CancellationToken cancellationToken = default)
         => DbSet.CountAsync(cancellationToken);
 
+    public Task<int> CountByStatusAsync(IngestionMessageStatus status, CancellationToken cancellationToken = default)
+        => DbSet.CountAsync(m => m.Status == status, cancellationToken);
+
     public Task<int> CountSinceAsync(DateTime sinceUtc, CancellationToken cancellationToken = default)
         => DbSet.CountAsync(m => m.CreatedAt >= sinceUtc, cancellationToken);
 

@@ -56,8 +56,15 @@ public class AdminSourcesController : ControllerBase
     public async Task<IActionResult> Update(Guid id, [FromBody] UpdateAdminSourceDto dto, CancellationToken cancellationToken)
     {
         RequireAdmin();
-        var source = await _adminSourceService.UpdateAsync(id, dto, cancellationToken);
-        return source is null ? NotFound() : Ok(source);
+        try
+        {
+            var source = await _adminSourceService.UpdateAsync(id, dto, cancellationToken);
+            return source is null ? NotFound() : Ok(source);
+        }
+        catch (IngestionPipelineException ex)
+        {
+            return UnprocessableEntity(new { error = ex.Message, code = ex.Code });
+        }
     }
 
     [HttpPatch("{id:guid}/enabled")]

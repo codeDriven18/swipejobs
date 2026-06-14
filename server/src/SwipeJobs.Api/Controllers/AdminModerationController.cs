@@ -97,6 +97,14 @@ public class AdminModerationController : ControllerBase
         return Ok(await _moderation.GetAnalyticsAsync(cancellationToken));
     }
 
+    [HttpGet("pipeline-diagnostics")]
+    public async Task<IActionResult> PipelineDiagnostics(CancellationToken cancellationToken = default)
+    {
+        _currentUser.RequireRole(UserRole.Admin);
+        var diagnostics = HttpContext.RequestServices.GetRequiredService<IIngestionDiagnosticsService>();
+        return Ok(await diagnostics.GetPipelineDiagnosticsAsync(cancellationToken));
+    }
+
     [HttpPost("ingest/telegram")]
     public async Task<IActionResult> IngestTelegram([FromBody] TelegramIngestMessageDto dto, CancellationToken cancellationToken = default)
     {

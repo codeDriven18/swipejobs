@@ -68,6 +68,13 @@ public class IngestionPipelineService
                 "Ingestion is disabled for this source.");
         }
 
+        if (string.IsNullOrWhiteSpace(dto.TelegramMessageId))
+        {
+            throw new IngestionPipelineException(
+                IngestionErrorCodes.InvalidTelegramMessageId,
+                "Telegram message ID is required.");
+        }
+
         if (source.Type == SourceType.Telegram && string.IsNullOrWhiteSpace(source.ChannelUrl) && string.IsNullOrWhiteSpace(dto.ChannelUrl))
         {
             await MarkSourceFailure(source, "Missing URL", "Telegram channel URL is not configured.", cancellationToken);
@@ -84,28 +91,49 @@ public class IngestionPipelineService
             return (linkedCandidate, true);
         }
 
-        var message = new IngestionMessage
+        IngestionMessage message;
+        if (existingMessage is not null)
         {
-            SourceId = dto.SourceId,
-            ExternalSourceKey = externalKey,
-            TelegramMessageId = dto.TelegramMessageId,
-            TelegramMessageUrl = dto.TelegramMessageUrl,
-            ChannelName = dto.ChannelName ?? source.ChannelName,
-            ChannelUrl = dto.ChannelUrl ?? source.ChannelUrl,
-            PostedAt = dto.PostedAt ?? DateTime.UtcNow,
-            RawMessageText = dto.RawMessageText,
-            RawMediaUrlsJson = dto.RawMediaUrls is { Count: > 0 }
+            message = existingMessage;
+            message.Status = IngestionMessageStatus.Processing;
+            message.ProcessingError = null;
+            message.RawMessageText = dto.RawMessageText;
+            message.TelegramMessageUrl = dto.TelegramMessageUrl ?? message.TelegramMessageUrl;
+            message.ChannelName = dto.ChannelName ?? source.ChannelName ?? message.ChannelName;
+            message.ChannelUrl = dto.ChannelUrl ?? source.ChannelUrl ?? message.ChannelUrl;
+            message.PostedAt = dto.PostedAt ?? message.PostedAt;
+            message.RawMediaUrlsJson = dto.RawMediaUrls is { Count: > 0 }
                 ? JsonSerializer.Serialize(dto.RawMediaUrls)
-                : null,
-            Status = IngestionMessageStatus.Processing,
-        };
-
-        try
+                : message.RawMediaUrlsJson;
+            await _messageRepository.UpdateAsync(message, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+            await Log(source.Id, "retry", "Info", "Retrying failed message ingestion.", externalKey, cancellationToken);
+        }
+        else
         {
+            message = new IngestionMessage
+            {
+                SourceId = dto.SourceId,
+                ExternalSourceKey = externalKey,
+                TelegramMessageId = dto.TelegramMessageId,
+                TelegramMessageUrl = dto.TelegramMessageUrl,
+                ChannelName = dto.ChannelName ?? source.ChannelName,
+                ChannelUrl = dto.ChannelUrl ?? source.ChannelUrl,
+                PostedAt = dto.PostedAt ?? DateTime.UtcNow,
+                RawMessageText = dto.RawMessageText,
+                RawMediaUrlsJson = dto.RawMediaUrls is { Count: > 0 }
+                    ? JsonSerializer.Serialize(dto.RawMediaUrls)
+                    : null,
+                Status = IngestionMessageStatus.Processing,
+            };
+
             await _messageRepository.AddAsync(message, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
             await Log(source.Id, "raw-storage", "Info", "Raw message stored.", message.Id.ToString(), cancellationToken);
+        }
 
+        try
+        {
             await Log(source.Id, "extraction", "Info", "Gemini extraction started.", null, cancellationToken);
             var extractionStarted = stopwatch.ElapsedMilliseconds;
             var aiResponse = await _aiExtractionService.ExtractJobAsync(dto.RawMessageText, cancellationToken);
@@ -119,9 +147,7 @@ public class IngestionPipelineService
                 await MarkSourceFailure(source, "Extraction failed", error, cancellationToken);
 
                 throw new IngestionPipelineException(
-                    error.Contains("ApiKey", StringComparison.OrdinalIgnoreCase)
-                        ? IngestionErrorCodes.TelegramAuthFailed
-                        : IngestionErrorCodes.GeminiExtractionFailed,
+                    ResolveGeminiErrorCode(error),
                     error);
             }
 
@@ -129,7 +155,7 @@ public class IngestionPipelineService
                 source.Id,
                 "extraction",
                 "Info",
-                $"Gemini extraction completed in {extractionMs}ms with confidence {aiResponse.Result.Confidence}.",
+                $"Gemini extraction completed in {extractionMs}ms with confidence {aiResponse.Result.Confidence}. Model={aiResponse.Model}",
                 aiResponse.ExtractionSource,
                 cancellationToken);
 
@@ -144,6 +170,11 @@ public class IngestionPipelineService
             }
 
             var normalized = _normalizer.Normalize(extracted);
+            if (string.IsNullOrWhiteSpace(normalized.CompanyName))
+            {
+                var fallbackCompany = dto.ChannelName ?? source.ChannelName ?? source.Name;
+                normalized = normalized with { CompanyName = fallbackCompany };
+            }
             var (completeness, trust, spam) = _qualityScoring.Score(normalized, source.TrustScore, dto.RawMessageText);
 
             var fingerprint = JobContentFingerprint.ComputeForCandidate(
@@ -240,6 +271,15 @@ public class IngestionPipelineService
                 "Ingestion failed unexpectedly.",
                 ex);
         }
+    }
+
+    private static string ResolveGeminiErrorCode(string error)
+    {
+        if (error.Contains("ApiKey", StringComparison.OrdinalIgnoreCase))
+            return IngestionErrorCodes.GeminiApiKeyMissing;
+        if (error.Contains("API key", StringComparison.OrdinalIgnoreCase))
+            return IngestionErrorCodes.GeminiApiKeyMissing;
+        return IngestionErrorCodes.GeminiExtractionFailed;
     }
 
     private async Task MarkMessageFailed(IngestionMessage message, string error, CancellationToken cancellationToken)

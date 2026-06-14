@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { moderationApi } from '@/api/moderationApi';
 import { sourcesApi } from '@/api/sourcesApi';
 import { getIngestionErrorMessage } from '@/lib/ingestionErrors';
+import { getModerationErrorMessage } from '@/lib/moderationErrors';
 import { formatSalary } from '@/lib/jobFormat';
 import type { AdminSource } from '@/models/source';
 import { SourceType } from '@/models/enums';
@@ -25,13 +26,16 @@ function extractTelegramUrl(text: string): string | null {
   return match?.[0] ?? null;
 }
 
+const POLL_INTERVAL_MS = 20_000;
+
 export function AdminModerationPage() {
   const [queue, setQueue] = useState<JobCandidate[]>([]);
   const [sources, setSources] = useState<AdminSource[]>([]);
   const [pendingCount, setPendingCount] = useState(0);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [analytics, setAnalytics] = useState<Awaited<ReturnType<typeof moderationApi.getAnalytics>> | null>(null);
   const [showIngest, setShowIngest] = useState(false);
@@ -57,9 +61,9 @@ export function AdminModerationPage() {
       .catch(() => setQueue([]));
   }, [selectedId]);
 
-  const load = useCallback(() => {
-    setLoading(true);
-    Promise.all([
+  const refresh = useCallback((silent = false) => {
+    if (!silent) setRefreshing(true);
+    return Promise.all([
       moderationApi.getQueue(CandidateJobStatus.PendingReview),
       moderationApi.getAnalytics(),
       sourcesApi.list(),
@@ -70,19 +74,30 @@ export function AdminModerationPage() {
         setAnalytics(a);
         setSources(s);
         const telegram = s.find((x) => x.type === SourceType.Telegram && x.ingestionEnabled) ?? s[0];
-        setTelegramSourceId(telegram?.id ?? null);
-        if (q.items.length > 0 && !selectedId) setSelectedId(q.items[0].id);
+        setTelegramSourceId((prev) => prev ?? telegram?.id ?? null);
       })
       .catch(() => {
-        setQueue([]);
-        setAnalytics(null);
+        if (!silent) {
+          setQueue([]);
+          setAnalytics(null);
+        }
       })
-      .finally(() => setLoading(false));
-  }, [selectedId]);
+      .finally(() => {
+        setInitialLoading(false);
+        if (!silent) setRefreshing(false);
+      });
+  }, []);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    void refresh();
+  }, [refresh]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      void refresh(true);
+    }, POLL_INTERVAL_MS);
+    return () => window.clearInterval(timer);
+  }, [refresh]);
 
   const notify = (text: string, tone: 'info' | 'error' | 'success' = 'info') => {
     setMessage(text);
@@ -99,8 +114,8 @@ export function AdminModerationPage() {
       setSelectedId(null);
       loadQueue();
       moderationApi.getAnalytics().then(setAnalytics).catch(() => undefined);
-    } catch {
-      notify('Action failed.', 'error');
+    } catch (err) {
+      notify(getModerationErrorMessage(err), 'error');
     } finally {
       setActionLoading(false);
     }
@@ -161,7 +176,7 @@ export function AdminModerationPage() {
     }, 'Selected candidates approved.');
   };
 
-  if (loading) return <p className={adminStyles.status}>Loading moderation queue...</p>;
+  if (initialLoading) return <p className={adminStyles.status}>Loading moderation queue...</p>;
 
   const createSourceUrl = extractTelegramUrl(ingestText);
 
@@ -173,6 +188,7 @@ export function AdminModerationPage() {
           <h2 className={adminStyles.pageTitle}>Moderation</h2>
           <p className={adminStyles.pageSubtitle}>
             {pendingCount} candidates waiting · {telegramSources.length} Telegram source(s) active
+            {refreshing ? ' · refreshing…' : ''}
           </p>
         </div>
         <div className={adminStyles.actions}>

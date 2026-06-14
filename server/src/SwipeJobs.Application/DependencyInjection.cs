@@ -1,4 +1,6 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using SwipeJobs.Application.Common.Configuration;
 using SwipeJobs.Application.Modules.Ingestion.Services;
 using SwipeJobs.Application.Modules.Admin.Interfaces;
 using SwipeJobs.Application.Modules.Admin.Services;
@@ -27,7 +29,7 @@ namespace SwipeJobs.Application;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddApplication(this IServiceCollection services)
+    public static IServiceCollection AddApplication(this IServiceCollection services, IConfiguration? configuration = null)
     {
         services.AddScoped<IActivityService, ActivityService>();
         services.AddScoped<IInterestService, InterestService>();
@@ -56,6 +58,15 @@ public static class DependencyInjection
         services.AddScoped<IModerationService, ModerationService>();
         services.AddScoped<IJobLifecycleService, JobLifecycleService>();
         services.AddScoped<JobIngestionService>();
+        services.AddScoped<IIngestionDiagnosticsService, IngestionDiagnosticsService>();
+
+        services.AddHttpClient<ITelegramPublicChannelReader, TelegramPublicChannelReader>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
+
+        if (configuration is not null)
+            services.Configure<IngestionOptions>(configuration.GetSection(IngestionOptions.SectionName));
 
         return services;
     }

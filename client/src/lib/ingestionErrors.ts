@@ -4,6 +4,8 @@ const INGESTION_ERROR_MESSAGES: Record<string, string> = {
   source_not_found: 'Source not found. Create it in Admin → Sources.',
   ingestion_disabled: 'Ingestion is disabled for this source.',
   telegram_auth_failed: 'Telegram authentication failed. Check AI and Telegram configuration.',
+  gemini_api_key_missing: 'Gemini API key is missing. Set AI:ApiKey in server configuration.',
+  invalid_telegram_message_id: 'Telegram message ID is required.',
   channel_not_found: 'Telegram channel not found or URL is missing.',
   gemini_extraction_failed: 'Gemini extraction failed.',
   invalid_ai_response: 'Invalid response from AI.',
