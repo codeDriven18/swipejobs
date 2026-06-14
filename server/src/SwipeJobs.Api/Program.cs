@@ -32,6 +32,7 @@ try
     builder.Services.AddSingleton<INotificationPublisher, SignalRNotificationPublisher>();
     builder.Services.AddHostedService<JobExpirationHostedService>();
     builder.Services.AddHostedService<TelegramIngestionHostedService>();
+    builder.Services.AddHostedService<AiExtractionQueueHostedService>();
 
     builder.Services.AddResponseCompression(options =>
     {

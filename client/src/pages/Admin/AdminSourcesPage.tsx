@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { sourcesApi } from '@/api/sourcesApi';
 import type {
   AdminSource,
+  AiExtractionQueueMetrics,
   CreateAdminSourceRequest,
   SourceConnectionTestResult,
   SourceIngestionLogEntry,
@@ -10,7 +11,11 @@ import type {
 import { SourceTypeLabels } from '@/models/source';
 import { SourceTrustLevel, SourceTrustLevelLabels, SourceType } from '@/models/enums';
 import { getIngestionErrorMessage } from '@/lib/ingestionErrors';
-import { getSourceIngestionStatusDisplay } from '@/lib/sourceIngestionStatus';
+import {
+  formatRelativeTime,
+  getStatusDetailLabel,
+  resolveSourceStatusBadge,
+} from '@/lib/sourceIngestionStatus';
 import adminStyles from './AdminPage.module.css';
 import styles from './AdminSourcesPage.module.css';
 
@@ -23,21 +28,27 @@ const EMPTY_FORM: CreateAdminSourceRequest = {
   ingestionEnabled: true,
 };
 
+const POLL_INTERVAL_MS = 20_000;
+
 function trustLabel(level: SourceTrustLevel) {
   return SourceTrustLevelLabels[level] ?? 'Standard';
 }
 
-function statusClass(status: string) {
-  if (status === 'Connected' || status === 'Configured') return styles.statusGood;
-  if (status === 'Disabled') return styles.statusMuted;
-  return styles.statusWarn;
+function badgeClass(tone: ReturnType<typeof resolveSourceStatusBadge>['tone']) {
+  switch (tone) {
+    case 'good': return styles.healthGood;
+    case 'muted': return styles.healthMuted;
+    case 'syncing': return styles.healthSyncing;
+    case 'rateLimited': return styles.healthRateLimited;
+    case 'failed': return styles.healthFailed;
+    default: return styles.healthWarn;
+  }
 }
-
-const POLL_INTERVAL_MS = 20_000;
 
 export function AdminSourcesPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [sources, setSources] = useState<AdminSource[]>([]);
+  const [queueMetrics, setQueueMetrics] = useState<AiExtractionQueueMetrics | null>(null);
   const [initialLoading, setInitialLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -52,8 +63,14 @@ export function AdminSourcesPage() {
 
   const refresh = useCallback((silent = false) => {
     if (!silent) setRefreshing(true);
-    return sourcesApi.list()
-      .then(setSources)
+    return Promise.all([
+      sourcesApi.list(),
+      sourcesApi.getExtractionQueueMetrics().catch(() => null),
+    ])
+      .then(([nextSources, metrics]) => {
+        setSources(nextSources);
+        setQueueMetrics(metrics);
+      })
       .catch(() => {
         if (!silent) setSources([]);
       })
@@ -196,6 +213,23 @@ export function AdminSourcesPage() {
         </div>
       </header>
 
+      {queueMetrics && (
+        <div className={styles.queueBar}>
+          <div><strong>{queueMetrics.queued}</strong><span>Queued</span></div>
+          <div><strong>{queueMetrics.processing}</strong><span>Processing</span></div>
+          <div><strong>{queueMetrics.completed}</strong><span>Completed</span></div>
+          <div><strong>{queueMetrics.failed}</strong><span>Failed</span></div>
+          <div><strong>{queueMetrics.rateLimited}</strong><span>Rate limited</span></div>
+          {queueMetrics.isInCooldown && (
+            <div className={styles.queueCooldown}>
+              Cooldown until {queueMetrics.cooldownUntilUtc
+                ? new Date(queueMetrics.cooldownUntilUtc).toLocaleTimeString()
+                : 'soon'}
+            </div>
+          )}
+        </div>
+      )}
+
       {message && <p className={adminStyles.banner}>{message}</p>}
 
       {telegramSources.length === 0 && (
@@ -209,93 +243,78 @@ export function AdminSourcesPage() {
       )}
 
       <div className={styles.grid}>
-        {sources.map((source) => (
-          <article key={source.id} className={styles.card}>
-            <div className={styles.cardTop}>
-              <div>
-                <p className={styles.type}>{SourceTypeLabels[source.type] ?? 'Source'}</p>
-                <h3 className={styles.name}>{source.name}</h3>
-                {source.channelUrl && (
-                  <a href={source.channelUrl} target="_blank" rel="noopener noreferrer" className={styles.url}>
-                    {source.channelUrl}
-                  </a>
-                )}
+        {sources.map((source) => {
+          const badge = resolveSourceStatusBadge(source.healthStatus, source.ingestionEnabled);
+          const statusDetail = getStatusDetailLabel(source.healthStatus);
+          const connectionLabel = source.ingestionEnabled ? badge.label : 'Disabled';
+
+          return (
+            <article key={source.id} className={styles.card}>
+              <div className={styles.cardTop}>
+                <div className={styles.cardIntro}>
+                  <p className={styles.type}>{SourceTypeLabels[source.type] ?? 'Source'}</p>
+                  <h3 className={styles.name}>{source.name}</h3>
+                  {source.channelUrl && (
+                    <a href={source.channelUrl} target="_blank" rel="noopener noreferrer" className={styles.url}>
+                      {source.channelUrl}
+                    </a>
+                  )}
+                </div>
+                <span className={`${styles.healthBadge} ${badgeClass(badge.tone)}`}>
+                  <span className={styles.healthDot} aria-hidden="true" />
+                  {badge.label}
+                </span>
               </div>
-              <span className={`${styles.badge} ${source.ingestionEnabled ? styles.badgeOn : styles.badgeOff}`}>
-                {source.ingestionEnabled ? 'Enabled' : 'Disabled'}
-              </span>
-            </div>
 
-            <div className={styles.metrics}>
-              <div><strong>{source.metrics.messagesScanned}</strong><span>Scanned</span></div>
-              <div><strong>{source.metrics.jobsExtracted}</strong><span>Extracted</span></div>
-              <div><strong>{source.metrics.pendingModeration}</strong><span>Pending</span></div>
-              <div className={statusClass(source.metrics.connectionStatus)}>
-                <strong>{source.metrics.connectionStatus}</strong><span>Connection</span>
+              <div className={styles.metrics}>
+                <div><strong>{source.metrics.messagesScanned}</strong><span>Scanned</span></div>
+                <div><strong>{source.metrics.jobsExtracted}</strong><span>Extracted</span></div>
+                <div><strong>{source.metrics.pendingModeration}</strong><span>Pending</span></div>
               </div>
-            </div>
 
-            <div className={styles.diagnostics}>
-              {(() => {
-                const ingestionStatus = getSourceIngestionStatusDisplay(
-                  source.lastSyncStatus,
-                  source.lastIngestionError,
-                );
-                return (
-                  <>
-                    {!ingestionStatus.hasError && (
-                      <div><span>Last sync</span><strong className={styles.clampedText}>{ingestionStatus.statusLabel}</strong></div>
-                    )}
-                    <div><span>Last success</span><strong>{source.lastSuccessfulIngestionAt ? new Date(source.lastSuccessfulIngestionAt).toLocaleString() : 'Never'}</strong></div>
-                    <div><span>Last message ID</span><strong>{source.lastScannedTelegramMessageId ?? '—'}</strong></div>
-                    {ingestionStatus.hasError && (
-                      <div className={`${styles.errorBlock} ${styles.errorBlockWide}`}>
-                        <div className={styles.errorRow}>
-                          <span>Status</span>
-                          <strong className={styles.clampedText}>{ingestionStatus.statusLabel}</strong>
-                        </div>
-                        {ingestionStatus.errorLabel && (
-                          <div className={styles.errorRow}>
-                            <span>Error</span>
-                            <strong className={styles.clampedText}>{ingestionStatus.errorLabel}</strong>
-                          </div>
-                        )}
-                        <button
-                          type="button"
-                          className={styles.errorAction}
-                          onClick={() => void handleViewLogs(source)}
-                        >
-                          View logs
-                        </button>
-                      </div>
-                    )}
-                  </>
-                );
-              })()}
-            </div>
+              <div className={styles.statusSection}>
+                <p className={styles.statusHeading}>Status</p>
+                <div className={styles.statusRows}>
+                  <div className={styles.statusRow}>
+                    <span>Connection</span>
+                    <strong className={styles.clampedText}>{connectionLabel}</strong>
+                  </div>
+                  <div className={styles.statusRow}>
+                    <span>Last sync</span>
+                    <strong>{formatRelativeTime(source.sourceLastCheckedAt)}</strong>
+                  </div>
+                  <div className={styles.statusRow}>
+                    <span>Last success</span>
+                    <strong>{formatRelativeTime(source.lastSuccessfulIngestionAt)}</strong>
+                  </div>
+                  <div className={styles.statusRow}>
+                    <span>Last message ID</span>
+                    <strong className={styles.clampedText}>{source.lastScannedTelegramMessageId ?? '—'}</strong>
+                  </div>
+                  {statusDetail && (
+                    <p className={styles.statusHint}>{statusDetail}</p>
+                  )}
+                </div>
+              </div>
 
-            <div className={styles.metaRow}>
-              <span>Trust: {trustLabel(source.trustLevel)} ({source.trustScore})</span>
-              <span>
-                Last sync: {source.sourceLastCheckedAt
-                  ? new Date(source.sourceLastCheckedAt).toLocaleString()
-                  : 'Never'}
-              </span>
-            </div>
+              <div className={styles.metaRow}>
+                <span>Trust: {trustLabel(source.trustLevel)} ({source.trustScore})</span>
+              </div>
 
-            <div className={adminStyles.actions}>
-              <button type="button" className={adminStyles.btn} onClick={() => openEdit(source)}>Edit</button>
-              <button type="button" className={adminStyles.btn} onClick={() => void handleTest(source)}>Test</button>
-              <button type="button" className={adminStyles.btn} onClick={() => void handleToggle(source)}>
-                {source.ingestionEnabled ? 'Disable' : 'Enable'}
-              </button>
-              <button type="button" className={adminStyles.btn} onClick={() => void handleViewLogs(source)}>View logs</button>
-              <button type="button" className={adminStyles.btnDanger} onClick={() => void handleDelete(source)}>
-                Delete
-              </button>
-            </div>
-          </article>
-        ))}
+              <div className={adminStyles.actions}>
+                <button type="button" className={adminStyles.btn} onClick={() => openEdit(source)}>Edit</button>
+                <button type="button" className={adminStyles.btn} onClick={() => void handleTest(source)}>Test</button>
+                <button type="button" className={adminStyles.btn} onClick={() => void handleToggle(source)}>
+                  {source.ingestionEnabled ? 'Disable' : 'Enable'}
+                </button>
+                <button type="button" className={adminStyles.btn} onClick={() => void handleViewLogs(source)}>View logs</button>
+                <button type="button" className={adminStyles.btnDanger} onClick={() => void handleDelete(source)}>
+                  Delete
+                </button>
+              </div>
+            </article>
+          );
+        })}
       </div>
 
       {formOpen && (

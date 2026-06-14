@@ -136,6 +136,11 @@ public class IngestionPipelineService
         try
         {
             await Log(source.Id, "extraction", "Info", "Gemini extraction started.", null, cancellationToken);
+            source.LastSyncStatus = "Syncing";
+            source.SourceLastCheckedAt = DateTime.UtcNow;
+            await _sourceRepository.UpdateAsync(source, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
             var extractionStarted = stopwatch.ElapsedMilliseconds;
             var aiResponse = await _aiExtractionService.ExtractJobAsync(dto.RawMessageText, cancellationToken);
             var extractionMs = stopwatch.ElapsedMilliseconds - extractionStarted;
@@ -143,13 +148,23 @@ public class IngestionPipelineService
             if (!aiResponse.Success || aiResponse.Result is null)
             {
                 var error = aiResponse.ErrorMessage ?? "Gemini extraction failed.";
-                await Log(source.Id, "extraction", "Error", error, aiResponse.Model, cancellationToken);
-                await MarkMessageFailed(message, error, cancellationToken);
+                await Log(source.Id, "extraction", "Error", IngestionErrorSummarizer.ForLog(error), aiResponse.Model, cancellationToken);
+
+                if (aiResponse.IsRateLimited)
+                {
+                    await MarkMessageFailed(message, IngestionErrorSummarizer.ForDisplay(error), cancellationToken);
+                    await MarkSourceRateLimited(source, cancellationToken);
+                    throw new IngestionPipelineException(
+                        IngestionErrorCodes.GeminiRateLimited,
+                        "Gemini rate limit exceeded. Extraction will retry automatically.");
+                }
+
+                await MarkMessageFailed(message, IngestionErrorSummarizer.ForDisplay(error), cancellationToken);
                 await MarkSourceFailure(source, "Extraction failed", error, cancellationToken);
 
                 throw new IngestionPipelineException(
                     ResolveGeminiErrorCode(error),
-                    error);
+                    IngestionErrorSummarizer.ForDisplay(error));
             }
 
             await Log(
@@ -276,11 +291,24 @@ public class IngestionPipelineService
 
     private static string ResolveGeminiErrorCode(string error)
     {
+        var lower = error.ToLowerInvariant();
+        if (lower.Contains("429") || lower.Contains("quota") || lower.Contains("rate limit"))
+            return IngestionErrorCodes.GeminiRateLimited;
         if (error.Contains("ApiKey", StringComparison.OrdinalIgnoreCase))
             return IngestionErrorCodes.GeminiApiKeyMissing;
         if (error.Contains("API key", StringComparison.OrdinalIgnoreCase))
             return IngestionErrorCodes.GeminiApiKeyMissing;
         return IngestionErrorCodes.GeminiExtractionFailed;
+    }
+
+    private async Task MarkSourceRateLimited(Source source, CancellationToken cancellationToken)
+    {
+        source.LastSyncStatus = "Rate Limited";
+        source.LastIngestionError = "Rate limit exceeded.";
+        source.SourceLastCheckedAt = DateTime.UtcNow;
+        await _sourceRepository.UpdateAsync(source, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await Log(source.Id, "rate-limit", "Warning", "Gemini rate limit exceeded.", null, cancellationToken);
     }
 
     private async Task MarkMessageFailed(IngestionMessage message, string error, CancellationToken cancellationToken)
@@ -298,7 +326,7 @@ public class IngestionPipelineService
         source.SourceLastCheckedAt = DateTime.UtcNow;
         await _sourceRepository.UpdateAsync(source, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
-        await Log(source.Id, "failure", "Error", error, status, cancellationToken);
+        await Log(source.Id, "failure", "Error", IngestionErrorSummarizer.ForLog(error), status, cancellationToken);
     }
 
     private Task Log(

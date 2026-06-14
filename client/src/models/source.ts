@@ -4,8 +4,8 @@ export interface AdminSourceMetrics {
   messagesScanned: number;
   jobsExtracted: number;
   pendingModeration: number;
-  connectionStatus: string;
 }
+
 export interface AdminSource {
   id: string;
   name: string;
@@ -25,8 +25,19 @@ export interface AdminSource {
   lastIngestionError?: string | null;
   lastSuccessfulIngestionAt?: string | null;
   lastScannedTelegramMessageId?: string | null;
+  healthStatus: string;
   metrics: AdminSourceMetrics;
   createdAt: string;
+}
+
+export interface AiExtractionQueueMetrics {
+  queued: number;
+  processing: number;
+  completed: number;
+  failed: number;
+  rateLimited: number;
+  isInCooldown: boolean;
+  cooldownUntilUtc?: string | null;
 }
 
 export interface SourceIngestionLogEntry {

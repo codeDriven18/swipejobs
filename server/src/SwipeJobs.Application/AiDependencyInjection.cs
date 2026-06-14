@@ -16,20 +16,14 @@ public static class AiDependencyInjection
 
         services.Configure<AiOptions>(configuration.GetSection(AiOptions.SectionName));
 
-        services.AddHttpClient<GeminiExtractionService>(client =>
+        services.AddSingleton<AiExtractionQueueMetrics>();
+        services.AddSingleton<QueuedAiExtractionService>();
+        services.AddSingleton<IAiExtractionService>(sp => sp.GetRequiredService<QueuedAiExtractionService>());
+
+        services.AddHttpClient<IGeminiExtractionClient, GeminiExtractionService>(client =>
         {
             client.BaseAddress = new Uri("https://generativelanguage.googleapis.com/");
-            client.Timeout = TimeSpan.FromSeconds(60);
-        });
-
-        services.AddScoped<IAiExtractionService>(sp =>
-        {
-            var options = configuration.GetSection(AiOptions.SectionName).Get<AiOptions>() ?? new AiOptions();
-            var provider = options.Provider?.Trim() ?? "Gemini";
-
-            return provider.Equals("Gemini", StringComparison.OrdinalIgnoreCase)
-                ? sp.GetRequiredService<GeminiExtractionService>()
-                : throw new InvalidOperationException($"Unsupported AI provider '{provider}'. Only Gemini is configured for Phase 1.");
+            client.Timeout = TimeSpan.FromSeconds(120);
         });
 
         return services;

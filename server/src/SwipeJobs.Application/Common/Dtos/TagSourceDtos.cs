@@ -36,8 +36,7 @@ public record UpdateSourceDto(
 public record AdminSourceMetricsDto(
     int MessagesScanned,
     int JobsExtracted,
-    int PendingModeration,
-    string ConnectionStatus);
+    int PendingModeration);
 
 public record AdminSourceDto(
     Guid Id,
@@ -58,8 +57,18 @@ public record AdminSourceDto(
     string? LastIngestionError,
     DateTime? LastSuccessfulIngestionAt,
     string? LastScannedTelegramMessageId,
+    string HealthStatus,
     AdminSourceMetricsDto Metrics,
     DateTime CreatedAt);
+
+public record AiExtractionQueueMetricsDto(
+    int Queued,
+    int Processing,
+    long Completed,
+    long Failed,
+    long RateLimited,
+    bool IsInCooldown,
+    DateTime? CooldownUntilUtc);
 
 public record SourceIngestionLogDto(
     Guid Id,

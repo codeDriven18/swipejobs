@@ -26,4 +26,7 @@ public record AiExtractionResponse(
     string ExtractionSource,
     bool Success,
     string? ErrorMessage,
-    long ProcessingTimeMs);
+    long ProcessingTimeMs,
+    int? HttpStatusCode = null,
+    bool IsRateLimited = false,
+    int? RetryAfterSeconds = null);

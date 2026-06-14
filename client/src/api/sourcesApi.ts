@@ -2,6 +2,7 @@ import { apiClient } from './client';
 import type {
   AdminDashboardIngestion,
   AdminSource,
+  AiExtractionQueueMetrics,
   CreateAdminSourceRequest,
   SourceConnectionTestResult,
   SourceIngestionLogEntry,
@@ -30,6 +31,9 @@ export const sourcesApi = {
 
   getDashboardIngestion: () =>
     apiClient<AdminDashboardIngestion>('/admin/sources/dashboard/ingestion'),
+
+  getExtractionQueueMetrics: () =>
+    apiClient<AiExtractionQueueMetrics>('/admin/sources/extraction-queue'),
 
   getLogs: (id: string, limit = 50) =>
     apiClient<SourceIngestionLogEntry[]>(`/admin/sources/${id}/logs?limit=${limit}`),

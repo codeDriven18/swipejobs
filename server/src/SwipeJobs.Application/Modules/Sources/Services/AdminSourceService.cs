@@ -16,6 +16,7 @@ public class AdminSourceService : IAdminSourceService
     private readonly IIngestionMessageRepository _messageRepository;
     private readonly IJobCandidateRepository _candidateRepository;
     private readonly ISourceIngestionLogger _ingestionLogger;
+    private readonly AiExtractionQueueMetrics _queueMetrics;
     private readonly IUnitOfWork _unitOfWork;
 
     public AdminSourceService(
@@ -23,12 +24,14 @@ public class AdminSourceService : IAdminSourceService
         IIngestionMessageRepository messageRepository,
         IJobCandidateRepository candidateRepository,
         ISourceIngestionLogger ingestionLogger,
+        AiExtractionQueueMetrics queueMetrics,
         IUnitOfWork unitOfWork)
     {
         _sourceRepository = sourceRepository;
         _messageRepository = messageRepository;
         _candidateRepository = candidateRepository;
         _ingestionLogger = ingestionLogger;
+        _queueMetrics = queueMetrics;
         _unitOfWork = unitOfWork;
     }
 
@@ -239,7 +242,7 @@ public class AdminSourceService : IAdminSourceService
             l.CreatedAt)).ToList();
     }
 
-    private static AdminSourceDto MapWithMetrics(Source source, SourceMetricsSnapshot? metrics)
+    private AdminSourceDto MapWithMetrics(Source source, SourceMetricsSnapshot? metrics)
     {
         return new AdminSourceDto(
             source.Id,
@@ -260,30 +263,16 @@ public class AdminSourceService : IAdminSourceService
             source.LastIngestionError,
             source.LastSuccessfulIngestionAt,
             source.LastScannedTelegramMessageId,
+            SourceHealthResolver.Resolve(source, _queueMetrics),
             new AdminSourceMetricsDto(
                 metrics?.MessagesScanned ?? 0,
                 metrics?.JobsExtracted ?? 0,
-                metrics?.PendingModeration ?? 0,
-                ResolveConnectionStatus(source)),
+                metrics?.PendingModeration ?? 0),
             source.CreatedAt);
     }
 
-    private static string ResolveConnectionStatus(Source source)
-    {
-        if (!source.IsActive || !source.IngestionEnabled)
-            return "Disabled";
-        if (source.Type == SourceType.Telegram && string.IsNullOrWhiteSpace(source.ChannelUrl))
-            return "Missing URL";
-        return source.MonitorStatus switch
-        {
-            SourceMonitorStatus.Active => "Connected",
-            SourceMonitorStatus.Unreachable => "Unreachable",
-            SourceMonitorStatus.MessageDeleted => "Message deleted",
-            SourceMonitorStatus.MessageChanged => "Needs review",
-            SourceMonitorStatus.Disabled => "Disabled",
-            _ => "Unknown",
-        };
-    }
+    public AiExtractionQueueMetricsSnapshot GetExtractionQueueMetrics()
+        => _queueMetrics.Snapshot();
 
     private static string? NormalizeChannelUrl(string? channelUrl)
         => TelegramChannelUrlNormalizer.Normalize(channelUrl);

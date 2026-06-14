@@ -1,57 +1,61 @@
-export interface SourceIngestionStatusDisplay {
-  statusLabel: string;
-  errorLabel?: string;
-  hasError: boolean;
+export type SourceHealthStatus =
+  | 'Healthy'
+  | 'Connected'
+  | 'Disabled'
+  | 'Syncing'
+  | 'Rate Limited'
+  | 'Extraction Failed'
+  | 'Missing URL'
+  | 'Unreachable'
+  | 'Message deleted'
+  | 'Needs review';
+
+export interface SourceStatusBadge {
+  label: SourceHealthStatus | string;
+  tone: 'good' | 'muted' | 'syncing' | 'rateLimited' | 'failed' | 'warn';
 }
 
-export function summarizeIngestionError(raw?: string | null): string | undefined {
-  if (!raw?.trim()) return undefined;
+export function resolveSourceStatusBadge(
+  healthStatus?: string | null,
+  ingestionEnabled?: boolean,
+): SourceStatusBadge {
+  const status = healthStatus ?? (ingestionEnabled ? 'Connected' : 'Disabled');
 
-  const lower = raw.toLowerCase();
-  if (lower.includes('not found') && lower.includes('model')) return 'Gemini Model Not Found';
-  if (lower.includes('apikey') || lower.includes('api key')) return 'Gemini API Key Missing';
-  if (lower.includes('gemini api error 401') || lower.includes('unauthorized')) return 'Gemini Authentication Failed';
-  if (lower.includes('gemini')) return 'Gemini Extraction Failed';
-  if (lower.includes('invalid ai response')) return 'Invalid AI Response';
-  if (lower.includes('persistence')) return 'Candidate Persistence Failed';
-
-  const firstLine = raw.split(/\r?\n/)[0]?.trim() ?? raw;
-  if (firstLine.length <= 80) return firstLine;
-  return `${firstLine.slice(0, 77)}…`;
-}
-
-export function getSourceIngestionStatusDisplay(
-  lastSyncStatus?: string | null,
-  lastIngestionError?: string | null,
-): SourceIngestionStatusDisplay {
-  if (!lastIngestionError?.trim()) {
-    return {
-      statusLabel: shortenStatus(lastSyncStatus) ?? 'OK',
-      hasError: false,
-    };
+  switch (status) {
+    case 'Healthy':
+    case 'Connected':
+      return { label: status, tone: 'good' };
+    case 'Disabled':
+      return { label: 'Disabled', tone: 'muted' };
+    case 'Syncing':
+      return { label: 'Syncing', tone: 'syncing' };
+    case 'Rate Limited':
+      return { label: 'Rate Limited', tone: 'rateLimited' };
+    case 'Extraction Failed':
+      return { label: 'Extraction Failed', tone: 'failed' };
+    default:
+      return { label: status, tone: 'warn' };
   }
-
-  const errorLabel = summarizeIngestionError(lastIngestionError);
-  const statusLabel = isExtractionFailure(lastSyncStatus, lastIngestionError)
-    ? 'Extraction Failed'
-    : shortenStatus(lastSyncStatus) ?? 'Failed';
-
-  return {
-    statusLabel,
-    errorLabel,
-    hasError: true,
-  };
 }
 
-function isExtractionFailure(lastSyncStatus?: string | null, lastIngestionError?: string | null): boolean {
-  const status = lastSyncStatus?.toLowerCase() ?? '';
-  const error = lastIngestionError?.toLowerCase() ?? '';
-  return status.includes('extract') || error.includes('gemini') || error.includes('ai response');
+export function formatRelativeTime(iso?: string | null): string {
+  if (!iso) return 'Never';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return 'Never';
+
+  const diffMs = Date.now() - date.getTime();
+  const minutes = Math.floor(diffMs / 60_000);
+  if (minutes < 1) return 'Just now';
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hr ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
 }
 
-function shortenStatus(value?: string | null): string | undefined {
-  if (!value?.trim()) return undefined;
-  const trimmed = value.trim();
-  if (trimmed.length <= 48) return trimmed;
-  return `${trimmed.slice(0, 45)}…`;
+export function getStatusDetailLabel(healthStatus?: string | null): string | undefined {
+  if (!healthStatus) return undefined;
+  if (healthStatus === 'Rate Limited') return 'Details available in logs.';
+  if (healthStatus === 'Extraction Failed') return 'Details available in logs.';
+  return undefined;
 }

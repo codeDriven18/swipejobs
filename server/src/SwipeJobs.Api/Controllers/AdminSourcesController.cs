@@ -111,5 +111,20 @@ public class AdminSourcesController : ControllerBase
         return Ok(await _adminSourceService.GetDashboardIngestionAsync(cancellationToken));
     }
 
+    [HttpGet("extraction-queue")]
+    public IActionResult GetExtractionQueueMetrics()
+    {
+        RequireAdmin();
+        var snapshot = _adminSourceService.GetExtractionQueueMetrics();
+        return Ok(new AiExtractionQueueMetricsDto(
+            snapshot.Queued,
+            snapshot.Processing,
+            snapshot.Completed,
+            snapshot.Failed,
+            snapshot.RateLimited,
+            snapshot.IsInCooldown,
+            snapshot.CooldownUntilUtc));
+    }
+
     private void RequireAdmin() => _currentUser.RequireRole(UserRole.Admin);
 }

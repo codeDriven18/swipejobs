@@ -1,5 +1,7 @@
 using SwipeJobs.Application.Common.Dtos;
 
+using SwipeJobs.Application.Modules.Ingestion.Services;
+
 namespace SwipeJobs.Application.Modules.Sources.Interfaces;
 
 public interface IAdminSourceService
@@ -13,4 +15,5 @@ public interface IAdminSourceService
     Task<SourceConnectionTestResultDto> TestConnectionAsync(Guid id, CancellationToken cancellationToken = default);
     Task<AdminDashboardIngestionDto> GetDashboardIngestionAsync(CancellationToken cancellationToken = default);
     Task<IReadOnlyList<SourceIngestionLogDto>> GetLogsAsync(Guid sourceId, int limit = 50, CancellationToken cancellationToken = default);
+    AiExtractionQueueMetricsSnapshot GetExtractionQueueMetrics();
 }

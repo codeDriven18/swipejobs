@@ -20,6 +20,7 @@ public static class IngestionErrorCodes
     public const string ChannelNotFound = "channel_not_found";
     public const string InvalidTelegramMessageId = "invalid_telegram_message_id";
     public const string GeminiExtractionFailed = "gemini_extraction_failed";
+    public const string GeminiRateLimited = "gemini_rate_limited";
     public const string InvalidAiResponse = "invalid_ai_response";
     public const string CandidatePersistenceFailed = "candidate_persistence_failed";
     public const string DuplicateChannelUrl = "duplicate_channel_url";
