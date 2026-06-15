@@ -1,0 +1,11 @@
+.shell {
+  margin: calc(-1 * var(--space-5));
+  margin-bottom: calc(-1 * (var(--nav-height) + var(--space-6)));
+  min-height: calc(100dvh - 4.25rem - var(--nav-height) - env(safe-area-inset-bottom));
+}
+
+@media (min-width: 768px) {
+  .shell {
+    margin-bottom: calc(-1 * (var(--nav-height) + var(--space-6)));
+  }
+}

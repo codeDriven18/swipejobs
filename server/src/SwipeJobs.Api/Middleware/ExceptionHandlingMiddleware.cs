@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Npgsql;
 using SwipeJobs.Api.Models;
 using SwipeJobs.Application.Modules.Ingestion;
+using SwipeJobs.Application.Modules.Messaging;
 using SwipeJobs.Infrastructure.Auth;
 
 namespace SwipeJobs.Api.Middleware;
@@ -40,6 +41,13 @@ public class ExceptionHandlingMiddleware
         {
             LogCaughtException(context, ex, StatusCodes.Status400BadRequest);
             if (await TryWriteErrorAsync(context, StatusCodes.Status400BadRequest, ex.Message, "bad_request"))
+                return;
+            throw;
+        }
+        catch (MessagingSendException ex)
+        {
+            LogCaughtException(context, ex, StatusCodes.Status400BadRequest);
+            if (await TryWriteMessagingSendErrorAsync(context, ex))
                 return;
             throw;
         }
@@ -132,6 +140,22 @@ public class ExceptionHandlingMiddleware
         context.Response.StatusCode = statusCode;
         context.Response.ContentType = "application/json";
         await context.Response.WriteAsJsonAsync(new ApiErrorResponse(message, code, details));
+        return true;
+    }
+
+    private async Task<bool> TryWriteMessagingSendErrorAsync(HttpContext context, MessagingSendException ex)
+    {
+        if (context.Response.HasStarted)
+            return false;
+
+        context.Response.StatusCode = StatusCodes.Status400BadRequest;
+        context.Response.ContentType = "application/json";
+        await context.Response.WriteAsJsonAsync(new
+        {
+            error = ex.Message,
+            code = ex.Code,
+            diagnostics = ex.Diagnostics,
+        });
         return true;
     }
 }

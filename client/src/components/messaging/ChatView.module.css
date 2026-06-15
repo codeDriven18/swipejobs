@@ -1,14 +1,30 @@
 .page {
-  display: flex;
-  flex-direction: column;
-  min-height: calc(100dvh - var(--nav-height, 88px) - 2rem);
+  --chat-nav-offset: var(--nav-height, 4.75rem);
+  --chat-keyboard-offset: var(--keyboard-offset, 0px);
+  --chat-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --chat-composer-gap: 0.75rem;
+
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  width: 100%;
   max-width: 720px;
+  height: calc(100dvh - var(--chat-nav-offset) - var(--chat-safe-bottom) - var(--chat-keyboard-offset));
+  max-height: calc(100dvh - var(--chat-nav-offset) - var(--chat-safe-bottom) - var(--chat-keyboard-offset));
   margin: 0 auto;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.pagePortal {
+  --chat-nav-offset: 4.25rem;
 }
 
 .header {
+  flex-shrink: 0;
   padding-bottom: var(--space-3);
   border-bottom: 1px solid var(--color-border);
+  background: var(--color-bg);
+  z-index: 2;
 }
 
 .back {
@@ -55,7 +71,7 @@
 }
 
 .readOnlyBanner {
-  margin: var(--space-3) 0 0;
+  margin: 0;
   padding: var(--space-2) var(--space-3);
   border-radius: var(--radius-md);
   background: var(--color-surface);
@@ -64,9 +80,11 @@
 }
 
 .messages {
-  flex: 1;
+  min-height: 0;
   overflow-y: auto;
-  padding: var(--space-4) 0;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--space-4) var(--space-1) var(--chat-composer-gap);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
@@ -165,6 +183,8 @@
 }
 
 .error {
+  margin: 0;
+  padding: 0 var(--space-1);
   color: var(--color-danger);
   font-size: var(--text-sm);
 }
@@ -174,8 +194,16 @@
   grid-template-columns: auto 1fr auto;
   gap: var(--space-2);
   align-items: end;
-  padding-top: var(--space-3);
+  flex-shrink: 0;
+  padding:
+    var(--space-2)
+    var(--space-1)
+    calc(var(--space-2) + var(--chat-safe-bottom));
   border-top: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-bg) 92%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 5;
 }
 
 .fileInput {
@@ -202,4 +230,18 @@
   color: var(--color-text);
   font: inherit;
   line-height: 1.4;
+}
+
+.bottomAnchor {
+  width: 100%;
+  height: 1px;
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .pagePortal {
+    --chat-nav-offset: 0px;
+    height: calc(100dvh - 2rem - var(--chat-keyboard-offset));
+    max-height: calc(100dvh - 2rem - var(--chat-keyboard-offset));
+  }
 }

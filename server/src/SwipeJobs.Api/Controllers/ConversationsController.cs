@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SwipeJobs.Api.Helpers;
 using SwipeJobs.Application.Common.Dtos;
 using SwipeJobs.Application.Common.Interfaces;
+using SwipeJobs.Application.Modules.Messaging;
 using SwipeJobs.Application.Modules.Messaging.Interfaces;
 using SwipeJobs.Domain.Enums;
 
@@ -22,15 +24,18 @@ public class ConversationsController : ControllerBase
     private readonly IMessagingService _messagingService;
     private readonly IMessageAttachmentStorage _attachmentStorage;
     private readonly ICurrentUserService _currentUser;
+    private readonly ILogger<ConversationsController> _logger;
 
     public ConversationsController(
         IMessagingService messagingService,
         IMessageAttachmentStorage attachmentStorage,
-        ICurrentUserService currentUser)
+        ICurrentUserService currentUser,
+        ILogger<ConversationsController> logger)
     {
         _messagingService = messagingService;
         _attachmentStorage = attachmentStorage;
         _currentUser = currentUser;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -73,21 +78,34 @@ public class ConversationsController : ControllerBase
     }
 
     [HttpPost("{id:guid}/messages")]
-    public async Task<IActionResult> Send(Guid id, [FromBody] SendMessageDto dto, CancellationToken cancellationToken)
+    public async Task<IActionResult> Send(Guid id, [FromBody] SendMessageDto? dto, CancellationToken cancellationToken)
     {
         _currentUser.RequireRole(UserRole.JobSeeker, UserRole.Admin);
         var userId = _currentUser.GetRequiredUserId();
         var profileId = _currentUser.GetRequiredProfileId();
 
+        if (!ModelState.IsValid)
+            return MessagingSendResponses.ValidationFailed(ModelState);
+
+        var bodyError = MessagingSendResponses.ValidateRequestBody(dto, out var messageText);
+        if (bodyError is not null)
+            return bodyError;
+
+        _logger.LogInformation(
+            "Candidate message send request conversationId={ConversationId} senderId={SenderId} applicationProfileId={ProfileId}",
+            id,
+            userId,
+            profileId);
+
         try
         {
             var message = await _messagingService.SendMessageAsync(
-                id, userId, UserRole.JobSeeker, null, profileId, dto.MessageText, cancellationToken);
-            return message is null ? NotFound() : Ok(message);
+                id, userId, UserRole.JobSeeker, null, profileId, messageText, cancellationToken);
+            return message is null ? NotFound(new { error = "Conversation not found.", code = "conversation_not_found" }) : Ok(message);
         }
-        catch (InvalidOperationException ex)
+        catch (MessagingSendException ex)
         {
-            return BadRequest(new { error = ex.Message, code = "messaging_locked" });
+            return MessagingSendResponses.FromSendException(ex);
         }
     }
 
@@ -125,9 +143,9 @@ public class ConversationsController : ControllerBase
                 cancellationToken);
             return message is null ? NotFound() : Ok(message);
         }
-        catch (InvalidOperationException ex)
+        catch (MessagingSendException ex)
         {
-            return BadRequest(new { error = ex.Message, code = "messaging_locked" });
+            return MessagingSendResponses.FromSendException(ex);
         }
     }
 

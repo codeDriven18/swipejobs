@@ -4,6 +4,8 @@ import { IconChevronLeft } from '@/components/icons/Icons';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Button } from '@/components/ui/Button';
 import { useChatHub } from '@/hooks/useChatHub';
+import { useKeyboardViewport } from '@/hooks/useKeyboardViewport';
+import { getApiErrorMessage } from '@/lib/apiErrors';
 import {
   formatDateSeparator,
   formatMessageTimestamp,
@@ -29,6 +31,7 @@ interface ChatViewProps {
   logoUrl?: string;
   api: ChatApi;
   onMessagesRead?: () => void;
+  layout?: 'seeker' | 'portal';
 }
 
 function normalizeLoadedMessage(message: ChatMessage): ChatMessage {
@@ -49,7 +52,9 @@ export function ChatView({
   logoUrl,
   api,
   onMessagesRead,
+  layout = 'seeker',
 }: ChatViewProps) {
+  useKeyboardViewport();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -139,8 +144,8 @@ export function ChatView({
       const message = normalizeLoadedMessage(await api.sendMessage(conversation.id, text));
       setMessages((current) => [...current, message]);
       setDraft('');
-    } catch {
-      setError('Message could not be sent.');
+    } catch (sendError) {
+      setError(getApiErrorMessage(sendError, 'Message could not be sent.'));
     } finally {
       setSending(false);
     }
@@ -153,8 +158,8 @@ export function ChatView({
     try {
       const message = normalizeLoadedMessage(await api.sendAttachment(conversation.id, file));
       setMessages((current) => [...current, message]);
-    } catch {
-      setError('Attachment could not be sent.');
+    } catch (attachError) {
+      setError(getApiErrorMessage(attachError, 'Attachment could not be sent.'));
     } finally {
       setSending(false);
     }
@@ -176,7 +181,7 @@ export function ChatView({
   };
 
   return (
-    <section className={styles.page}>
+    <section className={`${styles.page} ${layout === 'portal' ? styles.pagePortal : ''}`}>
       <header className={styles.header}>
         <Link to={backTo} className={styles.back}>
           <IconChevronLeft size={18} /> {backLabel}
@@ -254,7 +259,7 @@ export function ChatView({
           })
         )}
         {typingUserId && <p className={styles.typing}>Typing…</p>}
-        <div ref={bottomRef} />
+        <div ref={bottomRef} className={styles.bottomAnchor} />
       </div>
 
       {error && <p className={styles.error}>{error}</p>}

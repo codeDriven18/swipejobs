@@ -40,6 +40,7 @@ export function PortalConversationPage() {
       backLabel="Messages"
       title={conversation.candidateName}
       subtitle={conversation.jobTitle}
+      layout="portal"
       api={{
         getMessages: portalMessagingApi.getMessages,
         sendMessage: portalMessagingApi.sendMessage,

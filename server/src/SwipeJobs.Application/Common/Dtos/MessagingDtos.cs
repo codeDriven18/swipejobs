@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using SwipeJobs.Domain.Enums;
 
 namespace SwipeJobs.Application.Common.Dtos;
@@ -48,7 +49,17 @@ public record MessageDto(
     DateTime SentAt,
     DateTime? ReadAt);
 
-public record SendMessageDto(string MessageText);
+public sealed class SendMessageDto
+{
+    [JsonPropertyName("messageText")]
+    public string? MessageText { get; set; }
+
+    /// <summary>Backward-compatible alias for older clients.</summary>
+    [JsonPropertyName("text")]
+    public string? Text { get; set; }
+
+    public string ResolveText() => (MessageText ?? Text ?? string.Empty).Trim();
+}
 
 public record MessagingMetricsDto(
     int ConversationsCreated,

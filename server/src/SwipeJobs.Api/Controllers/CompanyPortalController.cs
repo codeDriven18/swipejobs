@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using SwipeJobs.Api.Helpers;
 using SwipeJobs.Application.Common.Dtos;
 using SwipeJobs.Application.Common.Interfaces;
+using SwipeJobs.Application.Modules.Messaging;
 using SwipeJobs.Application.Modules.Messaging.Interfaces;
 using SwipeJobs.Application.Modules.Portal.Interfaces;
 using SwipeJobs.Domain.Enums;
@@ -245,22 +247,37 @@ public class CompanyPortalController : ControllerBase
     [HttpPost("conversations/{id:guid}/messages")]
     public async Task<IActionResult> SendConversationMessage(
         Guid id,
-        [FromBody] SendMessageDto dto,
+        [FromBody] SendMessageDto? dto,
         CancellationToken cancellationToken)
     {
         _currentUser.RequireRole(UserRole.Company, UserRole.Admin);
         var companyId = _currentUser.GetRequiredCompanyId();
         var userId = _currentUser.GetRequiredUserId();
 
+        if (!ModelState.IsValid)
+            return MessagingSendResponses.ValidationFailed(ModelState);
+
+        var bodyError = MessagingSendResponses.ValidateRequestBody(dto, out var messageText);
+        if (bodyError is not null)
+            return bodyError;
+
+        _logger.LogInformation(
+            "Employer message send request conversationId={ConversationId} senderId={SenderId} companyId={CompanyId}",
+            id,
+            userId,
+            companyId);
+
         try
         {
             var message = await _messagingService.SendMessageAsync(
-                id, userId, UserRole.Company, companyId, null, dto.MessageText, cancellationToken);
-            return message is null ? NotFound() : Ok(message);
+                id, userId, UserRole.Company, companyId, null, messageText, cancellationToken);
+            return message is null
+                ? NotFound(new { error = "Conversation not found.", code = "conversation_not_found" })
+                : Ok(message);
         }
-        catch (InvalidOperationException ex)
+        catch (MessagingSendException ex)
         {
-            return BadRequest(new { error = ex.Message, code = "messaging_locked" });
+            return MessagingSendResponses.FromSendException(ex);
         }
     }
 
@@ -295,9 +312,9 @@ public class CompanyPortalController : ControllerBase
                 cancellationToken);
             return message is null ? NotFound() : Ok(message);
         }
-        catch (InvalidOperationException ex)
+        catch (MessagingSendException ex)
         {
-            return BadRequest(new { error = ex.Message, code = "messaging_locked" });
+            return MessagingSendResponses.FromSendException(ex);
         }
     }
 

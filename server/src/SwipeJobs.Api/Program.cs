@@ -3,12 +3,14 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using SwipeJobs.Api.HostedServices;
 using SwipeJobs.Api.Extensions;
 using SwipeJobs.Api.Filters;
+using SwipeJobs.Api.Helpers;
 using SwipeJobs.Api.Hubs;
 using SwipeJobs.Api.Middleware;
 using SwipeJobs.Api.Services;
@@ -117,6 +119,11 @@ try
     builder.Services.AddControllers(options =>
     {
         options.Filters.Add<AuthRegisterDiagnosticsFilter>();
+    })
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+            MessagingSendResponses.ValidationFailed(context.ModelState);
     });
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen(options =>

@@ -5,6 +5,7 @@ import { ChatView } from '@/components/messaging/ChatView';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useUnreadMessages } from '@/hooks/useUnreadMessages';
 import type { ConversationDetail } from '@/models/messaging';
+import styles from './ConversationPage.module.css';
 
 export function ConversationPage() {
   const { conversationId } = useParams<{ conversationId: string }>();
@@ -34,19 +35,22 @@ export function ConversationPage() {
   }
 
   return (
-    <ChatView
-      conversation={conversation}
-      backTo="/messages"
-      backLabel="Messages"
-      logoUrl={conversation.companyLogoUrl}
-      api={{
-        getMessages: messagingApi.getMessages,
-        sendMessage: messagingApi.sendMessage,
-        sendAttachment: messagingApi.sendAttachment,
-        markRead: messagingApi.markRead,
-        downloadAttachment: messagingApi.downloadAttachment,
-      }}
-      onMessagesRead={() => void refreshUnread()}
-    />
+    <div className={styles.shell}>
+      <ChatView
+        conversation={conversation}
+        backTo="/messages"
+        backLabel="Messages"
+        logoUrl={conversation.companyLogoUrl}
+        layout="seeker"
+        api={{
+          getMessages: messagingApi.getMessages,
+          sendMessage: messagingApi.sendMessage,
+          sendAttachment: messagingApi.sendAttachment,
+          markRead: messagingApi.markRead,
+          downloadAttachment: messagingApi.downloadAttachment,
+        }}
+        onMessagesRead={() => void refreshUnread()}
+      />
+    </div>
   );
 }

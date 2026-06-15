@@ -1,7 +1,9 @@
+using Microsoft.Extensions.Logging;
 using SwipeJobs.Application.Common;
 using SwipeJobs.Application.Common.Dtos;
 using SwipeJobs.Application.Common.Interfaces;
 using SwipeJobs.Application.Common.Interfaces.Repositories;
+using SwipeJobs.Application.Modules.Messaging;
 using SwipeJobs.Application.Modules.Messaging.Interfaces;
 using SwipeJobs.Application.Modules.Personalization.Interfaces;
 using SwipeJobs.Domain.Entities;
@@ -22,6 +24,7 @@ public class MessagingService : IMessagingService
     private readonly INotificationService _notificationService;
     private readonly IChatPublisher _chatPublisher;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly ILogger<MessagingService> _logger;
 
     public MessagingService(
         IConversationRepository conversationRepository,
@@ -32,7 +35,8 @@ public class MessagingService : IMessagingService
         IMessageAttachmentStorage attachmentStorage,
         INotificationService notificationService,
         IChatPublisher chatPublisher,
-        IUnitOfWork unitOfWork)
+        IUnitOfWork unitOfWork,
+        ILogger<MessagingService> logger)
     {
         _conversationRepository = conversationRepository;
         _messageRepository = messageRepository;
@@ -43,6 +47,7 @@ public class MessagingService : IMessagingService
         _notificationService = notificationService;
         _chatPublisher = chatPublisher;
         _unitOfWork = unitOfWork;
+        _logger = logger;
     }
 
     public async Task<IReadOnlyList<ConversationSummaryDto>> GetCandidateConversationsAsync(
@@ -108,24 +113,34 @@ public class MessagingService : IMessagingService
         Guid conversationId, Guid userId, UserRole role, Guid? companyId, Guid? profileId,
         string messageText, CancellationToken cancellationToken = default)
     {
-        var conversation = await _conversationRepository.GetByIdWithDetailsAsync(conversationId, cancellationToken);
-        if (conversation is null || !CanAccess(conversation, role, companyId, profileId))
-            return null;
+        var diagnostics = await ValidateMessageSendAsync(
+            conversationId, userId, role, companyId, profileId, messageText, cancellationToken);
 
-        if (!CanSend(conversation, role))
-            throw new InvalidOperationException("Messaging is not available for this application.");
+        LogMessageSendAttempt(diagnostics, messageText);
+
+        if (!diagnostics.CanSend)
+        {
+            throw new MessagingSendException(
+                diagnostics.ValidationResult,
+                ResolveSendErrorCode(diagnostics),
+                diagnostics);
+        }
 
         var text = messageText.Trim();
-        if (string.IsNullOrWhiteSpace(text))
-            throw new InvalidOperationException("Message cannot be empty.");
-
         var message = new Message
         {
             ConversationId = conversationId,
+            Type = MessageType.User,
             SenderUserId = userId,
             MessageText = text,
             SentAt = DateTime.UtcNow,
         };
+
+        var conversation = await _conversationRepository.GetByIdWithDetailsAsync(conversationId, cancellationToken)
+            ?? throw new MessagingSendException(
+                "Conversation not found.",
+                "conversation_not_found",
+                diagnostics);
 
         await _messageRepository.AddAsync(message, cancellationToken);
         conversation.UpdatedAt = DateTime.UtcNow;
@@ -136,6 +151,12 @@ public class MessagingService : IMessagingService
         await _chatPublisher.PublishMessageAsync(conversationId, dto, cancellationToken);
         await NotifyNewMessageAsync(conversation, userId, text, cancellationToken);
 
+        _logger.LogInformation(
+            "Message send succeeded conversationId={ConversationId} senderId={SenderId} applicationId={ApplicationId}",
+            conversationId,
+            userId,
+            diagnostics.ApplicationId);
+
         return dto;
     }
 
@@ -144,12 +165,25 @@ public class MessagingService : IMessagingService
         Stream content, string fileName, string contentType, string? messageText,
         CancellationToken cancellationToken = default)
     {
-        var conversation = await _conversationRepository.GetByIdWithDetailsAsync(conversationId, cancellationToken);
-        if (conversation is null || !CanAccess(conversation, role, companyId, profileId))
-            return null;
+        var body = string.IsNullOrWhiteSpace(messageText) ? $"Shared {fileName}" : messageText;
+        var diagnostics = await ValidateMessageSendAsync(
+            conversationId, userId, role, companyId, profileId, body, cancellationToken);
 
-        if (!CanSend(conversation, role))
-            throw new InvalidOperationException("Messaging is not available for this application.");
+        LogMessageSendAttempt(diagnostics, body);
+
+        if (!diagnostics.CanSend)
+        {
+            throw new MessagingSendException(
+                diagnostics.ValidationResult,
+                ResolveSendErrorCode(diagnostics),
+                diagnostics);
+        }
+
+        var conversation = await _conversationRepository.GetByIdWithDetailsAsync(conversationId, cancellationToken)
+            ?? throw new MessagingSendException(
+                "Conversation not found.",
+                "conversation_not_found",
+                diagnostics);
 
         var storageKey = await _attachmentStorage.SaveAsync(
             conversationId, content, fileName, contentType, cancellationToken);
@@ -157,8 +191,9 @@ public class MessagingService : IMessagingService
         var message = new Message
         {
             ConversationId = conversationId,
+            Type = MessageType.User,
             SenderUserId = userId,
-            MessageText = string.IsNullOrWhiteSpace(messageText) ? $"Shared {fileName}" : messageText.Trim(),
+            MessageText = body.Trim(),
             AttachmentUrl = storageKey,
             AttachmentFileName = fileName,
             AttachmentContentType = contentType,
@@ -390,16 +425,144 @@ public class MessagingService : IMessagingService
         return false;
     }
 
-    private static bool CanSend(Conversation conversation, UserRole role)
+    private static bool CanSend(Conversation conversation, ApplicationStatus appStatus)
     {
         if (conversation.Status != ConversationStatus.Active)
             return false;
 
-        var appStatus = conversation.Application?.Status ?? ApplicationStatus.Applied;
         if (ApplicationWorkflow.IsConversationReadOnly(appStatus))
             return false;
 
         return ApplicationWorkflow.IsMessagingUnlocked(appStatus);
+    }
+
+    private async Task<MessageSendDiagnostics> ValidateMessageSendAsync(
+        Guid conversationId,
+        Guid userId,
+        UserRole role,
+        Guid? companyId,
+        Guid? profileId,
+        string? messageText,
+        CancellationToken cancellationToken)
+    {
+        var conversation = await _conversationRepository.GetByIdWithDetailsAsync(conversationId, cancellationToken);
+        if (conversation is null)
+        {
+            return MessageSendDiagnostics.Failed(
+                conversationId,
+                userId,
+                role,
+                "Conversation not found.");
+        }
+
+        var application = await _applicationRepository.GetByIdAsync(conversation.ApplicationId, cancellationToken);
+        var appStatus = application?.Status;
+        var senderInConversation = CanAccess(conversation, role, companyId, profileId);
+        var recipientExists = conversation.CandidateProfile is not null && conversation.Company is not null;
+        var conversationActive = conversation.Status == ConversationStatus.Active;
+        var messagingUnlocked = appStatus.HasValue
+            && ApplicationWorkflow.IsMessagingUnlocked(appStatus.Value)
+            && !ApplicationWorkflow.IsConversationReadOnly(appStatus.Value);
+        var messageTextValid = !string.IsNullOrWhiteSpace(messageText?.Trim());
+
+        var validationResult = ResolveValidationMessage(
+            senderInConversation,
+            recipientExists,
+            conversationActive,
+            conversation.Status,
+            appStatus,
+            messageTextValid);
+
+        var canSend = senderInConversation
+            && recipientExists
+            && conversationActive
+            && messagingUnlocked
+            && messageTextValid;
+
+        return new MessageSendDiagnostics(
+            conversationId,
+            userId,
+            role,
+            conversation.ApplicationId,
+            appStatus,
+            conversation.Status,
+            true,
+            senderInConversation,
+            recipientExists,
+            conversationActive,
+            messagingUnlocked,
+            messageTextValid,
+            validationResult,
+            canSend);
+    }
+
+    private static string ResolveValidationMessage(
+        bool senderInConversation,
+        bool recipientExists,
+        bool conversationActive,
+        ConversationStatus conversationStatus,
+        ApplicationStatus? applicationStatus,
+        bool messageTextValid)
+    {
+        if (!senderInConversation)
+            return "Sender is not a participant in this conversation.";
+
+        if (!recipientExists)
+            return "Conversation is missing candidate or company details.";
+
+        if (!conversationActive)
+            return $"Conversation is {conversationStatus.ToString().ToLowerInvariant()} and cannot accept new messages.";
+
+        if (applicationStatus is null)
+            return "Linked application could not be loaded.";
+
+        if (ApplicationWorkflow.IsConversationReadOnly(applicationStatus.Value))
+            return $"Application status is {applicationStatus.Value} and messaging is read-only.";
+
+        if (!ApplicationWorkflow.IsMessagingUnlocked(applicationStatus.Value))
+            return $"Messaging unlocks after Interview Invited. Current application status: {applicationStatus.Value}.";
+
+        if (!messageTextValid)
+            return "Message text cannot be empty.";
+
+        return "Valid";
+    }
+
+    private void LogMessageSendAttempt(MessageSendDiagnostics diagnostics, string? requestBody)
+    {
+        _logger.LogInformation(
+            "Message Send Attempt conversationId={ConversationId} senderId={SenderId} role={Role} applicationId={ApplicationId} applicationStatus={ApplicationStatus} conversationStatus={ConversationStatus} validationResult={ValidationResult} requestBodyLength={RequestBodyLength}",
+            diagnostics.ConversationId,
+            diagnostics.SenderUserId,
+            diagnostics.Role,
+            diagnostics.ApplicationId,
+            diagnostics.ApplicationStatus,
+            diagnostics.ConversationStatus,
+            diagnostics.ValidationResult,
+            requestBody?.Length ?? 0);
+    }
+
+    private static string ResolveSendErrorCode(MessageSendDiagnostics diagnostics)
+    {
+        if (!diagnostics.ConversationExists)
+            return "conversation_not_found";
+
+        if (!diagnostics.SenderInConversation)
+            return "sender_not_in_conversation";
+
+        if (!diagnostics.RecipientExists)
+            return "recipient_missing";
+
+        if (!diagnostics.MessageTextValid)
+            return "empty_message";
+
+        if (!diagnostics.ConversationActive)
+            return "conversation_inactive";
+
+        if (!diagnostics.MessagingUnlocked)
+            return "messaging_locked";
+
+        return "send_rejected";
     }
 
     private async Task<ConversationSummaryDto> ToSummaryAsync(
@@ -439,7 +602,7 @@ public class MessagingService : IMessagingService
             latest?.MessageText,
             latest?.SentAt,
             unread,
-            CanSend(conversation, role));
+            CanSend(conversation, appStatus));
     }
 
     private static ConversationDetailDto ToDetail(Conversation conversation)
@@ -462,7 +625,7 @@ public class MessagingService : IMessagingService
             company?.LogoUrl,
             job?.Id ?? Guid.Empty,
             job?.Title ?? "Job",
-            ApplicationWorkflow.IsMessagingUnlocked(appStatus) && conversation.Status == ConversationStatus.Active,
+            CanSend(conversation, appStatus) && conversation.Status == ConversationStatus.Active,
             ApplicationWorkflow.IsConversationReadOnly(appStatus) || conversation.Status != ConversationStatus.Active);
     }
 
