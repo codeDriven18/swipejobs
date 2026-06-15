@@ -71,27 +71,29 @@ export function ApplicationCard({
       whileTap={{ scale: 0.99 }}
     >
       <div className={styles.hero}>
-        <JobHeroImage
-          image={heroImage}
-          alt={`${preview.title} at ${preview.company}`}
-          className={styles.heroImage}
-        />
-        <div className={styles.heroFade} aria-hidden />
+        <div className={styles.heroMedia}>
+          <JobHeroImage
+            image={heroImage}
+            alt={`${preview.title} at ${preview.company}`}
+            className={styles.heroImage}
+          />
+          <div className={styles.heroFade} aria-hidden />
+        </div>
         <div className={styles.heroOverlay}>
           <div className={styles.heroTop}>
             <StatusBadge status={application.status} compact />
           </div>
         </div>
-        <div className={styles.heroLogoFloat}>
+      </div>
+
+      <div className={styles.body}>
+        <div className={styles.logoOverlap}>
           <CompanyLogo
             name={preview.company}
             logoUrl={job.companyLogoUrl}
             size="md"
           />
         </div>
-      </div>
-
-      <div className={styles.body}>
         <h3 className={styles.title}>{preview.title}</h3>
         <p className={styles.company}>{preview.company}</p>
         <p className={styles.salary}>{preview.salary}</p>

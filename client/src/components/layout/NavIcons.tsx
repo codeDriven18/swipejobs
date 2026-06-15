@@ -44,18 +44,13 @@ export function IconMessages({ className }: IconProps) {
   );
 }
 
-/** Messenger-style filled bubble icon */
-export function IconMessenger({ className }: IconProps) {
+/** Flat 2D chat bubble for header actions */
+export function IconChatBubble({ className }: IconProps) {
   return (
-    <svg className={className} viewBox="0 0 24 24" aria-hidden>
-      <path
-        fill="currentColor"
-        d="M12 1C5.925 1 1 5.477 1 10.8c0 2.865 1.417 5.416 3.637 7.07L3.5 22.5l5.341-2.898c1.48.405 3.05.623 4.659.623 6.075 0 11-4.477 11-9.8S18.075 1 12 1z"
-      />
-      <path
-        fill="var(--color-bg)"
-        d="M16.2 9.4 12.1 13.6 9.9 11.4 6.6 13.6l2.2-3.4L6.6 7.2l3.3 2.2 2.2-2.2 2.2 3.4-2.2 1.6z"
-      />
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M5.5 19.5 4 21v-4.2A7.8 7.8 0 0 1 4.2 5.5 7.8 7.8 0 0 1 12 4.2a7.8 7.8 0 0 1 7.8 7.8 7.8 7.8 0 0 1-7.8 7.8c-.78 0-1.54-.11-2.26-.33L5.5 19.5Z" />
+      <path d="M8.5 11h7" />
+      <path d="M8.5 14h4.5" />
     </svg>
   );
 }

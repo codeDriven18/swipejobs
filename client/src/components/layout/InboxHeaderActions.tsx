@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { IconMessenger } from '@/components/layout/NavIcons';
+import { IconChatBubble } from '@/components/layout/NavIcons';
 import { NotificationBell } from '@/components/layout/NotificationBell';
 import { closeActiveFloatingPanel } from '@/lib/floatingPanels';
 import { useUnreadMessages } from '@/hooks/useUnreadMessages';
@@ -17,7 +17,7 @@ export function InboxHeaderActions() {
         aria-label="Messages"
         onClick={() => closeActiveFloatingPanel()}
       >
-        <IconMessenger className={styles.messengerIcon} />
+        <IconChatBubble className={styles.chatIcon} />
         {unreadMessages > 0 && (
           <span className={styles.badge}>
             {unreadMessages > 9 ? '9+' : unreadMessages}

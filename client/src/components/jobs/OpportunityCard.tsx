@@ -126,12 +126,14 @@ export function OpportunityCard({
     <>
       <article className={`${styles.card} ${styles[variant]}`}>
         <div className={styles.hero} aria-hidden={!interactive}>
-          <JobHeroImage
-            image={heroImage}
-            alt={`${preview.title} at ${preview.company}`}
-            className={styles.heroImage}
-          />
-          <div className={styles.heroFade} aria-hidden />
+          <div className={styles.heroMedia}>
+            <JobHeroImage
+              image={heroImage}
+              alt={`${preview.title} at ${preview.company}`}
+              className={styles.heroImage}
+            />
+            <div className={styles.heroFade} aria-hidden />
+          </div>
           <div className={styles.heroOverlay}>
             <div className={styles.heroOverlayTop}>
               {heroBadge}
@@ -144,8 +146,11 @@ export function OpportunityCard({
               </>
             )}
           </div>
+        </div>
+
+        <div className={styles.body}>
           {isCompact && (
-            <div className={styles.heroLogoFloat}>
+            <div className={styles.logoOverlap}>
               <CompanyLogo
                 name={preview.company}
                 logoUrl={job.companyLogoUrl}
@@ -153,9 +158,6 @@ export function OpportunityCard({
               />
             </div>
           )}
-        </div>
-
-        <div className={styles.body}>
           <h3 className={styles.title}>{preview.title}</h3>
           <p className={styles.companyLine}>{preview.company}</p>
 

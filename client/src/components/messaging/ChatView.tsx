@@ -46,9 +46,23 @@ function normalizeLoadedMessage(message: ChatMessage): ChatMessage {
 
 function MessageReceipt({ readAt }: { readAt?: string }) {
   if (readAt) {
-    return <span className={styles.receiptRead} aria-label="Read">✓✓</span>;
+    return (
+      <span className={styles.receiptRead} aria-label="Read">
+        <svg viewBox="0 0 16 11" className={styles.tgChecks} aria-hidden>
+          <path d="M11.07 0.65 4.55 7.17 1.93 4.55 0.5 5.98l4.05 4.05 9.57-9.57L11.07 0.65Z" />
+          <path d="M15.5 0.65 8.98 7.17 7.55 5.74 6.12 7.17 8.98 10.03 16.97 2.04 15.5 0.65Z" />
+        </svg>
+      </span>
+    );
   }
-  return <span className={styles.receiptSent} aria-label="Delivered">✓✓</span>;
+
+  return (
+    <span className={styles.receiptSent} aria-label="Sent">
+      <svg viewBox="0 0 12 11" className={styles.tgCheck} aria-hidden>
+        <path d="M11.07 0.65 4.55 7.17 1.93 4.55 0.5 5.98l4.05 4.05L11.07 0.65Z" />
+      </svg>
+    </span>
+  );
 }
 
 export function ChatView({
@@ -271,20 +285,22 @@ export function ChatView({
                   sameSender ? styles.messageGrouped : styles.messageNewSender,
                 ].join(' ')}
               >
-                <p className={styles.messageText}>{message.messageText}</p>
-                {message.attachmentUrl && (
-                  <button
-                    type="button"
-                    className={styles.attachment}
-                    onClick={() => void handleDownload(message)}
-                  >
-                    {message.attachmentFileName ?? 'Download attachment'}
-                  </button>
-                )}
-                <footer className={styles.meta}>
-                  <time dateTime={message.sentAt}>{formatBubbleTime(message.sentAt)}</time>
-                  {message.isMine && <MessageReceipt readAt={message.readAt} />}
-                </footer>
+                <div className={styles.bubbleInner}>
+                  <p className={styles.messageText}>{message.messageText}</p>
+                  {message.attachmentUrl && (
+                    <button
+                      type="button"
+                      className={styles.attachment}
+                      onClick={() => void handleDownload(message)}
+                    >
+                      {message.attachmentFileName ?? 'Download attachment'}
+                    </button>
+                  )}
+                  <footer className={styles.meta}>
+                    <time dateTime={message.sentAt}>{formatBubbleTime(message.sentAt)}</time>
+                    {message.isMine && <MessageReceipt readAt={message.readAt} />}
+                  </footer>
+                </div>
               </article>
             );
           })

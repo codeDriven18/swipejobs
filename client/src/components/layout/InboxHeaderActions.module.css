@@ -21,11 +21,10 @@
   transform: scale(0.94);
 }
 
-.messengerIcon {
+.chatIcon {
   width: 1.375rem;
   height: 1.375rem;
   display: block;
-  color: #0084ff;
 }
 
 .badge {
