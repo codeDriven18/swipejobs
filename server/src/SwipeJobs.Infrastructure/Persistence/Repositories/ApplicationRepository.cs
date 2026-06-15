@@ -74,4 +74,22 @@ public class ApplicationRepository : Repository<ApplicationEntity>, IApplication
             .Include(a => a.UserProfile)
             .OrderByDescending(a => a.AppliedAt)
             .ToListAsync(cancellationToken);
+
+    public async Task<IReadOnlyDictionary<Guid, int>> GetApplicationCountsByProfileIdsAsync(
+        IEnumerable<Guid> profileIds,
+        CancellationToken cancellationToken = default)
+    {
+        var ids = profileIds.Distinct().ToList();
+        if (ids.Count == 0)
+            return new Dictionary<Guid, int>();
+
+        var counts = await DbSet
+            .AsNoTracking()
+            .Where(a => ids.Contains(a.UserProfileId))
+            .GroupBy(a => a.UserProfileId)
+            .Select(g => new { ProfileId = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+
+        return counts.ToDictionary(x => x.ProfileId, x => x.Count);
+    }
 }

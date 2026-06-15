@@ -182,12 +182,19 @@
   z-index: 1;
   background: linear-gradient(
     to bottom,
-    rgba(0, 0, 0, 0.04) 0%,
-    transparent 30%,
-    rgba(10, 10, 10, 0.5) 68%,
+    rgba(0, 0, 0, 0.06) 0%,
+    transparent 48%,
+    rgba(10, 10, 10, 0.42) 78%,
     var(--color-surface-raised) 100%
   );
   pointer-events: none;
+}
+
+.heroLogo {
+  position: relative;
+  z-index: 3;
+  margin-top: auto;
+  pointer-events: auto;
 }
 
 .logoOverlap {
@@ -241,8 +248,13 @@
 }
 
 .compact .hero {
-  height: clamp(13.75rem, 44vw, 20rem);
-  min-height: 13.75rem;
+  height: clamp(12.5rem, 38vh, 21rem);
+  min-height: 12.5rem;
+}
+
+.compact .heroOverlay {
+  justify-content: space-between;
+  padding-bottom: var(--space-4);
 }
 
 .compact .body {

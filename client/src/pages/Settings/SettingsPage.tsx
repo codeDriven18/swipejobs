@@ -4,6 +4,14 @@ import { UserRole } from '@/models/auth';
 import { ThemeAppearancePicker } from '@/components/theme/ThemeAppearancePicker';
 import { resetOnboarding } from '@/lib/onboardingStorage';
 import { PageHeader } from '@/components/ui/PageHeader';
+import {
+  IconBriefcase,
+  IconChevronRight,
+  IconSettings,
+  IconSmartphone,
+  IconSpark,
+  IconUser,
+} from '@/components/icons/Icons';
 import styles from './SettingsPage.module.css';
 
 export function SettingsPage() {
@@ -15,63 +23,97 @@ export function SettingsPage() {
       <PageHeader title="Settings" subtitle="App preferences." />
 
       {isAuthenticated && user?.role === UserRole.Admin && (
-        <div className={styles.card}>
-          <h2 className={styles.cardTitle}>Admin console</h2>
-          <p className={styles.cardDesc}>Manage users, companies, jobs, and platform settings.</p>
-          <Link to="/admin" className={styles.btnAccent} style={{ display: 'inline-block', textAlign: 'center' }}>
-            Open admin panel
+        <div className={styles.group}>
+          <Link to="/admin" className={styles.row}>
+            <span className={styles.rowIcon} aria-hidden>
+              <IconBriefcase size={20} />
+            </span>
+            <span className={styles.rowBody}>
+              <span className={styles.rowTitle}>Admin console</span>
+              <span className={styles.rowDesc}>Users, companies, jobs, and platform settings</span>
+            </span>
+            <IconChevronRight size={18} className={styles.rowChevron} aria-hidden />
           </Link>
         </div>
       )}
 
       {isAuthenticated && (
-        <div className={styles.card}>
-          <h2 className={styles.cardTitle}>Account</h2>
-          <p className={styles.cardDesc}>Password, sign out, and security.</p>
-          <Link to="/account" className={styles.btnAccent} style={{ display: 'inline-block', textAlign: 'center' }}>
-            Account settings
+        <div className={styles.group}>
+          <Link to="/account" className={styles.row}>
+            <span className={styles.rowIcon} aria-hidden>
+              <IconUser size={20} />
+            </span>
+            <span className={styles.rowBody}>
+              <span className={styles.rowTitle}>Account</span>
+              <span className={styles.rowDesc}>Password, sign out, and security</span>
+            </span>
+            <IconChevronRight size={18} className={styles.rowChevron} aria-hidden />
           </Link>
         </div>
       )}
 
       {isAuthenticated && (
-        <div className={styles.card}>
-          <h2 className={styles.cardTitle}>Appearance</h2>
-          <p className={styles.cardDesc}>Light, dark, or match your system.</p>
-          <ThemeAppearancePicker />
+        <div className={styles.group}>
+          <div className={styles.rowStatic}>
+            <span className={styles.rowIcon} aria-hidden>
+              <IconSpark size={20} />
+            </span>
+            <span className={styles.rowBody}>
+              <span className={styles.rowTitle}>Appearance</span>
+              <span className={styles.rowDesc}>Light, dark, or match your system</span>
+            </span>
+          </div>
+          <div className={styles.rowContent}>
+            <ThemeAppearancePicker />
+          </div>
         </div>
       )}
 
       {isAuthenticated && (
-        <div className={styles.card}>
-          <h2 className={styles.cardTitle}>App & install</h2>
-          <p className={styles.cardDesc}>Install, updates, and version info.</p>
-          <Link to="/profile/app" className={styles.btn} style={{ display: 'inline-block', textAlign: 'center' }}>
-            Open app settings
+        <div className={styles.group}>
+          <Link to="/profile/app" className={styles.row}>
+            <span className={styles.rowIcon} aria-hidden>
+              <IconSmartphone size={20} />
+            </span>
+            <span className={styles.rowBody}>
+              <span className={styles.rowTitle}>App & install</span>
+              <span className={styles.rowDesc}>Install, updates, and version info</span>
+            </span>
+            <IconChevronRight size={18} className={styles.rowChevron} aria-hidden />
           </Link>
         </div>
       )}
 
-      <div className={styles.card}>
-        <h2 className={styles.cardTitle}>About SwipeJobs</h2>
-        <p className={styles.cardDesc}>Learn more about features, pricing, and our mission.</p>
-        <Link to="/landing" className={styles.btn} style={{ display: 'inline-block', textAlign: 'center' }}>
-          Visit marketing site
+      <div className={styles.group}>
+        <Link to="/landing" className={styles.row}>
+          <span className={styles.rowIcon} aria-hidden>
+            <IconSettings size={20} />
+          </span>
+          <span className={styles.rowBody}>
+            <span className={styles.rowTitle}>About SwipeJobs</span>
+            <span className={styles.rowDesc}>Features, pricing, and our mission</span>
+          </span>
+          <IconChevronRight size={18} className={styles.rowChevron} aria-hidden />
         </Link>
       </div>
 
-      <div className={styles.card}>
-        <h2 className={styles.cardTitle}>Onboarding</h2>
-        <p className={styles.cardDesc}>Replay the welcome tour and swipe tutorial.</p>
+      <div className={styles.group}>
         <button
           type="button"
-          className={styles.btn}
+          className={styles.row}
           onClick={() => {
             resetOnboarding();
             navigate('/welcome');
           }}
         >
-          Replay welcome
+          <span className={styles.rowIcon} aria-hidden>
+            <IconSpark size={20} />
+          </span>
+          <span className={styles.rowBody}>
+            <span className={styles.rowTitle}>Onboarding</span>
+            <span className={styles.rowDesc}>Replay the welcome tour and swipe tutorial</span>
+          </span>
+          <IconChevronRight size={18} className={styles.rowChevron} aria-hidden />
         </button>
       </div>
     </section>

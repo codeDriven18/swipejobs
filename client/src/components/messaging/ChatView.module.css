@@ -242,6 +242,101 @@
   opacity: 0.9;
 }
 
+.fileCard {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: 100%;
+  margin-top: 0.25rem;
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.625rem;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  background: color-mix(in srgb, currentColor 8%, transparent);
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.fileIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.375rem;
+  height: 2.375rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-accent) 22%, transparent);
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.fileMeta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.fileName {
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.loadingMessages {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.625rem;
+  padding: var(--space-6) var(--space-3);
+}
+
+.loader {
+  width: 1.75rem;
+  height: 1.75rem;
+  margin-bottom: var(--space-3);
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--color-border) 70%, transparent);
+  border-top-color: var(--color-accent);
+  animation: chatSpin 0.75s linear infinite;
+}
+
+.loadingBubble {
+  height: 2.75rem;
+  border-radius: 1rem;
+  background: linear-gradient(
+    110deg,
+    color-mix(in srgb, var(--color-border) 40%, transparent) 8%,
+    color-mix(in srgb, var(--color-border) 80%, transparent) 18%,
+    color-mix(in srgb, var(--color-border) 40%, transparent) 33%
+  );
+  background-size: 200% 100%;
+  animation: chatShimmer 1.2s ease-in-out infinite;
+}
+
+.loadingBubble.theirs {
+  align-self: flex-start;
+  width: 68%;
+  border-bottom-left-radius: 0.35rem;
+}
+
+.loadingBubble.mine {
+  align-self: flex-end;
+  width: 52%;
+  border-bottom-right-radius: 0.35rem;
+}
+
+@keyframes chatSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes chatShimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
 .meta {
   display: inline-flex;
   align-items: center;

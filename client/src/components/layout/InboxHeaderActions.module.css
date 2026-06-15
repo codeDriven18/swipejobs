@@ -21,7 +21,8 @@
   transform: scale(0.94);
 }
 
-.chatIcon {
+.chatIcon,
+.headerIcon {
   width: 1.375rem;
   height: 1.375rem;
   display: block;

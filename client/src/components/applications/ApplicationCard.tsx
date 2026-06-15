@@ -76,6 +76,7 @@ export function ApplicationCard({
             image={heroImage}
             alt={`${preview.title} at ${preview.company}`}
             className={styles.heroImage}
+            variant="compact"
           />
           <div className={styles.heroFade} aria-hidden />
         </div>
@@ -83,17 +84,17 @@ export function ApplicationCard({
           <div className={styles.heroTop}>
             <StatusBadge status={application.status} compact />
           </div>
+          <div className={styles.heroLogo}>
+            <CompanyLogo
+              name={preview.company}
+              logoUrl={job.companyLogoUrl}
+              size="md"
+            />
+          </div>
         </div>
       </div>
 
       <div className={styles.body}>
-        <div className={styles.logoOverlap}>
-          <CompanyLogo
-            name={preview.company}
-            logoUrl={job.companyLogoUrl}
-            size="md"
-          />
-        </div>
         <h3 className={styles.title}>{preview.title}</h3>
         <p className={styles.company}>{preview.company}</p>
         <p className={styles.salary}>{preview.salary}</p>

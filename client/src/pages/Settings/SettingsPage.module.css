@@ -1,52 +1,82 @@
 .section {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-4);
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
 }
 
-.card {
-  padding: 1.25rem;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  transition: background-color var(--transition), border-color var(--transition);
+.group {
+  background: var(--color-surface-raised);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
 }
 
-.cardTitle {
-  font-size: 1rem;
-  font-weight: 600;
-  margin-bottom: 0.25rem;
-}
-
-.cardDesc {
-  color: var(--color-text-muted);
-  font-size: 0.875rem;
-  margin-bottom: 1rem;
-}
-
-.actions {
+.row,
+.rowStatic {
   display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
-}
-
-.btn {
-  padding: 0.5rem 1rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-bg);
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-4);
+  text-align: left;
   color: var(--color-text);
-  font-weight: 500;
-  transition: border-color var(--transition);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  transition: background var(--transition-fast);
 }
 
-.btn:hover {
-  border-color: var(--color-text-muted);
+.row:hover,
+.row:active {
+  background: color-mix(in srgb, var(--color-accent) 6%, var(--color-surface));
 }
 
-.btnAccent {
-  composes: btn;
-  background: var(--color-accent);
-  border-color: var(--color-accent);
-  color: #000;
+.rowStatic {
+  cursor: default;
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.rowIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-accent) 14%, var(--color-bg));
+  color: var(--color-accent);
+  flex-shrink: 0;
+}
+
+.rowBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.rowTitle {
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+  line-height: var(--leading-snug);
+}
+
+.rowDesc {
+  font-size: var(--text-secondary);
+  color: var(--color-text-muted);
+  line-height: var(--leading-normal);
+}
+
+.rowChevron {
+  flex-shrink: 0;
+  color: var(--color-text-subtle);
+}
+
+.rowContent {
+  padding: 0 var(--space-4) var(--space-4);
 }

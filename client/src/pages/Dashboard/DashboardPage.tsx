@@ -7,7 +7,7 @@ import { CompanyCarousel } from '@/components/discovery/CompanyCarousel';
 import { PullToRefresh } from '@/components/ui/PullToRefresh';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { DiscoveryRailSkeleton } from '@/components/ui/Skeleton';
+import { DiscoveryRailSkeleton, DashboardSkeleton } from '@/components/ui/Skeleton';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAuth } from '@/context/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
@@ -43,6 +43,7 @@ export function DashboardPage() {
   const { profile } = useProfile();
   const [dashboard, setDashboard] = useState<UserDashboard>(() => mergeDashboardWithEmpty(null));
   const [fetchFailed, setFetchFailed] = useState(false);
+  const [dashboardReady, setDashboardReady] = useState(false);
   const { collections, loading: collectionsLoading, reload: reloadCollections } = useDiscoveryCollections(true);
   const {
     jobs: recommendedJobs,
@@ -58,6 +59,7 @@ export function DashboardPage() {
     if (!shouldLoadDashboard) {
       setDashboard(mergeDashboardWithEmpty(null));
       setFetchFailed(false);
+      setDashboardReady(true);
       return;
     }
 
@@ -67,8 +69,10 @@ export function DashboardPage() {
       const data = await dashboardApi.getMyDashboard();
       setDashboard(mergeDashboardWithEmpty(data));
     } catch {
-      setDashboard(mergeDashboardWithEmpty(null));
+      setDashboard((current) => mergeDashboardWithEmpty(current));
       setFetchFailed(true);
+    } finally {
+      setDashboardReady(true);
     }
   }, [authLoading, shouldLoadDashboard]);
 
@@ -130,6 +134,10 @@ export function DashboardPage() {
 
   if (isAuthenticated && isEmployer) {
     return <Navigate to="/portal" replace />;
+  }
+
+  if (isAuthenticated && !isEmployer && authLoading) {
+    return <DashboardSkeleton />;
   }
 
   if (!isAuthenticated) {
@@ -250,21 +258,17 @@ export function DashboardPage() {
       </motion.header>
 
       {fetchFailed && (
-        <motion.div variants={item}>
-          <EmptyState
-            illustration="swipe"
-            title="Could not refresh your dashboard"
-            description="Your feed is still available — try again or start swiping."
-            actions={[
-              { label: 'Retry', onClick: () => void loadDashboard(), primary: true },
-              { label: 'Start swiping', to: '/swipe' },
-            ]}
-          />
-        </motion.div>
+        <motion.p className={styles.refreshBanner} variants={item} role="status">
+          Some stats may be outdated.
+          {' '}
+          <button type="button" className={styles.refreshLink} onClick={() => void loadDashboard()}>
+            Retry
+          </button>
+        </motion.p>
       )}
 
       <motion.div variants={item}>
-        {recommendationsLoading ? (
+        {(!dashboardReady || recommendationsLoading) ? (
           <DiscoveryRailSkeleton title="Recommended for you" />
         ) : (
           <DiscoveryRail

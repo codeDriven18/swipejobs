@@ -77,12 +77,20 @@ public class AdminService : IAdminService
     public async Task<IReadOnlyList<AdminUserDto>> GetUsersAsync(CancellationToken cancellationToken = default)
     {
         var users = await _userRepository.GetAllWithDetailsAsync(cancellationToken);
+        var profileIds = users
+            .Where(u => u.Profile?.Id is Guid)
+            .Select(u => u.Profile!.Id)
+            .ToList();
+        var applicationCounts = await _applicationRepository.GetApplicationCountsByProfileIdsAsync(
+            profileIds,
+            cancellationToken);
+
         var result = new List<AdminUserDto>();
         foreach (var u in users)
         {
-            var appCount = 0;
-            if (u.Profile?.Id is Guid profileId)
-                appCount = (await _applicationRepository.GetByUserProfileIdAsync(profileId, cancellationToken)).Count;
+            var appCount = u.Profile?.Id is Guid profileId && applicationCounts.TryGetValue(profileId, out var count)
+                ? count
+                : 0;
 
             result.Add(new AdminUserDto(
                 u.Id,

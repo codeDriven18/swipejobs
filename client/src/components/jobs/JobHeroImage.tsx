@@ -7,7 +7,7 @@ interface JobHeroImageProps {
   alt: string;
   className?: string;
   priority?: boolean;
-  variant?: 'default' | 'swipe';
+  variant?: 'default' | 'swipe' | 'compact';
 }
 
 export function JobHeroImage({ image, alt, className = '', priority = false, variant = 'default' }: JobHeroImageProps) {
@@ -56,8 +56,8 @@ export function JobHeroImage({ image, alt, className = '', priority = false, var
           }
         }}
       />
-      {variant !== 'swipe' && <div className={styles.fade} aria-hidden />}
-      {variant !== 'swipe' && <div className={styles.fadeSurface} aria-hidden />}
+      {variant === 'default' && <div className={styles.fade} aria-hidden />}
+      {variant === 'default' && <div className={styles.fadeSurface} aria-hidden />}
     </div>
   );
 }

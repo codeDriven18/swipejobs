@@ -131,6 +131,7 @@ export function OpportunityCard({
               image={heroImage}
               alt={`${preview.title} at ${preview.company}`}
               className={styles.heroImage}
+              variant={isCompact ? 'compact' : 'default'}
             />
             <div className={styles.heroFade} aria-hidden />
           </div>
@@ -145,19 +146,19 @@ export function OpportunityCard({
                 <CompanyIdentityStrip job={job} variant="compact" onDark />
               </>
             )}
+            {isCompact && (
+              <div className={styles.heroLogo}>
+                <CompanyLogo
+                  name={preview.company}
+                  logoUrl={job.companyLogoUrl}
+                  size="md"
+                />
+              </div>
+            )}
           </div>
         </div>
 
         <div className={styles.body}>
-          {isCompact && (
-            <div className={styles.logoOverlap}>
-              <CompanyLogo
-                name={preview.company}
-                logoUrl={job.companyLogoUrl}
-                size="md"
-              />
-            </div>
-          )}
           <h3 className={styles.title}>{preview.title}</h3>
           <p className={styles.companyLine}>{preview.company}</p>
 

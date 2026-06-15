@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { AnimatePresence, motion, useScroll, useTransform } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { ApiError } from '@/api/client';
 import { applicationsApi } from '@/api/applicationsApi';
 import { jobsApi } from '@/api/jobsApi';
@@ -11,7 +11,7 @@ import {
   type PremiumSwipeDeckHandle,
   type SwipeDirection,
 } from '@/components/swipe/PremiumSwipeDeck';
-import { IconBookmark, IconFilter, IconHeart, IconMenu, IconX } from '@/components/icons/Icons';
+import { IconBookmark, IconFilter, IconHeart, IconX } from '@/components/icons/Icons';
 import { hasCompletedSwipeOnboarding, markSwipeOnboardingComplete } from '@/lib/swipeOnboardingStorage';
 import { PullToRefresh } from '@/components/ui/PullToRefresh';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -40,12 +40,9 @@ export function SwipePage() {
   const filters = useJobFilters();
   const deckRef = useRef<PremiumSwipeDeckHandle>(null);
   const headerRef = useRef<HTMLElement>(null);
-  const pageScrollRef = useRef<HTMLDivElement>(null);
-  const queueRef = useRef<Job[]>([]);
-  const { scrollY } = useScroll({ container: pageScrollRef });
-  const headerActionsOpacity = useTransform(scrollY, [0, 56], [1, 0]);
 
   const [queue, setQueue] = useState<Job[]>([]);
+  const queueRef = useRef<Job[]>([]);
   queueRef.current = queue;
   const [tags, setTags] = useState<Tag[]>([]);
   const [loading, setLoading] = useState(true);
@@ -240,36 +237,19 @@ export function SwipePage() {
     >
       <div className={styles.backdrop} aria-hidden />
 
-      <div ref={pageScrollRef} className={styles.pageScroll}>
+      <div className={styles.pageScroll}>
       <header ref={headerRef} className={styles.header}>
-        <motion.div className={styles.headerStart} style={{ opacity: headerActionsOpacity }}>
-          <button
-            type="button"
-            className={styles.headerBtn}
-            onClick={() => navigate('/jobs')}
-            aria-label="Browse jobs"
-          >
-            <IconMenu size={20} />
-          </button>
-        </motion.div>
-
-        <span className={styles.deckCount}>
-          {loading || isRefreshing ? '…' : `${queue.length} left`}
-        </span>
-
-        <motion.div className={styles.headerEnd} style={{ opacity: headerActionsOpacity }}>
-          <button
-            type="button"
-            className={styles.headerBtn}
-            onClick={openFilters}
-            aria-label="Filters"
-          >
-            <IconFilter size={20} />
-            {filters.activeFilterCount > 0 && (
-              <span className={styles.filterCount}>{filters.activeFilterCount}</span>
-            )}
-          </button>
-        </motion.div>
+        <button
+          type="button"
+          className={styles.headerBtn}
+          onClick={openFilters}
+          aria-label="Filters"
+        >
+          <IconFilter size={20} />
+          {filters.activeFilterCount > 0 && (
+            <span className={styles.filterCount}>{filters.activeFilterCount}</span>
+          )}
+        </button>
       </header>
 
       <div className={styles.stage}>
@@ -297,6 +277,10 @@ export function SwipePage() {
             </div>
 
             <div className={styles.controls}>
+              <span className={styles.deckCount}>
+                {loading || isRefreshing ? '…' : `${queue.length} left`}
+              </span>
+
               <div
                 className={`${styles.onboardingSlot} ${onboardingCollapsed ? styles.onboardingSlotCollapsed : ''} ${onboardingFading ? styles.onboardingSlotFading : ''}`}
                 aria-hidden={onboardingCollapsed}

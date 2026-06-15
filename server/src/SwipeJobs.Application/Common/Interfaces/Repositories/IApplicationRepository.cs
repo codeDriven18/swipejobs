@@ -13,4 +13,7 @@ public interface IApplicationRepository : IRepository<ApplicationEntity>
     Task<int> CountAsync(CancellationToken cancellationToken = default);
     Task<int> CountByStatusAsync(ApplicationStatus status, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ApplicationEntity>> GetAllWithDetailsAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyDictionary<Guid, int>> GetApplicationCountsByProfileIdsAsync(
+        IEnumerable<Guid> profileIds,
+        CancellationToken cancellationToken = default);
 }

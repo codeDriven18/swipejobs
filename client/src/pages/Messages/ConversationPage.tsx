@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { messagingApi } from '@/api/messagingApi';
+import { ChatConversationSkeleton } from '@/components/messaging/ChatConversationSkeleton';
 import { ChatView } from '@/components/messaging/ChatView';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useUnreadMessages } from '@/hooks/useUnreadMessages';
@@ -22,7 +23,7 @@ export function ConversationPage() {
       .finally(() => setLoading(false));
   }, [conversationId]);
 
-  if (loading) return <p>Loading conversation…</p>;
+  if (loading) return <ChatConversationSkeleton />;
   if (!conversation || !conversationId) {
     return (
       <EmptyState

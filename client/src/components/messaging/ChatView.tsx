@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { IconChevronLeft } from '@/components/icons/Icons';
+import { IconChevronLeft, IconFile } from '@/components/icons/Icons';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Button } from '@/components/ui/Button';
 import { useChatHub } from '@/hooks/useChatHub';
@@ -42,6 +42,15 @@ function normalizeLoadedMessage(message: ChatMessage): ChatMessage {
     type: isSystem ? 'System' : 'User',
     isSystem,
   };
+}
+
+function isAttachmentPlaceholderText(text: string, fileName?: string | null): boolean {
+  const trimmed = text.trim();
+  if (!trimmed) return true;
+  if (!fileName) return trimmed.startsWith('Shared ');
+  return trimmed === fileName
+    || trimmed === `Shared ${fileName}`
+    || trimmed.startsWith('Shared ');
 }
 
 function MessageReceipt({ readAt }: { readAt?: string }) {
@@ -250,7 +259,12 @@ export function ChatView({
 
       <div ref={listRef} className={styles.messages} aria-live="polite">
         {loading ? (
-          <p className={styles.status}>Loading messages…</p>
+          <div className={styles.loadingMessages} aria-busy="true" aria-label="Loading messages">
+            <span className={styles.loader} aria-hidden />
+            <div className={`${styles.loadingBubble} ${styles.theirs}`} />
+            <div className={`${styles.loadingBubble} ${styles.mine}`} />
+            <div className={`${styles.loadingBubble} ${styles.theirs}`} />
+          </div>
         ) : messages.length === 0 ? (
           <p className={styles.status}>
             {conversation.canSendMessages
@@ -286,14 +300,23 @@ export function ChatView({
                 ].join(' ')}
               >
                 <div className={styles.bubbleInner}>
-                  <p className={styles.messageText}>{message.messageText}</p>
+                  {!isAttachmentPlaceholderText(message.messageText, message.attachmentFileName) && (
+                    <p className={styles.messageText}>{message.messageText}</p>
+                  )}
                   {message.attachmentUrl && (
                     <button
                       type="button"
-                      className={styles.attachment}
+                      className={styles.fileCard}
                       onClick={() => void handleDownload(message)}
                     >
-                      {message.attachmentFileName ?? 'Download attachment'}
+                      <span className={styles.fileIcon} aria-hidden>
+                        <IconFile size={22} />
+                      </span>
+                      <span className={styles.fileMeta}>
+                        <span className={styles.fileName}>
+                          {message.attachmentFileName ?? 'Download file'}
+                        </span>
+                      </span>
                     </button>
                   )}
                   <footer className={styles.meta}>

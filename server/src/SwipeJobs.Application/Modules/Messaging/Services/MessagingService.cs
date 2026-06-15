@@ -188,7 +188,7 @@ public class MessagingService : IMessagingService
         Stream content, string fileName, string contentType, string? messageText,
         CancellationToken cancellationToken = default)
     {
-        var body = string.IsNullOrWhiteSpace(messageText) ? $"Shared {fileName}" : messageText;
+        var body = string.IsNullOrWhiteSpace(messageText) ? fileName : messageText;
         var diagnostics = await ValidateMessageSendAsync(
             conversationId, userId, role, companyId, profileId, body, cancellationToken);
 
