@@ -12,5 +12,8 @@ public interface ICurrentUserService
     Guid GetRequiredUserId();
     Guid GetRequiredProfileId();
     Guid GetRequiredCompanyId();
+    bool TryGetUserId(out Guid userId);
+    bool TryGetProfileId(out Guid profileId);
+    bool TryGetCompanyId(out Guid companyId);
     void RequireRole(params UserRole[] roles);
 }

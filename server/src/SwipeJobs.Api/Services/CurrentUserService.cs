@@ -42,6 +42,42 @@ public class CurrentUserService : ICurrentUserService
     public Guid GetRequiredCompanyId()
         => CompanyId ?? throw new UnauthorizedAccessException("Company account required.");
 
+    public bool TryGetUserId(out Guid userId)
+    {
+        if (UserId.HasValue)
+        {
+            userId = UserId.Value;
+            return true;
+        }
+
+        userId = Guid.Empty;
+        return false;
+    }
+
+    public bool TryGetProfileId(out Guid profileId)
+    {
+        if (ProfileId.HasValue)
+        {
+            profileId = ProfileId.Value;
+            return true;
+        }
+
+        profileId = Guid.Empty;
+        return false;
+    }
+
+    public bool TryGetCompanyId(out Guid companyId)
+    {
+        if (CompanyId.HasValue)
+        {
+            companyId = CompanyId.Value;
+            return true;
+        }
+
+        companyId = Guid.Empty;
+        return false;
+    }
+
     public void RequireRole(params UserRole[] roles)
     {
         if (Role is null || !roles.Contains(Role.Value))

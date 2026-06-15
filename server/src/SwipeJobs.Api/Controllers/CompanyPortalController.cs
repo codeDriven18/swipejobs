@@ -251,8 +251,10 @@ public class CompanyPortalController : ControllerBase
         CancellationToken cancellationToken)
     {
         _currentUser.RequireRole(UserRole.Company, UserRole.Admin);
-        var companyId = _currentUser.GetRequiredCompanyId();
-        var userId = _currentUser.GetRequiredUserId();
+
+        var contextError = MessagingSendResponses.ValidateCompanyContext(_currentUser, out var userId, out var companyId);
+        if (contextError is not null)
+            return contextError;
 
         if (!ModelState.IsValid)
             return MessagingSendResponses.ValidationFailed(ModelState);
@@ -278,6 +280,17 @@ public class CompanyPortalController : ControllerBase
         catch (MessagingSendException ex)
         {
             return MessagingSendResponses.FromSendException(ex);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogError(
+                ex,
+                "InvalidOperation during employer message send conversationId={ConversationId} senderId={SenderId} companyId={CompanyId} message={Message}",
+                id,
+                userId,
+                companyId,
+                ex.Message);
+            return MessagingSendResponses.FromUnexpectedException(ex, id, userId, companyId: companyId);
         }
     }
 

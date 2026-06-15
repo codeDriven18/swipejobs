@@ -148,8 +148,31 @@ public class MessagingService : IMessagingService
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var dto = ToMessageDto(message, userId);
-        await _chatPublisher.PublishMessageAsync(conversationId, dto, cancellationToken);
-        await NotifyNewMessageAsync(conversation, userId, text, cancellationToken);
+        try
+        {
+            await _chatPublisher.PublishMessageAsync(conversationId, dto, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Chat publish failed after message save conversationId={ConversationId} messageId={MessageId}",
+                conversationId,
+                message.Id);
+        }
+
+        try
+        {
+            await NotifyNewMessageAsync(conversation, userId, text, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Message notification failed after send conversationId={ConversationId} messageId={MessageId}",
+                conversationId,
+                message.Id);
+        }
 
         _logger.LogInformation(
             "Message send succeeded conversationId={ConversationId} senderId={SenderId} applicationId={ApplicationId}",
@@ -206,8 +229,31 @@ public class MessagingService : IMessagingService
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         var dto = ToMessageDto(message, userId);
-        await _chatPublisher.PublishMessageAsync(conversationId, dto, cancellationToken);
-        await NotifyNewMessageAsync(conversation, userId, message.MessageText, cancellationToken);
+        try
+        {
+            await _chatPublisher.PublishMessageAsync(conversationId, dto, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Chat publish failed after attachment save conversationId={ConversationId} messageId={MessageId}",
+                conversationId,
+                message.Id);
+        }
+
+        try
+        {
+            await NotifyNewMessageAsync(conversation, userId, message.MessageText, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(
+                ex,
+                "Attachment notification failed after send conversationId={ConversationId} messageId={MessageId}",
+                conversationId,
+                message.Id);
+        }
 
         return dto;
     }
@@ -636,7 +682,7 @@ public class MessagingService : IMessagingService
             message.SenderUserId,
             message.Type == MessageType.User
                 && message.SenderUserId.HasValue
-                && message.SenderUserId.Value == currentUserId,
+                && message.SenderUserId.GetValueOrDefault() == currentUserId,
             message.Type,
             message.Type == MessageType.System,
             message.MessageText,
@@ -732,8 +778,18 @@ public class MessagingService : IMessagingService
         if (candidate is null) return;
 
         var companyName = conversation.Company?.Name ?? "Company";
+        var candidateUserId = candidate.UserId;
 
-        if (senderUserId == candidate.UserId)
+        if (!candidateUserId.HasValue)
+        {
+            _logger.LogWarning(
+                "Skipping message notification because candidate user id is missing conversationId={ConversationId} candidateProfileId={CandidateProfileId}",
+                conversation.Id,
+                conversation.CandidateProfileId);
+            return;
+        }
+
+        if (senderUserId == candidateUserId.Value)
         {
             await _notificationService.NotifyNewMessageToCompanyAsync(
                 conversation.CompanyId,

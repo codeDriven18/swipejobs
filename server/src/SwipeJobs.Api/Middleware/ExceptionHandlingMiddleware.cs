@@ -40,7 +40,10 @@ public class ExceptionHandlingMiddleware
         catch (InvalidOperationException ex)
         {
             LogCaughtException(context, ex, StatusCodes.Status400BadRequest);
-            if (await TryWriteErrorAsync(context, StatusCodes.Status400BadRequest, ex.Message, "bad_request"))
+            var details = ex.Message.Contains("Nullable object must have a value", StringComparison.Ordinal)
+                ? "A required nullable value was null. Check server logs for the request path and stack trace."
+                : null;
+            if (await TryWriteErrorAsync(context, StatusCodes.Status400BadRequest, ex.Message, "bad_request", details))
                 return;
             throw;
         }

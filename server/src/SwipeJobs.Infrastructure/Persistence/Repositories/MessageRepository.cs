@@ -46,7 +46,7 @@ public class MessageRepository : Repository<Message>, IMessageRepository
         return await DbSet.CountAsync(
             m => m.ConversationId == conversationId
                 && m.Type == MessageType.User
-                && m.SenderUserId != null
+                && m.SenderUserId.HasValue
                 && m.ReadAt == null
                 && !memberUserIds.Contains(m.SenderUserId.Value),
             cancellationToken);

@@ -81,8 +81,10 @@ public class ConversationsController : ControllerBase
     public async Task<IActionResult> Send(Guid id, [FromBody] SendMessageDto? dto, CancellationToken cancellationToken)
     {
         _currentUser.RequireRole(UserRole.JobSeeker, UserRole.Admin);
-        var userId = _currentUser.GetRequiredUserId();
-        var profileId = _currentUser.GetRequiredProfileId();
+
+        var contextError = MessagingSendResponses.ValidateSeekerContext(_currentUser, out var userId, out var profileId);
+        if (contextError is not null)
+            return contextError;
 
         if (!ModelState.IsValid)
             return MessagingSendResponses.ValidationFailed(ModelState);
@@ -101,11 +103,24 @@ public class ConversationsController : ControllerBase
         {
             var message = await _messagingService.SendMessageAsync(
                 id, userId, UserRole.JobSeeker, null, profileId, messageText, cancellationToken);
-            return message is null ? NotFound(new { error = "Conversation not found.", code = "conversation_not_found" }) : Ok(message);
+            return message is null
+                ? NotFound(new { error = "Conversation not found.", code = "conversation_not_found" })
+                : Ok(message);
         }
         catch (MessagingSendException ex)
         {
             return MessagingSendResponses.FromSendException(ex);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogError(
+                ex,
+                "InvalidOperation during candidate message send conversationId={ConversationId} senderId={SenderId} profileId={ProfileId} message={Message}",
+                id,
+                userId,
+                profileId,
+                ex.Message);
+            return MessagingSendResponses.FromUnexpectedException(ex, id, userId, profileId);
         }
     }
 

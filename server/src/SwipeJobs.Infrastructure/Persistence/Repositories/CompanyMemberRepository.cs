@@ -21,10 +21,19 @@ public class CompanyMemberRepository : Repository<CompanyMember>, ICompanyMember
 
     public async Task<IReadOnlyList<Guid>> GetMemberProfileIdsByCompanyIdAsync(
         Guid companyId, CancellationToken cancellationToken = default)
-        => await DbSet
+    {
+        var members = await DbSet
             .AsNoTracking()
+            .Include(m => m.User)
+            .ThenInclude(u => u.Profile)
             .Where(m => m.CompanyId == companyId)
-            .Select(m => m.User.Profile!.Id)
-            .Where(id => id != Guid.Empty)
             .ToListAsync(cancellationToken);
+
+        return members
+            .Select(m => m.User?.Profile?.Id)
+            .Where(id => id.HasValue && id.Value != Guid.Empty)
+            .Select(id => id!.Value)
+            .Distinct()
+            .ToList();
+    }
 }
