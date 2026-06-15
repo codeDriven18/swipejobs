@@ -6,6 +6,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { useDismissibleOverlay } from '@/hooks/useDismissibleOverlay';
 import { useAuth } from '@/context/AuthContext';
 import { UserRole } from '@/models/auth';
+import { NotificationType } from '@/models/personalization';
 import styles from './NotificationBell.module.css';
 
 const PANEL_ID = 'notifications';
@@ -40,6 +41,22 @@ export function NotificationBell() {
 
   const handleNotificationNavigate = () => {
     close();
+  };
+
+  const resolveNotificationLink = (n: typeof notifications[number]) => {
+    if (n.relatedConversationId) {
+      return `/messages/${n.relatedConversationId}`;
+    }
+    if (n.relatedApplicationId) {
+      return '/applications';
+    }
+    if (n.type === NotificationType.NewJobFromFollowedCompany && n.relatedJobId) {
+      return `/jobs/${n.relatedJobId}`;
+    }
+    if (n.relatedJobId) {
+      return `/jobs/${n.relatedJobId}`;
+    }
+    return null;
   };
 
   return (
@@ -105,15 +122,24 @@ export function NotificationBell() {
                         </button>
                       </div>
                       <p className={styles.msg}>{n.message}</p>
-                      {n.relatedJobId && (
-                        <Link
-                          to={`/jobs/${n.relatedJobId}`}
-                          className={styles.link}
-                          onClick={handleNotificationNavigate}
-                        >
-                          View job <IconChevronRight size={14} />
-                        </Link>
-                      )}
+                      {(() => {
+                        const to = resolveNotificationLink(n);
+                        if (!to) return null;
+                        const label = n.type === NotificationType.NewMessage
+                          ? 'Open conversation'
+                          : n.type === NotificationType.InterviewInvited
+                            ? 'View application'
+                            : 'View details';
+                        return (
+                          <Link
+                            to={to}
+                            className={styles.link}
+                            onClick={handleNotificationNavigate}
+                          >
+                            {label} <IconChevronRight size={14} />
+                          </Link>
+                        );
+                      })()}
                     </li>
                   ))}
                 </ul>

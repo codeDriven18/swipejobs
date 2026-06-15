@@ -11,6 +11,7 @@ using SwipeJobs.Infrastructure.Persistence;
 using SwipeJobs.Infrastructure.Persistence.Interceptors;
 using SwipeJobs.Infrastructure.Persistence.Repositories;
 using SwipeJobs.Infrastructure.Persistence.Seeding;
+using SwipeJobs.Infrastructure.Storage;
 
 namespace SwipeJobs.Infrastructure;
 
@@ -77,6 +78,8 @@ public static class DependencyInjection
         services.AddScoped<ISourceRepository, SourceRepository>();
         services.AddScoped<IUserProfileRepository, UserProfileRepository>();
         services.AddScoped<IApplicationRepository, ApplicationRepository>();
+        services.AddScoped<IConversationRepository, ConversationRepository>();
+        services.AddScoped<IMessageRepository, MessageRepository>();
         services.AddScoped<ISavedJobRepository, SavedJobRepository>();
         services.AddScoped<IAuditLogRepository, AuditLogRepository>();
         services.AddScoped<IIngestionMessageRepository, IngestionMessageRepository>();
@@ -85,6 +88,7 @@ public static class DependencyInjection
         services.AddScoped<ISourceIngestionLogRepository, SourceIngestionLogRepository>();
         services.AddScoped<IAuditLogService, Audit.AuditLogService>();
         services.AddScoped<IResumeStorageService, Storage.LocalResumeStorageService>();
+        services.AddScoped<IMessageAttachmentStorage, LocalMessageAttachmentStorage>();
         services.AddScoped<IDataSeeder, DataSeeder>();
         services.AddScoped<ShowcaseJobSeeder>();
 

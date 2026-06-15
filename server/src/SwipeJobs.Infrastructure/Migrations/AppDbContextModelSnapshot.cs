@@ -250,6 +250,45 @@ namespace SwipeJobs.Infrastructure.Migrations
                     b.ToTable("CompanyMembers");
                 });
 
+            modelBuilder.Entity("SwipeJobs.Domain.Entities.Conversation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ApplicationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CandidateProfileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ClosedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationId")
+                        .IsUnique();
+
+                    b.HasIndex("CandidateProfileId");
+
+                    b.HasIndex("CompanyId");
+
+                    b.ToTable("Conversations", (string)null);
+                });
+
             modelBuilder.Entity("SwipeJobs.Domain.Entities.Education", b =>
                 {
                     b.Property<Guid>("Id")
@@ -804,6 +843,58 @@ namespace SwipeJobs.Infrastructure.Migrations
                     b.ToTable("JobTags");
                 });
 
+            modelBuilder.Entity("SwipeJobs.Domain.Entities.Message", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AttachmentContentType")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<string>("AttachmentFileName")
+                        .HasMaxLength(260)
+                        .HasColumnType("character varying(260)");
+
+                    b.Property<string>("AttachmentUrl")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
+
+                    b.Property<Guid>("ConversationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("MessageText")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("SenderUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ConversationId");
+
+                    b.HasIndex("SenderUserId");
+
+                    b.HasIndex("ConversationId", "SentAt");
+
+                    b.ToTable("Messages", (string)null);
+                });
+
             modelBuilder.Entity("SwipeJobs.Domain.Entities.Notification", b =>
                 {
                     b.Property<Guid>("Id")
@@ -824,7 +915,13 @@ namespace SwipeJobs.Infrastructure.Migrations
                     b.Property<DateTime?>("ReadAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<Guid?>("RelatedApplicationId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid?>("RelatedCompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("RelatedConversationId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid?>("RelatedJobId")
@@ -1432,6 +1529,33 @@ namespace SwipeJobs.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("SwipeJobs.Domain.Entities.Conversation", b =>
+                {
+                    b.HasOne("SwipeJobs.Domain.Entities.Application", "Application")
+                        .WithMany()
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SwipeJobs.Domain.Entities.UserProfile", "CandidateProfile")
+                        .WithMany()
+                        .HasForeignKey("CandidateProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SwipeJobs.Domain.Entities.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Application");
+
+                    b.Navigation("CandidateProfile");
+
+                    b.Navigation("Company");
+                });
+
             modelBuilder.Entity("SwipeJobs.Domain.Entities.Education", b =>
                 {
                     b.HasOne("SwipeJobs.Domain.Entities.UserProfile", "UserProfile")
@@ -1559,6 +1683,25 @@ namespace SwipeJobs.Infrastructure.Migrations
                     b.Navigation("Tag");
                 });
 
+            modelBuilder.Entity("SwipeJobs.Domain.Entities.Message", b =>
+                {
+                    b.HasOne("SwipeJobs.Domain.Entities.Conversation", "Conversation")
+                        .WithMany("Messages")
+                        .HasForeignKey("ConversationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SwipeJobs.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("SenderUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Conversation");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("SwipeJobs.Domain.Entities.Notification", b =>
                 {
                     b.HasOne("SwipeJobs.Domain.Entities.UserProfile", "UserProfile")
@@ -1673,6 +1816,11 @@ namespace SwipeJobs.Infrastructure.Migrations
                     b.Navigation("Followers");
 
                     b.Navigation("Jobs");
+                });
+
+            modelBuilder.Entity("SwipeJobs.Domain.Entities.Conversation", b =>
+                {
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("SwipeJobs.Domain.Entities.IngestionMessage", b =>

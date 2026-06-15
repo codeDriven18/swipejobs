@@ -21,21 +21,21 @@ export function AppLayout() {
   const hideNav = isAuthPage;
   const isProfileHub = location.pathname === '/profile' || location.pathname.startsWith('/profile/');
   const { scrollY } = useScroll();
-  const brandOpacity = useTransform(scrollY, [0, 72], [1, 0]);
+  const headerFadeOpacity = useTransform(scrollY, [0, 72], [1, 0]);
 
   return (
     <div className={`${styles.layout} ${isStandalone ? styles.layoutStandalone : ''}`}>
       {!hideHeader && (
         <header className={`${styles.header} ${isStandalone ? styles.headerStandalone : ''}`}>
-          <motion.div className={styles.brand} style={{ opacity: brandOpacity }}>
+          <motion.div className={styles.brand} style={{ opacity: headerFadeOpacity }}>
             <AppIcon size="sm" />
             {!isStandalone && <span className={styles.title}>SwipeJobs</span>}
             {isStandalone && isProfileHub && <span className={styles.title}>Profile</span>}
           </motion.div>
-          <div className={styles.headerActions}>
+          <motion.div className={styles.headerActions} style={{ opacity: headerFadeOpacity }}>
             <HeaderThemeToggle />
             {isAuthenticated && <NotificationBell />}
-          </div>
+          </motion.div>
         </header>
       )}
 

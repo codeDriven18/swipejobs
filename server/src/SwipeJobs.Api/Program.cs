@@ -30,6 +30,7 @@ try
     builder.Services.AddHttpContextAccessor();
     builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
     builder.Services.AddSingleton<INotificationPublisher, SignalRNotificationPublisher>();
+    builder.Services.AddSingleton<IChatPublisher, SignalRChatPublisher>();
     builder.Services.AddHostedService<JobExpirationHostedService>();
     builder.Services.AddHostedService<TelegramIngestionHostedService>();
     builder.Services.AddHostedService<AiExtractionQueueHostedService>();
@@ -197,6 +198,7 @@ try
 
     app.MapControllers().RequireCors(CorsExtensions.CorsPolicyName);
     app.MapHub<NotificationHub>("/hubs/notifications").RequireCors(CorsExtensions.CorsPolicyName);
+    app.MapHub<ChatHub>("/hubs/chat").RequireCors(CorsExtensions.CorsPolicyName);
 
     app.Run();
 }

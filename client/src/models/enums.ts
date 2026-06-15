@@ -12,11 +12,21 @@ export enum JobLevel {
 
 export enum ApplicationStatus {
   Pending = 0,
-  Submitted = 1,
+  Applied = 1,
   UnderReview = 2,
-  Accepted = 3,
-  Rejected = 4,
-  Withdrawn = 5,
+  Shortlisted = 3,
+  InterviewInvited = 4,
+  Interviewing = 5,
+  OfferSent = 6,
+  Hired = 7,
+  Rejected = 8,
+  Withdrawn = 9,
+}
+
+export enum ConversationStatus {
+  Active = 0,
+  ReadOnly = 1,
+  Closed = 2,
 }
 
 export enum SourceType {
@@ -69,9 +79,13 @@ export const JobLevelLabels: Record<JobLevel, string> = {
 
 export const ApplicationStatusLabels: Record<ApplicationStatus, string> = {
   [ApplicationStatus.Pending]: 'Pending',
-  [ApplicationStatus.Submitted]: 'Submitted',
+  [ApplicationStatus.Applied]: 'Applied',
   [ApplicationStatus.UnderReview]: 'Under Review',
-  [ApplicationStatus.Accepted]: 'Accepted',
+  [ApplicationStatus.Shortlisted]: 'Shortlisted',
+  [ApplicationStatus.InterviewInvited]: 'Interview Invited',
+  [ApplicationStatus.Interviewing]: 'Interviewing',
+  [ApplicationStatus.OfferSent]: 'Offer Sent',
+  [ApplicationStatus.Hired]: 'Hired',
   [ApplicationStatus.Rejected]: 'Rejected',
   [ApplicationStatus.Withdrawn]: 'Withdrawn',
 };

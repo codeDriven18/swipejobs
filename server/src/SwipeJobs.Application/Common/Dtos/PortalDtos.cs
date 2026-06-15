@@ -91,7 +91,9 @@ public record PortalApplicantDetailDto(
     IReadOnlyList<ExperienceDto> Experiences,
     IReadOnlyList<EducationDto> Educations,
     CandidateTrustLevel CandidateTrustLevel,
-    int CandidateTrustSignals);
+    int CandidateTrustSignals,
+    Guid? ConversationId,
+    bool MessagingUnlocked);
 
 public record PortalUpdateCompanyDto(
     string Description,

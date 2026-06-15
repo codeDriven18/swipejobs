@@ -7,11 +7,12 @@ import { CompanyCarousel } from '@/components/discovery/CompanyCarousel';
 import { PullToRefresh } from '@/components/ui/PullToRefresh';
 import { AnimatedCounter } from '@/components/ui/AnimatedCounter';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { DashboardSkeleton } from '@/components/ui/Skeleton';
+import { DiscoveryRailSkeleton } from '@/components/ui/Skeleton';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { useAuth } from '@/context/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { useDiscoveryCollections, getTimeGreeting } from '@/hooks/useDiscoveryCollections';
+import { useRecommendations } from '@/hooks/useRecommendations';
 import { useRefreshLock } from '@/hooks/useRefreshLock';
 import { useToast } from '@/context/ToastContext';
 import { refreshSeekerAccountData } from '@/lib/seekerRefresh';
@@ -41,9 +42,14 @@ export function DashboardPage() {
   const shouldLoadDashboard = isAuthenticated && !isEmployer;
   const { profile } = useProfile();
   const [dashboard, setDashboard] = useState<UserDashboard>(() => mergeDashboardWithEmpty(null));
-  const [loading, setLoading] = useState(true);
   const [fetchFailed, setFetchFailed] = useState(false);
-  const { collections, reload: reloadCollections } = useDiscoveryCollections(true);
+  const { collections, loading: collectionsLoading, reload: reloadCollections } = useDiscoveryCollections(true);
+  const {
+    jobs: recommendedJobs,
+    loading: recommendationsLoading,
+    ready: recommendationsReady,
+    reload: reloadRecommendations,
+  } = useRecommendations(shouldLoadDashboard);
   const { runRefresh, isRefreshing } = useRefreshLock();
   const { showToast } = useToast();
 
@@ -52,11 +58,9 @@ export function DashboardPage() {
     if (!shouldLoadDashboard) {
       setDashboard(mergeDashboardWithEmpty(null));
       setFetchFailed(false);
-      setLoading(false);
       return;
     }
 
-    setLoading(true);
     setFetchFailed(false);
 
     try {
@@ -65,8 +69,6 @@ export function DashboardPage() {
     } catch {
       setDashboard(mergeDashboardWithEmpty(null));
       setFetchFailed(true);
-    } finally {
-      setLoading(false);
     }
   }, [authLoading, shouldLoadDashboard]);
 
@@ -92,6 +94,9 @@ export function DashboardPage() {
       const collectionsOk = await reloadCollections();
       if (!collectionsOk) hadError = true;
 
+      const recommendationsOk = await reloadRecommendations();
+      if (!recommendationsOk) hadError = true;
+
       if (shouldLoadDashboard) {
         const side = await refreshSeekerAccountData();
         if (side.failed) hadError = true;
@@ -105,31 +110,23 @@ export function DashboardPage() {
         showToast('Some updates could not be loaded', 'error');
       }
     });
-  }, [reloadCollections, runRefresh, shouldLoadDashboard, showToast]);
+  }, [reloadCollections, reloadRecommendations, runRefresh, shouldLoadDashboard, showToast]);
 
   const profilePct = dashboard.profileCompletionPercentage
     ?? getProfileCompletionPercent(profile);
   const savedCount = dashboard.savedJobsCount ?? 0;
   const appsCount = dashboard.applicationsCount ?? 0;
-  const matchesToday = dashboard.recommendedJobs.length > 0
-    ? dashboard.recommendedJobs.length
+  const matchesToday = recommendedJobs.length > 0
+    ? recommendedJobs.length
     : dashboard.swipeRemainingEstimate ?? 0;
   const firstName = profile?.firstName?.trim() || 'there';
   const greeting = getTimeGreeting();
 
   const allJobsForCompanies = useMemo(() => [
-    ...dashboard.recommendedJobs,
+    ...recommendedJobs,
     ...dashboard.trendingJobs,
     ...collections.remote,
-  ], [dashboard, collections.remote]);
-
-  if (authLoading || (shouldLoadDashboard && loading)) {
-    return (
-      <section className={styles.page}>
-        <DashboardSkeleton />
-      </section>
-    );
-  }
+  ], [recommendedJobs, dashboard.trendingJobs, collections.remote]);
 
   if (isAuthenticated && isEmployer) {
     return <Navigate to="/portal" replace />;
@@ -154,13 +151,17 @@ export function DashboardPage() {
         </motion.div>
 
         <motion.div variants={item}>
-          <DiscoveryRail
-            title="Trending now"
-            jobs={collections.trending}
-            linkTo="/jobs"
-            linkLabel="See all"
-            onJobClick={(id) => navigate(`/jobs/${id}`)}
-          />
+          {collectionsLoading && collections.trending.length === 0 ? (
+            <DiscoveryRailSkeleton title="Trending now" />
+          ) : (
+            <DiscoveryRail
+              title="Trending now"
+              jobs={collections.trending}
+              linkTo="/jobs"
+              linkLabel="See all"
+              onJobClick={(id) => navigate(`/jobs/${id}`)}
+            />
+          )}
         </motion.div>
 
         <motion.div variants={item}>
@@ -263,14 +264,18 @@ export function DashboardPage() {
       )}
 
       <motion.div variants={item}>
-        <DiscoveryRail
-          title="Recommended for you"
-          jobs={dashboard.recommendedJobs}
-          linkTo="/jobs"
-          linkLabel="See all"
-          onJobClick={(id) => navigate(`/jobs/${id}`)}
-        />
-        {dashboard.recommendedJobs.length === 0 && (
+        {recommendationsLoading ? (
+          <DiscoveryRailSkeleton title="Recommended for you" />
+        ) : (
+          <DiscoveryRail
+            title="Recommended for you"
+            jobs={recommendedJobs}
+            linkTo="/jobs"
+            linkLabel="See all"
+            onJobClick={(id) => navigate(`/jobs/${id}`)}
+          />
+        )}
+        {recommendationsReady && !recommendationsLoading && recommendedJobs.length === 0 && (
           <EmptyState
             illustration="swipe"
             title="Your feed is warming up"

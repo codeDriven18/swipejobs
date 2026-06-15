@@ -28,6 +28,7 @@ interface RequestOptions extends Omit<RequestInit, 'body'> {
   body?: unknown;
   skipAuth?: boolean;
   timeoutMs?: number;
+  signal?: AbortSignal;
 }
 
 let refreshPromise: Promise<RefreshResult> | null = null;
@@ -173,10 +174,11 @@ export async function apiClient<T>(
   endpoint: string,
   options: RequestOptions = {},
 ): Promise<T> {
-  const { body, headers, skipAuth, timeoutMs, ...rest } = options;
+  const { body, headers, skipAuth, timeoutMs, signal, ...rest } = options;
 
   const url = `${API_CONFIG.baseUrl}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
   const requestTimeout = timeoutMs ?? API_CONFIG.timeout;
+  const requestSignal = signal ?? AbortSignal.timeout(requestTimeout);
 
   const buildHeaders = (): Record<string, string> => {
     const next: Record<string, string> = {
@@ -195,7 +197,7 @@ export async function apiClient<T>(
       ...rest,
       headers: buildHeaders(),
       body: body !== undefined ? JSON.stringify(body) : undefined,
-      signal: AbortSignal.timeout(requestTimeout),
+      signal: requestSignal,
     });
 
   if (!skipAuth && getRefreshToken() && (!getAccessToken() || isAccessTokenExpired())) {

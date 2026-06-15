@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
@@ -39,16 +40,37 @@ public class ProfilesController : ControllerBase
     public async Task<IActionResult> GetMe(CancellationToken cancellationToken)
     {
         var userId = _currentUser.GetRequiredUserId();
-        var profile = await _profileService.GetByUserIdAsync(userId, cancellationToken);
-        if (profile is null)
-        {
-            var email = User.FindFirstValue(ClaimTypes.Email)
-                ?? User.FindFirstValue(JwtRegisteredClaimNames.Email)
-                ?? string.Empty;
-            profile = await _profileService.EnsureForUserAsync(userId, email, cancellationToken);
-        }
+        var sw = Stopwatch.StartNew();
+        _logger.LogInformation("GET /api/profiles/me start userId={UserId}", userId);
 
-        return Ok(profile);
+        try
+        {
+            var profile = await _profileService.GetByUserIdAsync(userId, cancellationToken);
+            if (profile is null)
+            {
+                var email = User.FindFirstValue(ClaimTypes.Email)
+                    ?? User.FindFirstValue(JwtRegisteredClaimNames.Email)
+                    ?? string.Empty;
+                profile = await _profileService.EnsureForUserAsync(userId, email, cancellationToken);
+            }
+
+            _logger.LogInformation(
+                "GET /api/profiles/me end userId={UserId} profileId={ProfileId} elapsedMs={ElapsedMs}",
+                userId,
+                profile.Id,
+                sw.ElapsedMilliseconds);
+
+            return Ok(profile);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "GET /api/profiles/me failed userId={UserId} elapsedMs={ElapsedMs}",
+                userId,
+                sw.ElapsedMilliseconds);
+            throw;
+        }
     }
 
     [Authorize]

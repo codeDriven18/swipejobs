@@ -6,4 +6,5 @@ function resolveNotificationsHubUrl(): string {
 
 export const HUB_CONFIG = {
   notificationsUrl: resolveNotificationsHubUrl(),
+  chatUrl: new URL('/hubs/chat', new URL(API_CONFIG.baseUrl).origin).toString(),
 } as const;

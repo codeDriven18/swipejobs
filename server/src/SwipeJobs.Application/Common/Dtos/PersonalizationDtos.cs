@@ -50,6 +50,8 @@ public record NotificationDto(
     DateTime? ReadAt,
     Guid? RelatedJobId,
     Guid? RelatedCompanyId,
+    Guid? RelatedApplicationId,
+    Guid? RelatedConversationId,
     DateTime CreatedAt);
 
 public record TrendingJobDto(

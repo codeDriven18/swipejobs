@@ -233,7 +233,7 @@ public static class ProfileMapper
     private static bool HasResume(UserProfile profile) =>
         !string.IsNullOrWhiteSpace(profile.ResumeUrl) || !string.IsNullOrWhiteSpace(profile.ResumeFileName);
 
-    public static ApplicationDto ToDto(ApplicationEntity application, JobDto? job = null)
+    public static ApplicationDto ToDto(ApplicationEntity application, JobDto? job = null, Guid? conversationId = null)
     {
         var history = ApplicationStatusHistorySerializer.Deserialize(application.StatusHistoryJson)
             .Select(h => new ApplicationStatusHistoryDto(h.Status, h.ChangedAt))
@@ -249,7 +249,8 @@ public static class ProfileMapper
             job,
             application.ReapplicationCount,
             ApplicationWorkflow.ToApplicationNumber(application.ReapplicationCount),
-            history);
+            history,
+            conversationId);
     }
 
     public static SavedJobDto ToDto(SavedJob savedJob, JobDto? job = null) => new(

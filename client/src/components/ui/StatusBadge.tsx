@@ -7,9 +7,13 @@ interface StatusBadgeProps {
 
 const statusClass: Record<ApplicationStatus, string> = {
   [ApplicationStatus.Pending]: styles.pending,
-  [ApplicationStatus.Submitted]: styles.submitted,
+  [ApplicationStatus.Applied]: styles.applied,
   [ApplicationStatus.UnderReview]: styles.review,
-  [ApplicationStatus.Accepted]: styles.accepted,
+  [ApplicationStatus.Shortlisted]: styles.shortlisted,
+  [ApplicationStatus.InterviewInvited]: styles.interview,
+  [ApplicationStatus.Interviewing]: styles.interview,
+  [ApplicationStatus.OfferSent]: styles.offer,
+  [ApplicationStatus.Hired]: styles.hired,
   [ApplicationStatus.Rejected]: styles.rejected,
   [ApplicationStatus.Withdrawn]: styles.withdrawn,
 };

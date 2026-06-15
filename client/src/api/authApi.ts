@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import { createRequestTimer } from '@/lib/apiDiagnostics';
 import { getRefreshToken } from '@/lib/authStorage';
 import type {
   AuthResponse,
@@ -51,5 +52,17 @@ export const authApi = {
   changePassword: (data: ChangePasswordRequest) =>
     apiClient<void>('/auth/change-password', { method: 'POST', body: data }),
 
-  me: () => apiClient<AuthUser>('/auth/me'),
+  me: () => {
+    const timer = createRequestTimer('auth/me');
+    return apiClient<AuthUser>('/auth/me')
+      .then((user) => {
+        timer.end({ userId: user.id });
+        return user;
+      })
+      .catch((error) => {
+        const reason = error instanceof Error ? error.message : 'unknown';
+        timer.error(reason);
+        throw error;
+      });
+  },
 };

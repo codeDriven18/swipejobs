@@ -33,6 +33,8 @@ public class AppDbContext : DbContext
     public DbSet<JobCandidateMessage> JobCandidateMessages => Set<JobCandidateMessage>();
     public DbSet<JobReport> JobReports => Set<JobReport>();
     public DbSet<SourceIngestionLog> SourceIngestionLogs => Set<SourceIngestionLog>();
+    public DbSet<Conversation> Conversations => Set<Conversation>();
+    public DbSet<Message> Messages => Set<Message>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

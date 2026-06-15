@@ -4,6 +4,7 @@ using SwipeJobs.Application.Common.Interfaces.Repositories;
 using SwipeJobs.Application.Common.Mapping;
 using SwipeJobs.Application.Modules.Admin.Interfaces;
 using SwipeJobs.Application.Modules.Jobs.Interfaces;
+using SwipeJobs.Application.Modules.Messaging.Interfaces;
 using SwipeJobs.Application.Modules.Personalization.Interfaces;
 using SwipeJobs.Domain.Entities;
 using SwipeJobs.Domain.Enums;
@@ -22,6 +23,7 @@ public class AdminService : IAdminService
     private readonly INotificationService _notificationService;
     private readonly IAuditLogRepository _auditLogRepository;
     private readonly IAuditLogService _auditLogService;
+    private readonly IMessagingService _messagingService;
     private readonly IUnitOfWork _unitOfWork;
 
     public AdminService(
@@ -35,6 +37,7 @@ public class AdminService : IAdminService
         INotificationService notificationService,
         IAuditLogRepository auditLogRepository,
         IAuditLogService auditLogService,
+        IMessagingService messagingService,
         IUnitOfWork unitOfWork)
     {
         _userRepository = userRepository;
@@ -47,6 +50,7 @@ public class AdminService : IAdminService
         _notificationService = notificationService;
         _auditLogRepository = auditLogRepository;
         _auditLogService = auditLogService;
+        _messagingService = messagingService;
         _unitOfWork = unitOfWork;
     }
 
@@ -57,6 +61,8 @@ public class AdminService : IAdminService
         var jobs = await _jobRepository.GetAllWithDetailsAsync(cancellationToken);
         var notifications = await _notificationRepository.GetRecentAsync(500, cancellationToken);
 
+        var messaging = await _messagingService.GetMetricsAsync(cancellationToken);
+
         return new AdminStatsDto(
             users.Count,
             companies.Count,
@@ -64,7 +70,8 @@ public class AdminService : IAdminService
             jobs.Count(j => j.IsActive && !j.IsArchived),
             jobs.Count(j => j.IsArchived),
             await _applicationRepository.CountAsync(cancellationToken),
-            notifications.Count(n => !n.IsRead));
+            notifications.Count(n => !n.IsRead),
+            messaging);
     }
 
     public async Task<IReadOnlyList<AdminUserDto>> GetUsersAsync(CancellationToken cancellationToken = default)

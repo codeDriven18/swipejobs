@@ -7,4 +7,7 @@ public enum NotificationType
     ProfileCompletenessReminder = 2,
     ApplicationStatusChanged = 3,
     ApplicationReapplied = 4,
+    InterviewInvited = 5,
+    NewMessage = 6,
+    OfferReceived = 7,
 }

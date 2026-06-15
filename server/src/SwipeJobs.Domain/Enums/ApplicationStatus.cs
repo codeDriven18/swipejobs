@@ -3,9 +3,13 @@ namespace SwipeJobs.Domain.Enums;
 public enum ApplicationStatus
 {
     Pending = 0,
-    Submitted = 1,
+    Applied = 1,
     UnderReview = 2,
-    Accepted = 3,
-    Rejected = 4,
-    Withdrawn = 5
+    Shortlisted = 3,
+    InterviewInvited = 4,
+    Interviewing = 5,
+    OfferSent = 6,
+    Hired = 7,
+    Rejected = 8,
+    Withdrawn = 9,
 }

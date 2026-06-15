@@ -40,6 +40,17 @@ export const portalApi = {
       body: data,
     }),
 
+  inviteToInterview: (applicationId: string) =>
+    apiClient<import('@/models/messaging').InviteToInterviewResult>(
+      `/portal/applications/${applicationId}/invite-interview`,
+      { method: 'POST' },
+    ),
+
+  shortlistApplication: (applicationId: string) =>
+    apiClient<PortalApplication>(`/portal/applications/${applicationId}/shortlist`, {
+      method: 'POST',
+    }),
+
   downloadApplicantResume: (applicationId: string) =>
     apiClientBlob(`/portal/applications/${applicationId}/resume`),
 

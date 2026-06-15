@@ -9,10 +9,10 @@ import { ApplicationStatus, ApplicationStatusLabels } from '@/models/enums';
 import type { PortalApplicantDetail } from '@/models/portalApplicant';
 import styles from './PortalPage.module.css';
 
-const EMPLOYER_STATUSES = [
-  ApplicationStatus.UnderReview,
-  ApplicationStatus.Accepted,
-  ApplicationStatus.Rejected,
+const PIPELINE_STATUSES = [
+  ApplicationStatus.Interviewing,
+  ApplicationStatus.OfferSent,
+  ApplicationStatus.Hired,
 ] as const;
 
 export function PortalApplicantPage() {
@@ -56,6 +56,34 @@ export function PortalApplicantPage() {
     }
   };
 
+  const handleShortlist = async () => {
+    if (!applicationId) return;
+    setUpdating(true);
+    setError(null);
+    try {
+      await portalApi.shortlistApplication(applicationId);
+      await loadApplicant();
+    } catch {
+      setError('Failed to shortlist applicant.');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  const handleInvite = async () => {
+    if (!applicationId) return;
+    setUpdating(true);
+    setError(null);
+    try {
+      await portalApi.inviteToInterview(applicationId);
+      await loadApplicant();
+    } catch {
+      setError('Failed to invite applicant to interview.');
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   const handleDownloadResume = async () => {
     if (!applicationId || !applicant?.hasResume) return;
     setDownloading(true);
@@ -93,6 +121,8 @@ export function PortalApplicantPage() {
   }
 
   const fullName = `${applicant.firstName} ${applicant.lastName}`.trim() || 'Applicant';
+  const isClosed = applicant.status === ApplicationStatus.Rejected
+    || applicant.status === ApplicationStatus.Withdrawn;
 
   return (
     <section className={styles.page}>
@@ -138,17 +168,43 @@ export function PortalApplicantPage() {
         {applicant.bio && <p className={`${styles.cardMeta} copyable-content`}>{applicant.bio}</p>}
 
         <div className={styles.actions}>
-          {EMPLOYER_STATUSES.map((status) => (
-            <button
-              key={status}
-              type="button"
-              className={applicant.status === status ? styles.btnAccent : styles.btn}
-              disabled={updating || applicant.status === status}
-              onClick={() => void handleStatusChange(status)}
-            >
-              {ApplicationStatusLabels[status]}
-            </button>
-          ))}
+          <button
+            type="button"
+            className={styles.btn}
+            disabled={updating || isClosed || applicant.status === ApplicationStatus.UnderReview}
+            onClick={() => void handleStatusChange(ApplicationStatus.UnderReview)}
+          >
+            Review
+          </button>
+          <button
+            type="button"
+            className={styles.btn}
+            disabled={updating || isClosed || applicant.status === ApplicationStatus.Shortlisted}
+            onClick={() => void handleShortlist()}
+          >
+            Shortlist
+          </button>
+          <button
+            type="button"
+            className={styles.btnAccent}
+            disabled={updating || isClosed}
+            onClick={() => void handleInvite()}
+          >
+            Invite to Interview
+          </button>
+          <button
+            type="button"
+            className={styles.btn}
+            disabled={updating || isClosed}
+            onClick={() => void handleStatusChange(ApplicationStatus.Rejected)}
+          >
+            Reject
+          </button>
+          {applicant.conversationId && (
+            <Link to={`/portal/messages/${applicant.conversationId}`} className={styles.btn}>
+              Open messages
+            </Link>
+          )}
           {applicant.hasResume && (
             <button
               type="button"
@@ -160,6 +216,22 @@ export function PortalApplicantPage() {
             </button>
           )}
         </div>
+
+        {!isClosed && (
+          <div className={styles.actions}>
+            {PIPELINE_STATUSES.map((status) => (
+              <button
+                key={status}
+                type="button"
+                className={applicant.status === status ? styles.btnAccent : styles.btn}
+                disabled={updating || applicant.status === status}
+                onClick={() => void handleStatusChange(status)}
+              >
+                {ApplicationStatusLabels[status]}
+              </button>
+            ))}
+          </div>
+        )}
       </article>
 
       {applicant.applicationHistory.length > 1 && (

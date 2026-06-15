@@ -9,7 +9,8 @@ public record AdminStatsDto(
     int ActiveJobs,
     int ArchivedJobs,
     int TotalApplications,
-    int UnreadNotifications);
+    int UnreadNotifications,
+    MessagingMetricsDto Messaging);
 
 public record AdminUserDto(
     Guid Id,

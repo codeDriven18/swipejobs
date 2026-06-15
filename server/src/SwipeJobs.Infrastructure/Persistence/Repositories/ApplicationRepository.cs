@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using SwipeJobs.Application.Common.Interfaces.Repositories;
+using SwipeJobs.Domain.Enums;
 using ApplicationEntity = SwipeJobs.Domain.Entities.Application;
 
 namespace SwipeJobs.Infrastructure.Persistence.Repositories;
@@ -61,6 +62,9 @@ public class ApplicationRepository : Repository<ApplicationEntity>, IApplication
 
     public Task<int> CountAsync(CancellationToken cancellationToken = default)
         => DbSet.CountAsync(cancellationToken);
+
+    public Task<int> CountByStatusAsync(ApplicationStatus status, CancellationToken cancellationToken = default)
+        => DbSet.CountAsync(a => a.Status == status, cancellationToken);
 
     public async Task<IReadOnlyList<ApplicationEntity>> GetAllWithDetailsAsync(CancellationToken cancellationToken = default)
         => await DbSet

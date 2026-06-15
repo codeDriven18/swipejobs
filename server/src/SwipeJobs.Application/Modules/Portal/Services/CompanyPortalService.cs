@@ -3,6 +3,7 @@ using SwipeJobs.Application.Common.Dtos;
 using SwipeJobs.Application.Common.Interfaces;
 using SwipeJobs.Application.Common.Interfaces.Repositories;
 using SwipeJobs.Application.Common.Mapping;
+using SwipeJobs.Application.Modules.Messaging.Interfaces;
 using SwipeJobs.Application.Modules.Personalization.Interfaces;
 using SwipeJobs.Application.Modules.Portal.Interfaces;
 using SwipeJobs.Domain.Entities;
@@ -16,7 +17,9 @@ public class CompanyPortalService : ICompanyPortalService
     private static readonly HashSet<ApplicationStatus> EmployerSettableStatuses =
     [
         ApplicationStatus.UnderReview,
-        ApplicationStatus.Accepted,
+        ApplicationStatus.Interviewing,
+        ApplicationStatus.OfferSent,
+        ApplicationStatus.Hired,
         ApplicationStatus.Rejected,
     ];
 
@@ -26,6 +29,8 @@ public class CompanyPortalService : ICompanyPortalService
     private readonly ISourceRepository _sourceRepository;
     private readonly IAuditLogService _auditLogService;
     private readonly INotificationService _notificationService;
+    private readonly IMessagingService _messagingService;
+    private readonly IConversationRepository _conversationRepository;
     private readonly IResumeStorageService _resumeStorage;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<CompanyPortalService> _logger;
@@ -37,6 +42,8 @@ public class CompanyPortalService : ICompanyPortalService
         ISourceRepository sourceRepository,
         IAuditLogService auditLogService,
         INotificationService notificationService,
+        IMessagingService messagingService,
+        IConversationRepository conversationRepository,
         IResumeStorageService resumeStorage,
         IUnitOfWork unitOfWork,
         ILogger<CompanyPortalService> logger)
@@ -47,6 +54,8 @@ public class CompanyPortalService : ICompanyPortalService
         _sourceRepository = sourceRepository;
         _auditLogService = auditLogService;
         _notificationService = notificationService;
+        _messagingService = messagingService;
+        _conversationRepository = conversationRepository;
         _resumeStorage = resumeStorage;
         _unitOfWork = unitOfWork;
         _logger = logger;
@@ -226,6 +235,10 @@ public class CompanyPortalService : ICompanyPortalService
                 ApplicationWorkflow.ToApplicationNumber(a.ReapplicationCount)))
             .ToList();
 
+        var conversation = await _conversationRepository.GetByApplicationIdAsync(application.Id, cancellationToken);
+        var messagingUnlocked = ApplicationWorkflow.IsMessagingUnlocked(application.Status)
+            && conversation?.Status == ConversationStatus.Active;
+
         return new PortalApplicantDetailDto(
             application.Id,
             application.Status,
@@ -255,7 +268,9 @@ public class CompanyPortalService : ICompanyPortalService
             profile.Educations.Select(e => new EducationDto(
                 e.Id, e.Institution, e.Degree, e.FieldOfStudy, e.StartDate, e.EndDate, e.IsCurrent)).ToList(),
             CandidateTrustCalculator.Compute(profile),
-            CandidateTrustCalculator.CountSignals(profile));
+            CandidateTrustCalculator.CountSignals(profile),
+            conversation?.Id,
+            messagingUnlocked);
     }
 
     public async Task<PortalApplicationDto?> UpdateApplicationStatusAsync(
@@ -280,6 +295,9 @@ public class CompanyPortalService : ICompanyPortalService
             application.StatusHistoryJson, status, changedAt);
         await _applicationRepository.UpdateAsync(application, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        await _messagingService.SyncConversationStatusForApplicationAsync(
+            applicationId, status, cancellationToken);
 
         _logger.LogInformation(
             "Application status updated applicationId={ApplicationId} companyId={CompanyId} from={Previous} to={Status}",

@@ -17,6 +17,7 @@ export interface JobApplication {
   reapplicationCount: number;
   applicationNumber: number;
   statusHistory: ApplicationStatusHistoryEntry[];
+  conversationId?: string;
 }
 
 export interface CreateApplicationRequest {

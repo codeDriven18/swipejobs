@@ -11,7 +11,8 @@ import {
   type PremiumSwipeDeckHandle,
   type SwipeDirection,
 } from '@/components/swipe/PremiumSwipeDeck';
-import { IconArrowRight, IconBookmark, IconFilter, IconMenu, IconX } from '@/components/icons/Icons';
+import { IconBookmark, IconFilter, IconHeart, IconMenu, IconX } from '@/components/icons/Icons';
+import { hasCompletedSwipeOnboarding, markSwipeOnboardingComplete } from '@/lib/swipeOnboardingStorage';
 import { PullToRefresh } from '@/components/ui/PullToRefresh';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Skeleton } from '@/components/ui/Skeleton';
@@ -70,6 +71,22 @@ export function SwipePage() {
   const [fetchPage, setFetchPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const skippedRef = useRef<Set<string>>(new Set());
+
+  const [onboardingOpen, setOnboardingOpen] = useState(() => !hasCompletedSwipeOnboarding());
+  const [onboardingFading, setOnboardingFading] = useState(false);
+  const [onboardingCollapsed, setOnboardingCollapsed] = useState(() => hasCompletedSwipeOnboarding());
+  const onboardingDoneRef = useRef(hasCompletedSwipeOnboarding());
+
+  const dismissOnboarding = useCallback(() => {
+    if (onboardingDoneRef.current) return;
+    onboardingDoneRef.current = true;
+    markSwipeOnboardingComplete();
+    setOnboardingFading(true);
+    window.setTimeout(() => {
+      setOnboardingOpen(false);
+      window.setTimeout(() => setOnboardingCollapsed(true), 50);
+    }, 420);
+  }, []);
 
   const loadMore = useCallback(async (page: number, append: boolean) => {
     const result = await jobsApi.search({
@@ -163,6 +180,7 @@ export function SwipePage() {
   };
 
   const handleDismiss = useCallback(async (job: Job, direction: SwipeDirection) => {
+    dismissOnboarding();
     setQueue((q) => q.filter((j) => j.id !== job.id));
 
     if (direction === 'pass') {
@@ -206,7 +224,7 @@ export function SwipePage() {
         showLocalToast('Apply failed', 'error');
       }
     }
-  }, [isAuthenticated, navigate, profile, trackJobSkip]);
+  }, [dismissOnboarding, isAuthenticated, navigate, profile, trackJobSkip]);
 
   return (
     <PullToRefresh
@@ -274,37 +292,53 @@ export function SwipePage() {
               />
             </div>
 
-            <div className={styles.actionDock}>
-              <motion.button
-                type="button"
-                className={`${styles.dockBtn} ${styles.passBtn}`}
-                whileTap={{ scale: 0.94 }}
-                onClick={() => deckRef.current?.dismiss('pass')}
-                aria-label="Pass"
+            <div className={styles.controls}>
+              <div
+                className={`${styles.onboardingSlot} ${onboardingCollapsed ? styles.onboardingSlotCollapsed : ''} ${onboardingFading ? styles.onboardingSlotFading : ''}`}
+                aria-hidden={onboardingCollapsed}
               >
-                <span className={styles.dockIcon}><IconX size={22} /></span>
-                Pass
-              </motion.button>
-              <motion.button
-                type="button"
-                className={`${styles.dockBtn} ${styles.saveBtn}`}
-                whileTap={{ scale: 0.94 }}
-                onClick={() => deckRef.current?.dismiss('save')}
-                aria-label="Save"
-              >
-                <span className={styles.dockIcon}><IconBookmark size={20} /></span>
-                Save
-              </motion.button>
-              <motion.button
-                type="button"
-                className={`${styles.dockBtn} ${styles.applyBtn}`}
-                whileTap={{ scale: 0.96 }}
-                onClick={() => deckRef.current?.dismiss('apply')}
-                aria-label="Apply"
-              >
-                <span className={styles.dockIcon}><IconArrowRight size={22} /></span>
-                Apply
-              </motion.button>
+                {onboardingOpen && (
+                  <div className={styles.onboarding}>
+                    <p className={styles.onboardingText}>
+                      Swipe <strong>right</strong> to apply, <strong>left</strong> to skip, <strong>up</strong> to save.
+                    </p>
+                    <p className={styles.onboardingSub}>Diagonals combine actions.</p>
+                  </div>
+                )}
+              </div>
+
+              <div className={styles.glassDock}>
+                <motion.button
+                  type="button"
+                  className={`${styles.glassBtn} ${styles.passBtn}`}
+                  whileHover={{ scale: 1.06, boxShadow: '0 0 24px rgba(239, 68, 68, 0.25)' }}
+                  whileTap={{ scale: 0.92 }}
+                  onClick={() => deckRef.current?.dismiss('pass')}
+                  aria-label="Pass"
+                >
+                  <IconX size={24} />
+                </motion.button>
+                <motion.button
+                  type="button"
+                  className={`${styles.glassBtn} ${styles.saveBtn}`}
+                  whileHover={{ scale: 1.06, boxShadow: '0 0 24px rgba(255, 214, 0, 0.2)' }}
+                  whileTap={{ scale: 0.92 }}
+                  onClick={() => deckRef.current?.dismiss('save')}
+                  aria-label="Save"
+                >
+                  <IconBookmark size={22} />
+                </motion.button>
+                <motion.button
+                  type="button"
+                  className={`${styles.glassBtn} ${styles.applyBtn}`}
+                  whileHover={{ scale: 1.08, boxShadow: '0 0 32px rgba(255, 214, 0, 0.35)' }}
+                  whileTap={{ scale: 0.94 }}
+                  onClick={() => deckRef.current?.dismiss('apply')}
+                  aria-label="Apply"
+                >
+                  <IconHeart size={26} />
+                </motion.button>
+              </div>
             </div>
           </div>
         )}

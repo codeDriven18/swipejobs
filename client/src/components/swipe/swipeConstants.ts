@@ -7,20 +7,29 @@ export const SWIPE_THRESHOLD_Y = 72;
 export const SWIPE_EXIT_X = typeof window !== 'undefined' ? window.innerWidth * 1.15 : 640;
 export const SWIPE_EXIT_Y = typeof window !== 'undefined' ? window.innerHeight * 0.9 : 520;
 
-/** Fixed-duration exit — no velocity, no acceleration */
-export const SWIPE_EXIT = { duration: 0.18, ease: [0.4, 0, 1, 1] as const };
-export const SWIPE_SNAP_BACK = { duration: 0.2, ease: [0.25, 0.1, 0.25, 1] as const };
+export const SWIPE_EXIT = {
+  type: 'spring' as const,
+  stiffness: 340,
+  damping: 32,
+  mass: 0.85,
+};
+
+export const SWIPE_SNAP_BACK = {
+  type: 'spring' as const,
+  stiffness: 420,
+  damping: 34,
+  mass: 0.75,
+};
 
 export const STACK_LAYERS = 3;
 
-/** Stack peek — scaled cards sit below, never clipped */
 export const STACK_STYLE = [
-  { scale: 1, y: 0, opacity: 1 },
-  { scale: 0.96, y: 14, opacity: 0.92 },
-  { scale: 0.92, y: 28, opacity: 0.82 },
+  { scale: 1, y: 0, rotate: 0, opacity: 1 },
+  { scale: 0.94, y: 16, rotate: -2.8, opacity: 0.88 },
+  { scale: 0.88, y: 32, rotate: 3.2, opacity: 0.72 },
 ] as const;
 
-export const SWIPE_ROTATE_RANGE = 8;
+export const SWIPE_ROTATE_RANGE = 10;
 
 /** Minimum drag (px) before suppressing tap */
 export const SWIPE_TAP_SLOP = 12;

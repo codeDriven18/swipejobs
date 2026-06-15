@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import type { JobApplication } from '@/models/application';
@@ -7,6 +8,7 @@ import { StatusBadge } from '@/components/ui/StatusBadge';
 import { Button } from '@/components/ui/Button';
 import { ApplicationStatusTimeline } from '@/components/applications/ApplicationStatusTimeline';
 import { canWithdrawApplication } from '@/lib/applicationHelpers';
+import { isMessagingUnlocked } from '@/lib/messagingHelpers';
 import { getJobCardPreview } from '@/lib/jobPreview';
 import { getWorkType } from '@/lib/jobCardMeta';
 import { resolveJobImage } from '@/lib/resolveJobImage';
@@ -39,6 +41,7 @@ export function ApplicationCard({
   const heroImage = useMemo(() => (job ? resolveJobImage(job) : null), [job]);
   const preview = useMemo(() => (job ? getJobCardPreview(job) : null), [job]);
   const showWithdraw = canWithdrawApplication(application.status) && Boolean(onWithdraw);
+  const showMessages = Boolean(application.conversationId) && isMessagingUnlocked(application.status);
 
   if (!job || !heroImage || !preview) {
     return (
@@ -94,8 +97,18 @@ export function ApplicationCard({
           appliedAt={application.appliedAt}
         />
 
-        {showWithdraw && (
+        {(showWithdraw || showMessages) && (
           <div className={styles.actions}>
+            {showMessages && application.conversationId && (
+              <Link
+                to={`/messages/${application.conversationId}`}
+                className={styles.messageLink}
+                onClick={(event) => event.stopPropagation()}
+              >
+                Open messages
+              </Link>
+            )}
+            {showWithdraw && (
             <Button
               type="button"
               variant="ghost"
@@ -110,6 +123,7 @@ export function ApplicationCard({
             >
               Withdraw application
             </Button>
+            )}
           </div>
         )}
       </div>

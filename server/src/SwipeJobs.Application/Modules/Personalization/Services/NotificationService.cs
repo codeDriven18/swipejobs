@@ -193,27 +193,43 @@ public class NotificationService : INotificationService
         string jobTitle,
         CancellationToken cancellationToken = default)
     {
-        if (status is not (ApplicationStatus.Rejected or ApplicationStatus.Accepted))
+        if (status is ApplicationStatus.Pending or ApplicationStatus.Applied)
             return;
 
-        var statusLabel = status switch
+        var (title, message, type) = status switch
         {
-            ApplicationStatus.Accepted => "Accepted",
-            ApplicationStatus.Rejected => "Rejected",
-            _ => status.ToString(),
-        };
-
-        var title = status switch
-        {
-            ApplicationStatus.Accepted => $"Application accepted: {jobTitle}",
-            ApplicationStatus.Rejected => $"Application rejected: {jobTitle}",
-            _ => $"Application update: {jobTitle}",
-        };
-        var message = status switch
-        {
-            ApplicationStatus.Rejected => $"Your application for {jobTitle} was not selected. You can update your profile and apply again when you're ready.",
-            ApplicationStatus.Accepted => $"Congratulations — your application for {jobTitle} was accepted!",
-            _ => $"Your application status is now {statusLabel}.",
+            ApplicationStatus.UnderReview => (
+                $"Application under review: {jobTitle}",
+                $"Your application for {jobTitle} is being reviewed by the hiring team.",
+                NotificationType.ApplicationStatusChanged),
+            ApplicationStatus.Shortlisted => (
+                $"Shortlisted: {jobTitle}",
+                $"You've been shortlisted for {jobTitle}. The employer may invite you to interview next.",
+                NotificationType.ApplicationStatusChanged),
+            ApplicationStatus.Interviewing => (
+                $"Interview scheduled: {jobTitle}",
+                $"Your interview process for {jobTitle} has started. Check messages for details.",
+                NotificationType.ApplicationStatusChanged),
+            ApplicationStatus.OfferSent => (
+                $"Offer received: {jobTitle}",
+                $"You received an offer for {jobTitle}. Review details in your application.",
+                NotificationType.OfferReceived),
+            ApplicationStatus.Hired => (
+                $"Hired: {jobTitle}",
+                $"Congratulations — you were hired for {jobTitle}!",
+                NotificationType.ApplicationStatusChanged),
+            ApplicationStatus.Rejected => (
+                $"Application rejected: {jobTitle}",
+                $"Your application for {jobTitle} was not selected. You can update your profile and apply again when you're ready.",
+                NotificationType.ApplicationStatusChanged),
+            ApplicationStatus.Withdrawn => (
+                $"Application withdrawn: {jobTitle}",
+                $"You withdrew your application for {jobTitle}.",
+                NotificationType.ApplicationStatusChanged),
+            _ => (
+                $"Application update: {jobTitle}",
+                $"Your application status is now {status}.",
+                NotificationType.ApplicationStatusChanged),
         };
 
         if (await _notificationRepository.ExistsAsync(userProfileId, title, applicationId, cancellationToken))
@@ -222,16 +238,108 @@ public class NotificationService : INotificationService
         var notification = new Notification
         {
             UserProfileId = userProfileId,
-            Type = NotificationType.ApplicationStatusChanged,
+            Type = type,
             Title = title,
             Message = message,
-            RelatedJobId = applicationId,
+            RelatedApplicationId = applicationId,
             IsRead = false,
         };
 
         await _notificationRepository.AddAsync(notification, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         await _publisher.PublishAsync(userProfileId, ToDto(notification), cancellationToken);
+    }
+
+    public async Task NotifyInterviewInvitedAsync(
+        Guid userProfileId,
+        Guid applicationId,
+        Guid conversationId,
+        string jobTitle,
+        string companyName,
+        CancellationToken cancellationToken = default)
+    {
+        var title = $"{companyName} invited you to interview";
+        if (await _notificationRepository.ExistsAsync(userProfileId, title, applicationId, cancellationToken))
+            return;
+
+        var notification = new Notification
+        {
+            UserProfileId = userProfileId,
+            Type = NotificationType.InterviewInvited,
+            Title = title,
+            Message = $"You've been invited to continue the hiring process for {jobTitle}. Messaging is now unlocked.",
+            RelatedApplicationId = applicationId,
+            RelatedConversationId = conversationId,
+            IsRead = false,
+        };
+
+        await _notificationRepository.AddAsync(notification, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _publisher.PublishAsync(userProfileId, ToDto(notification), cancellationToken);
+    }
+
+    public async Task NotifyNewMessageAsync(
+        Guid userProfileId,
+        Guid conversationId,
+        Guid applicationId,
+        string companyName,
+        string preview,
+        CancellationToken cancellationToken = default)
+    {
+        var title = $"New message from {companyName}";
+        var trimmed = preview.Length > 120 ? $"{preview[..117]}..." : preview;
+
+        var notification = new Notification
+        {
+            UserProfileId = userProfileId,
+            Type = NotificationType.NewMessage,
+            Title = title,
+            Message = trimmed,
+            RelatedApplicationId = applicationId,
+            RelatedConversationId = conversationId,
+            IsRead = false,
+        };
+
+        await _notificationRepository.AddAsync(notification, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        await _publisher.PublishAsync(userProfileId, ToDto(notification), cancellationToken);
+    }
+
+    public async Task NotifyNewMessageToCompanyAsync(
+        Guid companyId,
+        Guid conversationId,
+        Guid applicationId,
+        string candidateName,
+        string preview,
+        CancellationToken cancellationToken = default)
+    {
+        var memberProfileIds = await _companyMemberRepository.GetMemberProfileIdsByCompanyIdAsync(
+            companyId, cancellationToken);
+        if (memberProfileIds.Count == 0)
+            return;
+
+        var title = $"New message from {candidateName}";
+        var trimmed = preview.Length > 120 ? $"{preview[..117]}..." : preview;
+
+        foreach (var profileId in memberProfileIds)
+        {
+            var notification = new Notification
+            {
+                UserProfileId = profileId,
+                Type = NotificationType.NewMessage,
+                Title = title,
+                Message = trimmed,
+                RelatedApplicationId = applicationId,
+                RelatedConversationId = conversationId,
+                RelatedCompanyId = companyId,
+                IsRead = false,
+            };
+
+            await _notificationRepository.AddAsync(notification, cancellationToken);
+            await _publisher.PublishAsync(profileId, ToDto(notification), cancellationToken);
+        }
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
     }
 
     public async Task NotifyApplicationReappliedAsync(
@@ -277,5 +385,5 @@ public class NotificationService : INotificationService
 
     private static NotificationDto ToDto(Notification n) => new(
         n.Id, n.Type, n.Title, n.Message, n.IsRead, n.ReadAt,
-        n.RelatedJobId, n.RelatedCompanyId, n.CreatedAt);
+        n.RelatedJobId, n.RelatedCompanyId, n.RelatedApplicationId, n.RelatedConversationId, n.CreatedAt);
 }

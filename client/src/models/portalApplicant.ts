@@ -41,6 +41,8 @@ export interface PortalApplicantDetail {
   educations: Education[];
   candidateTrustLevel: CandidateTrustLevel;
   candidateTrustSignals: number;
+  conversationId?: string;
+  messagingUnlocked: boolean;
 }
 
 export interface PortalUpdateApplicationStatusRequest {

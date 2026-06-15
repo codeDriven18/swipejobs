@@ -30,6 +30,6 @@ export function blocksNewApplication(latest: JobApplication | undefined): boolea
 
 export function canWithdrawApplication(status: ApplicationStatus): boolean {
   return status !== ApplicationStatus.Withdrawn
-    && status !== ApplicationStatus.Accepted
+    && status !== ApplicationStatus.Hired
     && status !== ApplicationStatus.Rejected;
 }

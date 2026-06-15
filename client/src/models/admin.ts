@@ -4,6 +4,8 @@ import type { Job } from './job';
 import type { NotificationType } from './personalization';
 import type { AuditAction, AuditEntityType } from './operations';
 
+import type { MessagingMetrics } from './messaging';
+
 export interface AdminStats {
   totalUsers: number;
   totalCompanies: number;
@@ -12,6 +14,7 @@ export interface AdminStats {
   archivedJobs: number;
   totalApplications: number;
   unreadNotifications: number;
+  messaging: MessagingMetrics;
 }
 
 export interface AdminUser {

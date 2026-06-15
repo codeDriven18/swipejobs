@@ -95,6 +95,17 @@ export function AdminDashboardPage() {
       )}
 
       <div className={styles.section}>
+        <h3 className={styles.sectionTitle}>Messaging</h3>
+        <div className={styles.metricsRowCompact}>
+          <div className={styles.metricCard}><span className={styles.metricValue}>{stats.messaging.conversationsCreated}</span><span className={styles.metricLabel}>Conversations</span></div>
+          <div className={styles.metricCard}><span className={styles.metricValue}>{stats.messaging.messagesSent}</span><span className={styles.metricLabel}>Messages sent</span></div>
+          <div className={styles.metricCard}><span className={styles.metricValue}>{stats.messaging.interviewInvitations}</span><span className={styles.metricLabel}>Interview invites</span></div>
+          <div className={styles.metricCard}><span className={styles.metricValue}>{stats.messaging.offersSent}</span><span className={styles.metricLabel}>Offers sent</span></div>
+          <div className={styles.metricCard}><span className={styles.metricValue}>{stats.messaging.hires}</span><span className={styles.metricLabel}>Hires</span></div>
+        </div>
+      </div>
+
+      <div className={styles.section}>
         <h3 className={styles.sectionTitle}>Platform snapshot</h3>
         <div className={styles.metricsRowCompact}>
           <div className={styles.metricCard}><span className={styles.metricValue}>{stats.totalUsers}</span><span className={styles.metricLabel}>Users</span></div>

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { getHomeRouteForRole } from '@/lib/authRoutes';
+import { getRefreshToken } from '@/lib/authStorage';
 import { UserRole } from '@/models/auth';
 
 interface UserAppGateProps {
@@ -12,8 +13,9 @@ interface UserAppGateProps {
 export function UserAppGate({ children }: UserAppGateProps) {
   const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
+  const hasSession = Boolean(getRefreshToken());
 
-  if (isLoading) {
+  if (isLoading && !hasSession) {
     return (
       <p style={{ padding: '2rem', textAlign: 'center', color: 'var(--color-text-muted)' }}>
         Loading...

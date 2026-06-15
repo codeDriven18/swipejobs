@@ -9,6 +9,7 @@ const navItems = [
   { to: '/portal', label: 'Overview', end: true },
   { to: '/portal/jobs', label: 'Jobs' },
   { to: '/portal/applications', label: 'Applicants' },
+  { to: '/portal/messages', label: 'Messages' },
   { to: '/profile', label: 'Company' },
   { to: '/account', label: 'Settings' },
 ] as const;

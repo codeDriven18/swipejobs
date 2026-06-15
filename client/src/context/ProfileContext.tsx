@@ -28,6 +28,7 @@ import { removeProfileBanner, removeProfileResume, uploadProfileBanner, uploadPr
 
 import { useAuth } from '@/context/AuthContext';
 import { UserRole } from '@/models/auth';
+import { getRefreshToken } from '@/lib/authStorage';
 
 import { syncAuthUserProfileId } from '@/api/client';
 import { setOnboardingComplete } from '@/lib/onboardingStorage';
@@ -94,91 +95,78 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
   const profileRef = useRef<UserProfile | null>(null);
 
+  const inFlightRef = useRef<AbortController | null>(null);
+
 
 
   profileRef.current = profile;
 
 
 
-  const load = useCallback(async (force = false) => {
-
+  const load = useCallback(async (force = false, externalSignal?: AbortSignal) => {
     if (!isAuthenticated || user?.role === UserRole.Company) {
-
+      inFlightRef.current?.abort();
       setProfile(null);
-
       profileRef.current = null;
-
       setLoading(false);
-
       setError(null);
-
       lastLoadedRef.current = 0;
-
       return;
-
     }
-
-
 
     if (!force && profileRef.current && Date.now() - lastLoadedRef.current < CACHE_MS) {
-
       setLoading(false);
-
       return;
-
     }
 
-
+    inFlightRef.current?.abort();
+    const controller = new AbortController();
+    inFlightRef.current = controller;
+    const signal = externalSignal ?? controller.signal;
 
     setLoading(true);
-
     setError(null);
 
     try {
-
-      const p = normalizeUserProfile(await profilesApi.getMe());
+      const p = normalizeUserProfile(await profilesApi.getMe(signal));
+      if (signal.aborted) return;
 
       setProfile(p);
-
       profileRef.current = p;
-
       lastLoadedRef.current = Date.now();
-
       syncAuthUserProfileId(p.id);
-
     } catch (e) {
+      if (signal.aborted) return;
 
       if (e instanceof ApiError && e.status === 404) {
-
         setProfile(null);
-
         profileRef.current = null;
-
       } else {
-
         const message = getApiErrorMessage(e, 'Failed to load profile');
-
         setError(message);
-
       }
-
     } finally {
-
-      setLoading(false);
-
+      if (!signal.aborted) {
+        setLoading(false);
+      }
+      if (inFlightRef.current === controller) {
+        inFlightRef.current = null;
+      }
     }
-
   }, [isAuthenticated, user?.role]);
 
 
 
   useEffect(() => {
+    if (authLoading && !getRefreshToken()) return;
 
-    if (authLoading) return;
+    const controller = new AbortController();
+    void load(false, controller.signal);
 
-    void load();
-
-  }, [authLoading, load]);
+    return () => {
+      controller.abort();
+    };
+  }, [authLoading, isAuthenticated, user?.role, load]);
 
   useEffect(() => {
     if (profile && isProfileSubstantiallyComplete(profile)) {
@@ -431,7 +419,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
       profile,
 
-      loading: authLoading || loading,
+      loading,
 
       saving,
 
@@ -455,7 +443,7 @@ export function ProfileProvider({ children }: { children: ReactNode }) {
 
     }),
 
-    [profile, authLoading, loading, saving, error, load, updateProfile, uploadAvatar, removeAvatarFn, uploadBannerFn, removeBannerFn, uploadResumeFn, removeResumeFn],
+    [profile, loading, saving, error, load, updateProfile, uploadAvatar, removeAvatarFn, uploadBannerFn, removeBannerFn, uploadResumeFn, removeResumeFn],
 
   );
 

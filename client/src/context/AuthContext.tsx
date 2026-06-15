@@ -16,6 +16,7 @@ import {
 import { authApi } from '@/api/authApi';
 import {
   clearAuthSession,
+  getAccessToken,
   getRefreshToken,
   getStoredAuthUser,
   hasAuthSession,
@@ -66,37 +67,39 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      setUser(getStoredAuthUser());
+      const stored = getStoredAuthUser();
+      if (stored) {
+        setUser(stored);
+      }
 
-      const needsRefresh = !getStoredAuthUser() || isAccessTokenExpired();
-      if (needsRefresh) {
-        const result = await refreshAuthSessionDetailed();
-        if (cancelled) return;
-
-        if (result === 'rejected') {
-          setUser(null);
+      const tokenReady = Boolean(getAccessToken()) && !isAccessTokenExpired();
+      if (tokenReady) {
+        if (!cancelled) {
           setIsLoading(false);
-          return;
         }
+        scheduleProactiveTokenRefresh();
+        void refreshUser().catch(() => undefined);
+        return;
+      }
 
-        if (result === 'success') {
-          setUser(getStoredAuthUser());
-        }
+      const result = await refreshAuthSessionDetailed();
+      if (cancelled) return;
+
+      if (result === 'rejected') {
+        setUser(null);
+        setIsLoading(false);
+        return;
+      }
+
+      setUser(getStoredAuthUser());
+      if (!cancelled) {
+        setIsLoading(false);
       }
 
       if (hasAuthSession()) {
         scheduleProactiveTokenRefresh();
-        try {
-          const me = await authApi.me();
-          if (!cancelled) {
-            setUser(toStoredAuthUser(me));
-          }
-        } catch {
-          /* keep stored session */
-        }
+        void refreshUser().catch(() => undefined);
       }
-
-      if (!cancelled) setIsLoading(false);
     }
 
     void bootstrap();
@@ -105,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       cancelled = true;
       stopProactiveTokenRefresh();
     };
-  }, []);
+  }, [refreshUser]);
 
   const login = useCallback(async (data: LoginRequest) => {
     const response = await authApi.login(data);

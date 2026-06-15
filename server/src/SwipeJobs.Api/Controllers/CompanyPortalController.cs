@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using SwipeJobs.Application.Common.Dtos;
 using SwipeJobs.Application.Common.Interfaces;
+using SwipeJobs.Application.Modules.Messaging.Interfaces;
 using SwipeJobs.Application.Modules.Portal.Interfaces;
 using SwipeJobs.Domain.Enums;
 
@@ -13,15 +14,21 @@ namespace SwipeJobs.Api.Controllers;
 public class CompanyPortalController : ControllerBase
 {
     private readonly ICompanyPortalService _portalService;
+    private readonly IMessagingService _messagingService;
+    private readonly IMessageAttachmentStorage _attachmentStorage;
     private readonly ICurrentUserService _currentUser;
     private readonly ILogger<CompanyPortalController> _logger;
 
     public CompanyPortalController(
         ICompanyPortalService portalService,
+        IMessagingService messagingService,
+        IMessageAttachmentStorage attachmentStorage,
         ICurrentUserService currentUser,
         ILogger<CompanyPortalController> logger)
     {
         _portalService = portalService;
+        _messagingService = messagingService;
+        _attachmentStorage = attachmentStorage;
         _currentUser = currentUser;
         _logger = logger;
     }
@@ -160,6 +167,140 @@ public class CompanyPortalController : ControllerBase
 
         var (stream, contentType, fileName) = opened.Value;
         return File(stream, contentType, fileName);
+    }
+
+    [HttpPost("applications/{id:guid}/invite-interview")]
+    public async Task<IActionResult> InviteToInterview(Guid id, CancellationToken cancellationToken)
+    {
+        _currentUser.RequireRole(UserRole.Company, UserRole.Admin);
+        var companyId = _currentUser.GetRequiredCompanyId();
+
+        try
+        {
+            var result = await _messagingService.InviteToInterviewAsync(companyId, id, cancellationToken);
+            return result is null ? NotFound() : Ok(result);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message, code = "invalid_invite" });
+        }
+    }
+
+    [HttpPost("applications/{id:guid}/shortlist")]
+    public async Task<IActionResult> ShortlistApplication(Guid id, CancellationToken cancellationToken)
+    {
+        _currentUser.RequireRole(UserRole.Company, UserRole.Admin);
+        var companyId = _currentUser.GetRequiredCompanyId();
+
+        try
+        {
+            var updated = await _messagingService.ShortlistApplicationAsync(companyId, id, cancellationToken);
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message, code = "invalid_status" });
+        }
+    }
+
+    [HttpGet("conversations")]
+    public async Task<IActionResult> Conversations([FromQuery] string? filter, CancellationToken cancellationToken)
+    {
+        _currentUser.RequireRole(UserRole.Company, UserRole.Admin);
+        var companyId = _currentUser.GetRequiredCompanyId();
+        return Ok(await _messagingService.GetCompanyConversationsAsync(companyId, filter, cancellationToken));
+    }
+
+    [HttpGet("conversations/{id:guid}")]
+    public async Task<IActionResult> GetConversation(Guid id, CancellationToken cancellationToken)
+    {
+        _currentUser.RequireRole(UserRole.Company, UserRole.Admin);
+        var companyId = _currentUser.GetRequiredCompanyId();
+        var userId = _currentUser.GetRequiredUserId();
+        var conversation = await _messagingService.GetConversationAsync(
+            id, userId, UserRole.Company, companyId, null, cancellationToken);
+        return conversation is null ? NotFound() : Ok(conversation);
+    }
+
+    [HttpGet("conversations/{id:guid}/messages")]
+    public async Task<IActionResult> ConversationMessages(Guid id, CancellationToken cancellationToken)
+    {
+        _currentUser.RequireRole(UserRole.Company, UserRole.Admin);
+        var companyId = _currentUser.GetRequiredCompanyId();
+        var userId = _currentUser.GetRequiredUserId();
+        var messages = await _messagingService.GetMessagesAsync(
+            id, userId, UserRole.Company, companyId, null, cancellationToken);
+        return Ok(messages);
+    }
+
+    [HttpPost("conversations/{id:guid}/messages")]
+    public async Task<IActionResult> SendConversationMessage(
+        Guid id,
+        [FromBody] SendMessageDto dto,
+        CancellationToken cancellationToken)
+    {
+        _currentUser.RequireRole(UserRole.Company, UserRole.Admin);
+        var companyId = _currentUser.GetRequiredCompanyId();
+        var userId = _currentUser.GetRequiredUserId();
+
+        try
+        {
+            var message = await _messagingService.SendMessageAsync(
+                id, userId, UserRole.Company, companyId, null, dto.MessageText, cancellationToken);
+            return message is null ? NotFound() : Ok(message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message, code = "messaging_locked" });
+        }
+    }
+
+    [HttpPost("conversations/{id:guid}/attachments")]
+    [RequestSizeLimit(10 * 1024 * 1024)]
+    public async Task<IActionResult> SendConversationAttachment(
+        Guid id,
+        IFormFile file,
+        [FromForm] string? messageText,
+        CancellationToken cancellationToken)
+    {
+        _currentUser.RequireRole(UserRole.Company, UserRole.Admin);
+        if (file is null || file.Length == 0)
+            return BadRequest(new { error = "File is required." });
+
+        var companyId = _currentUser.GetRequiredCompanyId();
+        var userId = _currentUser.GetRequiredUserId();
+
+        try
+        {
+            await using var stream = file.OpenReadStream();
+            var message = await _messagingService.SendAttachmentAsync(
+                id,
+                userId,
+                UserRole.Company,
+                companyId,
+                null,
+                stream,
+                file.FileName,
+                file.ContentType,
+                messageText,
+                cancellationToken);
+            return message is null ? NotFound() : Ok(message);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message, code = "messaging_locked" });
+        }
+    }
+
+    [HttpPost("conversations/{id:guid}/read")]
+    public async Task<IActionResult> MarkConversationRead(Guid id, CancellationToken cancellationToken)
+    {
+        _currentUser.RequireRole(UserRole.Company, UserRole.Admin);
+        var companyId = _currentUser.GetRequiredCompanyId();
+        var userId = _currentUser.GetRequiredUserId();
+        await _messagingService.MarkConversationReadAsync(
+            id, userId, UserRole.Company, companyId, null, cancellationToken);
+        return NoContent();
     }
 
     [HttpGet("company")]

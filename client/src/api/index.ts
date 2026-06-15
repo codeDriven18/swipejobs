@@ -13,3 +13,4 @@ export { notificationsApi } from './notificationsApi';
 export { companyFollowsApi } from './companyFollowsApi';
 export { adminApi } from './adminApi';
 export { portalApi } from './portalApi';
+export { messagingApi, portalMessagingApi } from './messagingApi';

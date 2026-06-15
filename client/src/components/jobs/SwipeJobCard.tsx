@@ -1,14 +1,15 @@
 import type { Job } from '@/models/job';
+import type { MotionValue } from 'framer-motion';
 import { SwipeCard } from '@/components/jobs/SwipeCard';
 
 interface SwipeJobCardProps {
   job: Job;
   interactive?: boolean;
-  attachedDock?: boolean;
+  dragX?: MotionValue<number>;
+  dragY?: MotionValue<number>;
 }
 
-/** Swipe deck card — dedicated dating-app style layout. */
-export function SwipeJobCard({ job, interactive = true, attachedDock = true }: SwipeJobCardProps) {
+export function SwipeJobCard({ job, interactive = true, dragX, dragY }: SwipeJobCardProps) {
   void interactive;
-  return <SwipeCard job={job} attachedDock={attachedDock} />;
+  return <SwipeCard job={job} dragX={dragX} dragY={dragY} />;
 }

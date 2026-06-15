@@ -13,6 +13,7 @@ namespace SwipeJobs.Application.Modules.Applications.Services;
 public class ApplicationService : IApplicationService
 {
     private readonly IApplicationRepository _applicationRepository;
+    private readonly IConversationRepository _conversationRepository;
     private readonly IUserProfileRepository _profileRepository;
     private readonly IJobRepository _jobRepository;
     private readonly IActivityService _activityService;
@@ -21,6 +22,7 @@ public class ApplicationService : IApplicationService
 
     public ApplicationService(
         IApplicationRepository applicationRepository,
+        IConversationRepository conversationRepository,
         IUserProfileRepository profileRepository,
         IJobRepository jobRepository,
         IActivityService activityService,
@@ -28,6 +30,7 @@ public class ApplicationService : IApplicationService
         IUnitOfWork unitOfWork)
     {
         _applicationRepository = applicationRepository;
+        _conversationRepository = conversationRepository;
         _profileRepository = profileRepository;
         _jobRepository = jobRepository;
         _activityService = activityService;
@@ -40,10 +43,14 @@ public class ApplicationService : IApplicationService
         CancellationToken cancellationToken = default)
     {
         var applications = await _applicationRepository.GetByUserProfileIdAsync(userProfileId, cancellationToken);
+        var conversationIds = await _conversationRepository.GetConversationIdsByApplicationIdsAsync(
+            applications.Select(a => a.Id), cancellationToken);
+
         return applications.Select(a =>
         {
             var jobDto = a.Job is not null ? JobMapper.ToDto(a.Job) : null;
-            return ProfileMapper.ToDto(a, jobDto);
+            conversationIds.TryGetValue(a.Id, out var conversationId);
+            return ProfileMapper.ToDto(a, jobDto, conversationId == default ? null : conversationId);
         }).ToList();
     }
 
@@ -79,10 +86,10 @@ public class ApplicationService : IApplicationService
         {
             UserProfileId = dto.UserProfileId,
             JobId = dto.JobId,
-            Status = ApplicationStatus.Submitted,
+            Status = ApplicationStatus.Applied,
             AppliedAt = appliedAt,
             ReapplicationCount = priorApplications.Count,
-            StatusHistoryJson = ApplicationStatusHistorySerializer.CreateInitial(ApplicationStatus.Submitted, appliedAt),
+            StatusHistoryJson = ApplicationStatusHistorySerializer.CreateInitial(ApplicationStatus.Applied, appliedAt),
         };
 
         await _applicationRepository.AddAsync(application, cancellationToken);
@@ -113,7 +120,9 @@ public class ApplicationService : IApplicationService
         var application = await _applicationRepository.GetByIdAsync(id, cancellationToken);
         if (application is null || application.UserProfileId != userProfileId) return false;
 
-        if (application.Status is ApplicationStatus.Withdrawn or ApplicationStatus.Accepted or ApplicationStatus.Rejected)
+        if (application.Status is ApplicationStatus.Withdrawn
+            or ApplicationStatus.Hired
+            or ApplicationStatus.Rejected)
             return false;
 
         var changedAt = DateTime.UtcNow;
@@ -123,6 +132,16 @@ public class ApplicationService : IApplicationService
 
         await _applicationRepository.UpdateAsync(application, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        var conversation = await _conversationRepository.GetByApplicationIdTrackedAsync(application.Id, cancellationToken);
+        if (conversation is not null)
+        {
+            conversation.Status = Domain.Enums.ConversationStatus.ReadOnly;
+            conversation.ClosedAt = changedAt;
+            await _conversationRepository.UpdateAsync(conversation, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+        }
+
         return true;
     }
 }

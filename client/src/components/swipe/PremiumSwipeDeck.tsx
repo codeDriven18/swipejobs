@@ -150,11 +150,11 @@ export const PremiumSwipeDeck = forwardRef<PremiumSwipeDeckHandle, PremiumSwipeD
               className={styles.stackCard}
               style={{
                 zIndex: 10 - layerIndex,
-                transform: `translateY(${layer.y}px) scale(${layer.scale})`,
+                transform: `translateY(${layer.y}px) scale(${layer.scale}) rotate(${layer.rotate}deg)`,
                 opacity: layer.opacity,
               }}
             >
-              <SwipeJobCard job={job} interactive={false} attachedDock={false} />
+              <SwipeJobCard job={job} interactive={false} />
             </div>
           );
         })}
@@ -206,7 +206,7 @@ export const PremiumSwipeDeck = forwardRef<PremiumSwipeDeckHandle, PremiumSwipeD
                 </motion.span>
               </>
             )}
-            <SwipeJobCard job={topJob} interactive />
+            <SwipeJobCard job={topJob} interactive dragX={x} dragY={y} />
           </motion.div>
         )}
       </div>

@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import { createRequestTimer } from '@/lib/apiDiagnostics';
 import type {
   ProfileCompleteness,
   UpdateUserProfileRequest,
@@ -7,7 +8,23 @@ import type {
 import type { PublicProfile } from '@/models/publicProfile';
 
 export const profilesApi = {
-  getMe: () => apiClient<UserProfile>('/profiles/me'),
+  getMe: (signal?: AbortSignal) => {
+    const timer = createRequestTimer('profiles/me');
+    return apiClient<UserProfile>('/profiles/me', { signal })
+      .then((profile) => {
+        timer.end({ profileId: profile.id });
+        return profile;
+      })
+      .catch((error) => {
+        if (signal?.aborted) {
+          timer.cancel({ reason: 'aborted' });
+        } else {
+          const reason = error instanceof Error ? error.message : 'unknown';
+          timer.error(reason);
+        }
+        throw error;
+      });
+  },
 
   getPublic: (id: string) => apiClient<PublicProfile>(`/profiles/public/${id}`, { skipAuth: true }),
 

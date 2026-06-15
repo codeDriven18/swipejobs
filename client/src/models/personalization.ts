@@ -12,6 +12,9 @@ export enum NotificationType {
   ProfileCompletenessReminder = 2,
   ApplicationStatusChanged = 3,
   ApplicationReapplied = 4,
+  InterviewInvited = 5,
+  NewMessage = 6,
+  OfferReceived = 7,
 }
 
 export interface AppNotification {
@@ -23,6 +26,8 @@ export interface AppNotification {
   readAt?: string;
   relatedJobId?: string;
   relatedCompanyId?: string;
+  relatedApplicationId?: string;
+  relatedConversationId?: string;
   createdAt: string;
 }
 

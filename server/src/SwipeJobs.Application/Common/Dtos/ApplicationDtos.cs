@@ -16,7 +16,8 @@ public record ApplicationDto(
     JobDto? Job,
     int ReapplicationCount,
     int ApplicationNumber,
-    IReadOnlyList<ApplicationStatusHistoryDto> StatusHistory);
+    IReadOnlyList<ApplicationStatusHistoryDto> StatusHistory,
+    Guid? ConversationId = null);
 
 public record CreateApplicationDto(Guid UserProfileId, Guid JobId);
 

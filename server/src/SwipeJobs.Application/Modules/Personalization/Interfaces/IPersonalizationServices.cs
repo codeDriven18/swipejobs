@@ -51,6 +51,27 @@ public interface INotificationService
         ApplicationStatus status,
         string jobTitle,
         CancellationToken cancellationToken = default);
+    Task NotifyInterviewInvitedAsync(
+        Guid userProfileId,
+        Guid applicationId,
+        Guid conversationId,
+        string jobTitle,
+        string companyName,
+        CancellationToken cancellationToken = default);
+    Task NotifyNewMessageAsync(
+        Guid userProfileId,
+        Guid conversationId,
+        Guid applicationId,
+        string companyName,
+        string preview,
+        CancellationToken cancellationToken = default);
+    Task NotifyNewMessageToCompanyAsync(
+        Guid companyId,
+        Guid conversationId,
+        Guid applicationId,
+        string candidateName,
+        string preview,
+        CancellationToken cancellationToken = default);
     Task NotifyApplicationReappliedAsync(
         Guid companyId,
         string applicantName,

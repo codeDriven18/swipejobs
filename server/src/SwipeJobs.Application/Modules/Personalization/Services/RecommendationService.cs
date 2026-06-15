@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using SwipeJobs.Application.Common.Dtos;
 using SwipeJobs.Application.Common.Interfaces.Repositories;
 using SwipeJobs.Application.Common.Mapping;
@@ -17,6 +18,7 @@ public class RecommendationService : IRecommendationService
     private readonly ISavedJobRepository _savedJobRepository;
     private readonly ICompanyFollowRepository _companyFollowRepository;
     private readonly ITrendingService _trendingService;
+    private readonly ILogger<RecommendationService> _logger;
 
     public RecommendationService(
         IJobRepository jobRepository,
@@ -25,7 +27,8 @@ public class RecommendationService : IRecommendationService
         IApplicationRepository applicationRepository,
         ISavedJobRepository savedJobRepository,
         ICompanyFollowRepository companyFollowRepository,
-        ITrendingService trendingService)
+        ITrendingService trendingService,
+        ILogger<RecommendationService> logger)
     {
         _jobRepository = jobRepository;
         _interestService = interestService;
@@ -34,13 +37,22 @@ public class RecommendationService : IRecommendationService
         _savedJobRepository = savedJobRepository;
         _companyFollowRepository = companyFollowRepository;
         _trendingService = trendingService;
+        _logger = logger;
     }
 
     public async Task<IReadOnlyList<JobDto>> GetRecommendedJobsAsync(
         Guid userProfileId, int limit, CancellationToken cancellationToken = default)
     {
-        var interests = await _interestService.GetAsync(userProfileId, cancellationToken)
-            ?? await _interestService.RecalculateAsync(userProfileId, cancellationToken);
+        var startedAt = DateTime.UtcNow;
+        _logger.LogInformation(
+            "Recommendation calculation start profileId={ProfileId} limit={Limit}",
+            userProfileId,
+            limit);
+
+        try
+        {
+            var interests = await _interestService.GetAsync(userProfileId, cancellationToken)
+                ?? await _interestService.RecalculateAsync(userProfileId, cancellationToken);
 
         var applications = await _applicationRepository.GetByUserProfileIdAsync(userProfileId, cancellationToken);
         var saved = await _savedJobRepository.GetByUserProfileIdAsync(userProfileId, cancellationToken);
@@ -73,7 +85,25 @@ public class RecommendationService : IRecommendationService
             .ToList();
 
         var badges = await _trendingService.GetTrendingBadgesAsync(scored.Select(j => j.Id), cancellationToken);
-        return scored.Select(j => JobMapper.ToDto(j, badges.GetValueOrDefault(j.Id, Array.Empty<string>()))).ToList();
+        var result = scored.Select(j => JobMapper.ToDto(j, badges.GetValueOrDefault(j.Id, Array.Empty<string>()))).ToList();
+
+        _logger.LogInformation(
+            "Recommendation calculation end profileId={ProfileId} count={Count} elapsedMs={ElapsedMs}",
+            userProfileId,
+            result.Count,
+            (DateTime.UtcNow - startedAt).TotalMilliseconds);
+
+        return result;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Recommendation calculation failed profileId={ProfileId} elapsedMs={ElapsedMs}",
+                userProfileId,
+                (DateTime.UtcNow - startedAt).TotalMilliseconds);
+            throw;
+        }
     }
 
     private static double ScoreJob(

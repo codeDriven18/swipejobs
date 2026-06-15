@@ -57,6 +57,21 @@ export function SwipeCardSkeleton() {
   );
 }
 
+export function DiscoveryRailSkeleton({ title = 'Loading' }: { title?: string }) {
+  return (
+    <section className={styles.railSkeleton} aria-busy="true" aria-label={`${title} loading`}>
+      <div className={styles.railSkeletonHeader}>
+        <Skeleton variant="lineTitle" />
+      </div>
+      <div className={styles.railSkeletonScroll}>
+        {Array.from({ length: 4 }, (_, index) => (
+          <Skeleton key={index} variant="card" className={styles.railSkeletonCard} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
 export function DashboardSkeleton() {
   return (
     <div className={styles.list} aria-busy="true" aria-label="Loading dashboard">

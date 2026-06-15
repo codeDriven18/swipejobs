@@ -15,4 +15,6 @@ public class Notification : BaseEntity
     public DateTime? ReadAt { get; set; }
     public Guid? RelatedJobId { get; set; }
     public Guid? RelatedCompanyId { get; set; }
+    public Guid? RelatedApplicationId { get; set; }
+    public Guid? RelatedConversationId { get; set; }
 }

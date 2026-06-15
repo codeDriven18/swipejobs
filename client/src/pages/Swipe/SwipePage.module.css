@@ -1,8 +1,8 @@
 .page {
   --swipe-header-h: 3rem;
-  --swipe-dock-h: 4.75rem;
+  --swipe-controls-h: 7.5rem;
   --swipe-available: calc(
-    100dvh - var(--nav-height) - var(--swipe-header-h) - var(--swipe-dock-h) - env(safe-area-inset-bottom) - var(--space-4)
+    100dvh - var(--nav-height) - var(--swipe-header-h) - var(--swipe-controls-h) - env(safe-area-inset-bottom) - var(--space-3)
   );
 
   position: relative;
@@ -32,8 +32,9 @@
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(ellipse 80% 50% at 50% -5%, rgba(255, 214, 0, 0.08), transparent 58%),
-    var(--color-bg);
+    radial-gradient(ellipse 70% 45% at 50% 0%, rgba(255, 214, 0, 0.06), transparent 55%),
+    radial-gradient(ellipse 90% 60% at 50% 100%, rgba(255, 214, 0, 0.03), transparent 50%),
+    #000;
   z-index: 0;
 }
 
@@ -66,11 +67,11 @@
   justify-content: center;
   width: 2.75rem;
   height: 2.75rem;
-  background: var(--color-surface-overlay);
+  background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(16px);
-  border: 1px solid var(--color-border-subtle);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-full);
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
   color: var(--color-text);
   transition: transform var(--duration-fast) var(--ease-out);
 }
@@ -101,12 +102,13 @@
   justify-self: center;
   font-size: 0.8125rem;
   font-weight: 600;
-  color: var(--color-text-muted);
+  color: rgba(255, 255, 255, 0.55);
   white-space: nowrap;
   padding: 0.35rem 0.85rem;
   border-radius: var(--radius-full);
-  background: var(--color-surface-overlay);
-  border: 1px solid var(--color-border-subtle);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(12px);
 }
 
 .stage {
@@ -117,89 +119,134 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0 var(--space-1) var(--space-2);
+  padding: 0 var(--space-2) var(--space-2);
 }
 
 .swipeUnit {
   display: flex;
   flex-direction: column;
-  width: min(100%, 22.5rem);
+  align-items: center;
+  width: min(100%, 23rem);
   max-height: 100%;
-  filter: drop-shadow(0 12px 28px rgba(0, 0, 0, 0.28));
 }
 
 .deckStage {
   position: relative;
   width: 100%;
-  height: min(calc(var(--swipe-available) * 0.76), 26rem);
-  min-height: 16.5rem;
+  height: min(var(--swipe-available), 28rem);
+  min-height: 17rem;
   flex-shrink: 1;
 }
 
 .skeletonCard {
-  width: min(100%, 22.5rem);
-  height: min(calc(var(--swipe-available) * 0.76), 26rem);
-  min-height: 16.5rem;
+  width: min(100%, 23rem);
+  height: min(var(--swipe-available), 28rem);
+  min-height: 17rem;
   border-radius: var(--radius-2xl);
 }
 
-.actionDock {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1.15fr;
-  align-items: center;
-  gap: var(--space-3);
+.controls {
   width: 100%;
-  padding: 0.75rem 1rem calc(0.75rem + env(safe-area-inset-bottom));
-  background: var(--color-surface-raised);
-  border: 1px solid var(--color-border-subtle);
-  border-top: 1px solid var(--color-border-subtle);
-  border-radius: 0 0 var(--radius-2xl) var(--radius-2xl);
-  box-shadow: var(--shadow-md);
-}
-
-.dockBtn {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 0.2rem;
-  min-height: 3.25rem;
-  border-radius: var(--radius-xl);
-  border: 1px solid var(--color-border-subtle);
-  background: var(--color-bg);
-  color: var(--color-text-muted);
-  font-size: 0.6875rem;
+  flex-shrink: 0;
+  padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
+}
+
+.onboardingSlot {
+  width: 100%;
+  max-height: 3.75rem;
+  overflow: hidden;
+  opacity: 1;
+  transition:
+    opacity 0.42s var(--ease-out),
+    max-height 0.38s var(--ease-out) 0.08s,
+    margin 0.38s var(--ease-out) 0.08s;
+  margin-bottom: 0.625rem;
+}
+
+.onboardingSlotFading {
+  opacity: 0;
+}
+
+.onboardingSlotCollapsed {
+  max-height: 0;
+  margin-bottom: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.onboarding {
+  text-align: center;
+  padding: 0 0.5rem;
+}
+
+.onboardingText {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.onboardingText strong {
   font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  transition: transform var(--duration-fast) var(--ease-out);
+  color: var(--color-accent);
 }
 
-.dockBtn:active {
-  transform: scale(0.94);
+.onboardingSub {
+  margin: 0.2rem 0 0;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.35);
 }
 
-.passBtn {
-  color: var(--color-danger);
-  border-color: color-mix(in srgb, var(--color-danger) 22%, var(--color-border-subtle));
-}
-
-.saveBtn {
-  color: var(--color-text);
-}
-
-.applyBtn {
-  background: var(--color-accent);
-  color: #0a0a0a;
-  border-color: color-mix(in srgb, var(--color-accent) 55%, #000);
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--color-accent) 28%, transparent);
-  font-weight: 700;
-}
-
-.dockIcon {
+.glassDock {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: clamp(1.25rem, 6vw, 2rem);
+  padding: 0.25rem 0;
+}
+
+.glassBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 3.5rem;
+  height: 3.5rem;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.85);
+  transition: box-shadow 0.2s var(--ease-out);
+}
+
+.passBtn {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.saveBtn {
+  color: var(--color-accent);
+  background: rgba(255, 214, 0, 0.1);
+  border-color: rgba(255, 214, 0, 0.22);
+}
+
+.applyBtn {
+  width: 4rem;
+  height: 4rem;
+  color: var(--color-accent);
+  background: rgba(255, 214, 0, 0.14);
+  border-color: rgba(255, 214, 0, 0.32);
+  box-shadow:
+    0 10px 36px rgba(255, 214, 0, 0.15),
+    0 8px 32px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .toastWrap {
@@ -211,7 +258,7 @@
 
 .toast {
   position: fixed;
-  bottom: calc(var(--nav-height) + 6rem + env(safe-area-inset-bottom));
+  bottom: calc(var(--nav-height) + 7rem + env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   padding: var(--space-3) var(--space-6);
@@ -243,12 +290,17 @@
 
 @media (max-width: 380px) {
   .deckStage {
-    min-height: 15rem;
-    height: min(calc(var(--swipe-available) * 0.72), 24rem);
+    min-height: 15.5rem;
+    height: min(var(--swipe-available), 25rem);
   }
 
-  .actionDock {
-    gap: var(--space-2);
-    padding-inline: 0.75rem;
+  .glassBtn {
+    width: 3.25rem;
+    height: 3.25rem;
+  }
+
+  .applyBtn {
+    width: 3.75rem;
+    height: 3.75rem;
   }
 }

@@ -7,9 +7,10 @@ interface JobHeroImageProps {
   alt: string;
   className?: string;
   priority?: boolean;
+  variant?: 'default' | 'swipe';
 }
 
-export function JobHeroImage({ image, alt, className = '', priority = false }: JobHeroImageProps) {
+export function JobHeroImage({ image, alt, className = '', priority = false, variant = 'default' }: JobHeroImageProps) {
   const [loaded, setLoaded] = useState(false);
   const [src, setSrc] = useState(image.url);
   const imgRef = useRef<HTMLImageElement>(null);
@@ -55,8 +56,8 @@ export function JobHeroImage({ image, alt, className = '', priority = false }: J
           }
         }}
       />
-      <div className={styles.fade} aria-hidden />
-      <div className={styles.fadeSurface} aria-hidden />
+      {variant !== 'swipe' && <div className={styles.fade} aria-hidden />}
+      {variant !== 'swipe' && <div className={styles.fadeSurface} aria-hidden />}
     </div>
   );
 }
