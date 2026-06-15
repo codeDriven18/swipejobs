@@ -17,7 +17,7 @@ interface NotificationBellProps {
 
 export function NotificationBell({ bellClassName }: NotificationBellProps = {}) {
   const { isAuthenticated, user } = useAuth();
-  const { notifications, unreadCount, markAllRead, dismiss, dismissAll } = useNotifications();
+  const { notifications, unreadCount, markAllRead, markRead, dismiss, dismissAll } = useNotifications();
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -43,7 +43,12 @@ export function NotificationBell({ bellClassName }: NotificationBellProps = {}) 
 
   if (!isAuthenticated || user?.role !== UserRole.JobSeeker) return null;
 
-  const handleNotificationNavigate = () => {
+  const handleNotificationOpen = (id: string, isRead: boolean) => {
+    if (!isRead) void markRead(id);
+  };
+
+  const handleNotificationNavigate = (id: string, isRead: boolean) => {
+    if (!isRead) void markRead(id);
     close();
   };
 
@@ -113,7 +118,12 @@ export function NotificationBell({ bellClassName }: NotificationBellProps = {}) 
               ) : (
                 <ul className={styles.list}>
                   {notifications.map((n) => (
-                    <li key={n.id} className={n.isRead ? styles.itemRead : styles.item}>
+                    <li
+                      key={n.id}
+                      className={n.isRead ? styles.itemRead : styles.item}
+                      onMouseEnter={() => handleNotificationOpen(n.id, n.isRead)}
+                      onFocus={() => handleNotificationOpen(n.id, n.isRead)}
+                    >
                       <div className={styles.itemTop}>
                         <strong>{n.title}</strong>
                         <button
@@ -138,7 +148,7 @@ export function NotificationBell({ bellClassName }: NotificationBellProps = {}) 
                           <Link
                             to={to}
                             className={styles.link}
-                            onClick={handleNotificationNavigate}
+                            onClick={() => handleNotificationNavigate(n.id, n.isRead)}
                           >
                             {label} <IconChevronRight size={14} />
                           </Link>

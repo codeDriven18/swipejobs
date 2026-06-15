@@ -1,7 +1,7 @@
 import { Outlet, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, useScroll, useTransform } from 'framer-motion';
 import { Navigation } from './Navigation';
-import { NotificationBell } from './NotificationBell';
+import { InboxHeaderActions } from './InboxHeaderActions';
 import { AppIcon } from '@/components/brand/AppIcon';
 import { useAuth } from '@/context/AuthContext';
 import { usePwaInstallPrompt } from '@/context/PwaInstallContext';
@@ -19,6 +19,8 @@ export function AppLayout() {
   const hideHeader = isSwipe || isWelcome || isAuthPage;
   const hideNav = isAuthPage;
   const isProfileHub = location.pathname === '/profile' || location.pathname.startsWith('/profile/');
+  const showInboxActions = isAuthenticated && !isProfileHub && !isSwipe && !isWelcome && !isAuthPage
+    && (location.pathname === '/' || location.pathname === '/saved' || location.pathname === '/applications');
   const { scrollY } = useScroll();
   const headerFadeOpacity = useTransform(scrollY, [0, 72], [1, 0]);
 
@@ -32,7 +34,7 @@ export function AppLayout() {
             {isStandalone && isProfileHub && <span className={styles.title}>Profile</span>}
           </motion.div>
           <motion.div className={styles.headerActions} style={{ opacity: headerFadeOpacity }}>
-            {isAuthenticated && <NotificationBell />}
+            {showInboxActions && <InboxHeaderActions />}
           </motion.div>
         </header>
       )}

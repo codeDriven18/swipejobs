@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion, useScroll, useTransform } from 'framer-motion';
 import { ApiError } from '@/api/client';
 import { applicationsApi } from '@/api/applicationsApi';
@@ -12,8 +12,6 @@ import {
   type SwipeDirection,
 } from '@/components/swipe/PremiumSwipeDeck';
 import { IconBookmark, IconFilter, IconHeart, IconMenu, IconX } from '@/components/icons/Icons';
-import { IconMessages } from '@/components/layout/NavIcons';
-import { NotificationBell } from '@/components/layout/NotificationBell';
 import { hasCompletedSwipeOnboarding, markSwipeOnboardingComplete } from '@/lib/swipeOnboardingStorage';
 import { PullToRefresh } from '@/components/ui/PullToRefresh';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -25,7 +23,6 @@ import { useJobFilters } from '@/hooks/useJobFilters';
 import { useProfile } from '@/hooks/useProfile';
 import { useRefreshLock } from '@/hooks/useRefreshLock';
 import { useActivityTracking } from '@/hooks/useActivityTracking';
-import { useUnreadMessages } from '@/hooks/useUnreadMessages';
 import { refreshSeekerAccountData } from '@/lib/seekerRefresh';
 import { closeActiveFloatingPanel, registerFloatingPanel, unregisterFloatingPanel } from '@/lib/floatingPanels';
 import type { Job } from '@/models/job';
@@ -47,7 +44,6 @@ export function SwipePage() {
   const queueRef = useRef<Job[]>([]);
   const { scrollY } = useScroll({ container: pageScrollRef });
   const headerActionsOpacity = useTransform(scrollY, [0, 56], [1, 0]);
-  const { count: unreadMessages } = useUnreadMessages();
 
   const [queue, setQueue] = useState<Job[]>([]);
   queueRef.current = queue;
@@ -255,6 +251,13 @@ export function SwipePage() {
           >
             <IconMenu size={20} />
           </button>
+        </motion.div>
+
+        <span className={styles.deckCount}>
+          {loading || isRefreshing ? '…' : `${queue.length} left`}
+        </span>
+
+        <motion.div className={styles.headerEnd} style={{ opacity: headerActionsOpacity }}>
           <button
             type="button"
             className={styles.headerBtn}
@@ -266,31 +269,6 @@ export function SwipePage() {
               <span className={styles.filterCount}>{filters.activeFilterCount}</span>
             )}
           </button>
-        </motion.div>
-
-        <span className={styles.deckCount}>
-          {loading || isRefreshing ? '…' : `${queue.length} left`}
-        </span>
-
-        <motion.div className={styles.headerEnd} style={{ opacity: headerActionsOpacity }}>
-          {isAuthenticated && (
-            <div className={styles.headerActions}>
-              <NotificationBell bellClassName={styles.headerBtn} />
-              <Link
-                to="/messages"
-                className={styles.headerBtn}
-                aria-label="Messages"
-                onClick={() => closeActiveFloatingPanel()}
-              >
-                <IconMessages />
-                {unreadMessages > 0 && (
-                  <span className={styles.filterCount}>
-                    {unreadMessages > 9 ? '9+' : unreadMessages}
-                  </span>
-                )}
-              </Link>
-            </div>
-          )}
         </motion.div>
       </header>
 

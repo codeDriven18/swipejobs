@@ -1,8 +1,9 @@
 .page {
-  --swipe-header-h: 3rem;
-  --swipe-controls-h: 7.5rem;
+  --swipe-header-h: 2.75rem;
+  --swipe-controls-h: 5.25rem;
+  --swipe-side-pad: max(0.75rem, env(safe-area-inset-left), env(safe-area-inset-right));
   --swipe-available: calc(
-    100dvh - var(--nav-height) - var(--swipe-header-h) - var(--swipe-controls-h) - env(safe-area-inset-bottom) - var(--space-3)
+    100dvh - var(--nav-height) - var(--swipe-header-h) - var(--swipe-controls-h) - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 0.875rem
   );
 
   position: relative;
@@ -12,7 +13,7 @@
   min-height: 28rem;
   margin: calc(-1 * var(--space-5));
   margin-bottom: calc(-1 * (var(--nav-height) + var(--space-5)));
-  overflow: hidden;
+  overflow: visible;
 }
 
 .pageInner {
@@ -22,10 +23,10 @@
   height: 100%;
   min-height: inherit;
   padding:
-    max(var(--space-2), env(safe-area-inset-top))
-    max(var(--space-1), env(safe-area-inset-right))
+    max(0.5rem, env(safe-area-inset-top))
+    var(--swipe-side-pad)
     0
-    max(var(--space-1), env(safe-area-inset-left));
+    var(--swipe-side-pad);
 }
 
 .pageScroll {
@@ -33,13 +34,8 @@
   min-height: 0;
   display: flex;
   flex-direction: column;
-  overflow-y: auto;
+  overflow: visible;
   overscroll-behavior: contain;
-  scrollbar-width: none;
-}
-
-.pageScroll::-webkit-scrollbar {
-  display: none;
 }
 
 .backdrop {
@@ -50,17 +46,18 @@
     radial-gradient(ellipse 90% 60% at 50% 100%, rgba(255, 214, 0, 0.03), transparent 50%),
     #000;
   z-index: 0;
+  pointer-events: none;
 }
 
 .header {
   position: relative;
   z-index: 2;
   display: grid;
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: 2.75rem 1fr 2.75rem;
   align-items: center;
   gap: var(--space-2);
   min-height: var(--swipe-header-h);
-  margin-bottom: var(--space-1);
+  margin-bottom: 0.25rem;
   flex-shrink: 0;
 }
 
@@ -68,18 +65,10 @@
 .headerEnd {
   display: flex;
   align-items: center;
-  gap: 0.35rem;
 }
 
 .headerEnd {
   justify-content: flex-end;
-}
-
-.headerActions {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
-  will-change: opacity;
 }
 
 .headerBtn {
@@ -91,6 +80,7 @@
   height: 2.625rem;
   background: rgba(255, 255, 255, 0.06);
   backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-full);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
@@ -132,6 +122,10 @@
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .stage {
@@ -140,33 +134,39 @@
   min-height: 0;
   z-index: 1;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 0.25rem var(--space-1);
+  flex-direction: column;
+  align-items: stretch;
+  justify-content: flex-start;
+  overflow: visible;
+  padding: 0;
 }
 
 .swipeUnit {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: min(100%, calc(100vw - 0.75rem));
-  max-width: 28rem;
-  max-height: 100%;
+  flex: 1;
+  min-height: 0;
+  width: min(96vw, calc(100% - 0.25rem));
+  max-width: none;
 }
 
 .deckStage {
   position: relative;
   width: 100%;
-  height: min(var(--swipe-available), 32rem);
-  min-height: 18.5rem;
-  flex-shrink: 1;
+  flex: 1 1 auto;
+  height: min(72%, var(--swipe-available));
+  min-height: 16rem;
+  max-height: var(--swipe-available);
+  overflow: visible;
+  padding: 0.5rem 0;
 }
 
 .skeletonCard {
-  width: min(100%, calc(100vw - 0.75rem));
-  max-width: 28rem;
-  height: min(var(--swipe-available), 32rem);
-  min-height: 18.5rem;
+  width: min(96vw, calc(100% - 0.25rem));
+  height: min(72%, var(--swipe-available));
+  min-height: 16rem;
+  max-height: var(--swipe-available);
   border-radius: var(--radius-2xl);
 }
 
@@ -176,19 +176,21 @@
   flex-direction: column;
   align-items: center;
   flex-shrink: 0;
-  padding-bottom: calc(var(--space-2) + env(safe-area-inset-bottom));
+  margin-top: auto;
+  padding-top: 0.875rem;
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
 }
 
 .onboardingSlot {
   width: 100%;
-  max-height: 3.75rem;
+  max-height: 3.25rem;
   overflow: hidden;
   opacity: 1;
   transition:
     opacity 0.42s var(--ease-out),
     max-height 0.38s var(--ease-out) 0.08s,
     margin 0.38s var(--ease-out) 0.08s;
-  margin-bottom: 0.625rem;
+  margin-bottom: 0.5rem;
 }
 
 .onboardingSlotFading {
@@ -231,7 +233,7 @@
   align-items: center;
   justify-content: center;
   gap: clamp(1.25rem, 6vw, 2rem);
-  padding: 0.25rem 0;
+  padding: 0.125rem 0;
 }
 
 .glassBtn {
@@ -241,37 +243,44 @@
   width: 3.5rem;
   height: 3.5rem;
   border-radius: var(--radius-full);
-  background: rgba(255, 255, 255, 0.06);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.85);
-  transition: box-shadow 0.2s var(--ease-out);
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 0 20px rgba(255, 255, 255, 0.03);
+  color: rgba(255, 255, 255, 0.9);
+  transition:
+    box-shadow 0.2s var(--ease-out),
+    background 0.2s var(--ease-out);
 }
 
 .passBtn {
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .saveBtn {
   color: var(--color-accent);
-  background: rgba(255, 214, 0, 0.1);
-  border-color: rgba(255, 214, 0, 0.22);
+  background: rgba(255, 214, 0, 0.12);
+  border-color: rgba(255, 214, 0, 0.28);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 24px rgba(255, 214, 0, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .applyBtn {
   width: 4rem;
   height: 4rem;
   color: var(--color-accent);
-  background: rgba(255, 214, 0, 0.14);
-  border-color: rgba(255, 214, 0, 0.32);
+  background: rgba(255, 214, 0, 0.16);
+  border-color: rgba(255, 214, 0, 0.36);
   box-shadow:
-    0 10px 36px rgba(255, 214, 0, 0.15),
-    0 8px 32px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    0 10px 36px rgba(255, 214, 0, 0.18),
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
 .toastWrap {
@@ -283,7 +292,7 @@
 
 .toast {
   position: fixed;
-  bottom: calc(var(--nav-height) + 7rem + env(safe-area-inset-bottom));
+  bottom: calc(var(--nav-height) + 5.5rem + env(safe-area-inset-bottom));
   left: 50%;
   transform: translateX(-50%);
   padding: var(--space-3) var(--space-6);
@@ -315,8 +324,7 @@
 
 @media (max-width: 380px) {
   .deckStage {
-    min-height: 16.5rem;
-    height: min(var(--swipe-available), 28.5rem);
+    min-height: 14.5rem;
   }
 
   .glassBtn {

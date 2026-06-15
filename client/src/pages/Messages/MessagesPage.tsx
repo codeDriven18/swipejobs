@@ -36,7 +36,7 @@ export function MessagesPage() {
     <section className={styles.page}>
       <PageHeader
         title="Messages"
-        subtitle="Employer conversations unlock after an interview invitation."
+        subtitle="Chat with employers after an interview invite."
       />
 
       {loading ? (

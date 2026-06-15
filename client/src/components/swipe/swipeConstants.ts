@@ -25,8 +25,8 @@ export const STACK_LAYERS = 3;
 
 export const STACK_STYLE = [
   { scale: 1, y: 0, rotate: 0, opacity: 1 },
-  { scale: 0.94, y: 16, rotate: -2.8, opacity: 0.88 },
-  { scale: 0.88, y: 32, rotate: 3.2, opacity: 0.72 },
+  { scale: 0.95, y: 10, rotate: -1.5, opacity: 0.92 },
+  { scale: 0.9, y: 20, rotate: 2, opacity: 0.78 },
 ] as const;
 
 export const SWIPE_ROTATE_RANGE = 10;
