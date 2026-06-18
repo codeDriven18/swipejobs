@@ -11,6 +11,7 @@ export enum JobLevel {
 }
 
 export enum ApplicationStatus {
+  /** @deprecated Normalized to Applied in API responses. */
   Pending = 0,
   Applied = 1,
   UnderReview = 2,
@@ -21,6 +22,23 @@ export enum ApplicationStatus {
   Hired = 7,
   Rejected = 8,
   Withdrawn = 9,
+}
+
+export enum PipelineStage {
+  Applied = 0,
+  Reviewing = 1,
+  Shortlisted = 2,
+  Interview = 3,
+  Offer = 4,
+  Hired = 5,
+  Rejected = 6,
+}
+
+export enum InterviewPhase {
+  None = 0,
+  Requested = 1,
+  Scheduled = 2,
+  Completed = 3,
 }
 
 export enum ConversationStatus {

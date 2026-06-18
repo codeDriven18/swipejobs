@@ -1,4 +1,4 @@
-import type { ApplicationStatus, CandidateTrustLevel, JobCategory, JobLevel } from './enums';
+import type { ApplicationStatus, CandidateTrustLevel, InterviewPhase, JobCategory, JobLevel, PipelineStage } from './enums';
 import type { Job } from './job';
 
 export interface PortalStats {
@@ -13,10 +13,9 @@ export interface PortalStats {
 export interface PortalApplication {
   id: string;
   status: ApplicationStatus;
+  pipelineStage: PipelineStage;
   appliedAt: string;
-  /** Sub-state when in interview stage (requested / scheduled / completed). */
-  interviewPhase?: 'none' | 'requested' | 'scheduled' | 'completed';
-  /** Reserved for calendar integration. */
+  interviewPhase: InterviewPhase;
   interviewScheduledAtUtc?: string;
   jobId: string;
   jobTitle: string;
@@ -28,6 +27,9 @@ export interface PortalApplication {
   reapplicationCount: number;
   applicationNumber: number;
   candidateTrustLevel: CandidateTrustLevel;
+  hasResume: boolean;
+  unreadMessageCount: number;
+  isWithdrawn: boolean;
 }
 
 export interface PortalUpdateCompanyRequest {

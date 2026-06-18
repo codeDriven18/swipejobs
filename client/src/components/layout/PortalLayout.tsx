@@ -16,6 +16,7 @@ function PortalLayoutShell() {
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   const isConversation = /^\/portal\/messages\/[^/]+$/.test(location.pathname);
+  const isPipeline = location.pathname === '/portal/pipeline' || location.pathname.startsWith('/portal/pipeline/');
   const pageTitle = useMemo(
     () => resolvePortalPageTitle(location.pathname),
     [location.pathname],
@@ -65,7 +66,7 @@ function PortalLayoutShell() {
           onOpenMenu={() => setDrawerOpen(true)}
         />
 
-        <main className={styles.main}>
+        <main className={[styles.main, isPipeline ? styles.mainPipelineReady : ''].filter(Boolean).join(' ')}>
           <motion.div
             key={location.pathname}
             initial={{ opacity: 0, y: 8 }}

@@ -39,6 +39,8 @@ public class JobConfiguration : IEntityTypeConfiguration<Job>
             .HasForeignKey(j => j.CompanyId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasIndex(j => j.CompanyId);
+
         builder.HasOne(j => j.Source)
             .WithMany(s => s.Jobs)
             .HasForeignKey(j => j.SourceId)

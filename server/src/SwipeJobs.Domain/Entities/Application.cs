@@ -5,7 +5,7 @@ namespace SwipeJobs.Domain.Entities;
 
 public class Application : BaseEntity
 {
-    public ApplicationStatus Status { get; set; } = ApplicationStatus.Pending;
+    public ApplicationStatus Status { get; set; } = ApplicationStatus.Applied;
     public DateTime AppliedAt { get; set; } = DateTime.UtcNow;
     /// <summary>Sub-state when Status is in the interview stage (requested / scheduled / completed).</summary>
     public InterviewPhase InterviewPhase { get; set; } = InterviewPhase.None;

@@ -76,4 +76,30 @@ public class MessageRepository : Repository<Message>, IMessageRepository
     public Task<int> CountInterviewInvitationsAsync(CancellationToken cancellationToken = default)
         => Context.Set<Domain.Entities.Application>()
             .CountAsync(a => a.Status == ApplicationStatus.InterviewInvited, cancellationToken);
+
+    public async Task<IReadOnlyDictionary<Guid, int>> CountUnreadForCompanyByConversationIdsAsync(
+        Guid companyId,
+        IReadOnlyList<Guid> conversationIds,
+        CancellationToken cancellationToken = default)
+    {
+        if (conversationIds.Count == 0)
+            return new Dictionary<Guid, int>();
+
+        var memberUserIds = await Context.Set<CompanyMember>()
+            .Where(cm => cm.CompanyId == companyId)
+            .Select(cm => cm.UserId)
+            .ToListAsync(cancellationToken);
+
+        var counts = await DbSet
+            .Where(m => conversationIds.Contains(m.ConversationId)
+                && m.Type == MessageType.User
+                && m.SenderUserId.HasValue
+                && m.ReadAt == null
+                && !memberUserIds.Contains(m.SenderUserId.Value))
+            .GroupBy(m => m.ConversationId)
+            .Select(g => new { ConversationId = g.Key, Count = g.Count() })
+            .ToListAsync(cancellationToken);
+
+        return counts.ToDictionary(x => x.ConversationId, x => x.Count);
+    }
 }

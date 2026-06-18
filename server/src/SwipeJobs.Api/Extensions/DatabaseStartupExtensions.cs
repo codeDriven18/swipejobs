@@ -25,6 +25,9 @@ public static class DatabaseStartupExtensions
         var showcaseSeeder = scope.ServiceProvider.GetRequiredService<ShowcaseJobSeeder>();
         await showcaseSeeder.SeedAsync();
 
+        var pipelineDemoSeeder = scope.ServiceProvider.GetRequiredService<PipelineDemoSeeder>();
+        await pipelineDemoSeeder.SeedAsync();
+
         if (app.Configuration.GetValue("Seed:AutoApproveCompanies", false))
         {
             var pending = await dbContext.Companies

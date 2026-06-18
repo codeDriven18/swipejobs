@@ -31,6 +31,7 @@ public class CompanyPortalService : ICompanyPortalService
     private readonly INotificationService _notificationService;
     private readonly IMessagingService _messagingService;
     private readonly IConversationRepository _conversationRepository;
+    private readonly IMessageRepository _messageRepository;
     private readonly IResumeStorageService _resumeStorage;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<CompanyPortalService> _logger;
@@ -44,6 +45,7 @@ public class CompanyPortalService : ICompanyPortalService
         INotificationService notificationService,
         IMessagingService messagingService,
         IConversationRepository conversationRepository,
+        IMessageRepository messageRepository,
         IResumeStorageService resumeStorage,
         IUnitOfWork unitOfWork,
         ILogger<CompanyPortalService> logger)
@@ -56,6 +58,7 @@ public class CompanyPortalService : ICompanyPortalService
         _notificationService = notificationService;
         _messagingService = messagingService;
         _conversationRepository = conversationRepository;
+        _messageRepository = messageRepository;
         _resumeStorage = resumeStorage;
         _unitOfWork = unitOfWork;
         _logger = logger;
@@ -209,7 +212,28 @@ public class CompanyPortalService : ICompanyPortalService
         Guid companyId, Guid? jobId, CancellationToken cancellationToken = default)
     {
         var applications = await _applicationRepository.GetByCompanyIdAsync(companyId, jobId, cancellationToken);
-        return applications.Select(ToPortalApplicationDto).ToList();
+        if (applications.Count == 0)
+            return [];
+
+        var applicationIds = applications.Select(a => a.Id).ToList();
+        var conversationIdsByApplication = await _conversationRepository
+            .GetConversationIdsByApplicationIdsAsync(applicationIds, cancellationToken);
+        var unreadByConversation = await _messageRepository.CountUnreadForCompanyByConversationIdsAsync(
+            companyId,
+            conversationIdsByApplication.Values.ToList(),
+            cancellationToken);
+
+        return applications.Select(application =>
+        {
+            var unread = 0;
+            if (conversationIdsByApplication.TryGetValue(application.Id, out var conversationId)
+                && unreadByConversation.TryGetValue(conversationId, out var count))
+            {
+                unread = count;
+            }
+
+            return PortalApplicationMapper.ToDto(application, unread);
+        }).ToList();
     }
 
     public async Task<PortalApplicantDetailDto?> GetApplicantDetailAsync(
@@ -292,6 +316,7 @@ public class CompanyPortalService : ICompanyPortalService
         var previous = application.Status;
         var changedAt = DateTime.UtcNow;
         application.Status = status;
+        SyncInterviewPhaseForStatus(application, status);
         application.StatusHistoryJson = ApplicationStatusHistorySerializer.Append(
             application.StatusHistoryJson, status, changedAt);
         await _applicationRepository.UpdateAsync(application, cancellationToken);
@@ -323,7 +348,34 @@ public class CompanyPortalService : ICompanyPortalService
             cancellationToken);
 
         var refreshed = await _applicationRepository.GetByIdForCompanyAsync(applicationId, companyId, cancellationToken);
-        return refreshed is null ? null : ToPortalApplicationDto(refreshed);
+        return refreshed is null ? null : PortalApplicationMapper.ToDto(refreshed);
+    }
+
+    private static void SyncInterviewPhaseForStatus(Domain.Entities.Application application, ApplicationStatus status)
+    {
+        switch (status)
+        {
+            case ApplicationStatus.InterviewInvited:
+                application.InterviewPhase = InterviewPhase.Requested;
+                application.InterviewScheduledAtUtc = null;
+                break;
+            case ApplicationStatus.Interviewing:
+                application.InterviewPhase = application.InterviewPhase == InterviewPhase.None
+                    ? InterviewPhase.Scheduled
+                    : application.InterviewPhase;
+                break;
+            case ApplicationStatus.OfferSent:
+            case ApplicationStatus.Hired:
+            case ApplicationStatus.Rejected:
+                application.InterviewPhase = InterviewPhase.Completed;
+                break;
+            case ApplicationStatus.UnderReview:
+            case ApplicationStatus.Shortlisted:
+            case ApplicationStatus.Applied:
+                application.InterviewPhase = InterviewPhase.None;
+                application.InterviewScheduledAtUtc = null;
+                break;
+        }
     }
 
     public async Task<(Stream Content, string ContentType, string FileName)?> OpenApplicantResumeAsync(
@@ -368,28 +420,5 @@ public class CompanyPortalService : ICompanyPortalService
 
         var openJobs = await _companyRepository.CountOpenJobsAsync(companyId, cancellationToken);
         return CompanyMapper.ToDto(company, openJobs);
-    }
-
-    private static PortalApplicationDto ToPortalApplicationDto(Domain.Entities.Application a)
-    {
-        var profile = a.UserProfile;
-        var trust = profile is null
-            ? CandidateTrustLevel.None
-            : CandidateTrustCalculator.Compute(profile);
-
-        return new PortalApplicationDto(
-            a.Id,
-            a.Status,
-            a.AppliedAt,
-            a.JobId,
-            a.Job?.Title ?? "Job",
-            a.UserProfileId,
-            $"{profile?.FirstName} {profile?.LastName}".Trim(),
-            profile?.Email ?? string.Empty,
-            profile?.Phone,
-            profile?.ProfileImageUrl,
-            a.ReapplicationCount,
-            ApplicationWorkflow.ToApplicationNumber(a.ReapplicationCount),
-            trust);
     }
 }

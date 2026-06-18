@@ -1,74 +1,75 @@
-import { ApplicationStatus } from '@/models/enums';
-
-/** Kanban column identifiers — canonical employer pipeline model. */
-export type PipelineColumnId =
-  | 'applied'
-  | 'reviewing'
-  | 'shortlisted'
-  | 'interview'
-  | 'offer'
-  | 'hired'
-  | 'rejected';
-
-/** Sub-state within the Interview column (calendar/scheduling ready). */
-export type InterviewPhase = 'none' | 'requested' | 'scheduled' | 'completed';
+import { ApplicationStatus, InterviewPhase, PipelineStage } from '@/models/enums';
 
 export interface PipelineColumnDefinition {
-  id: PipelineColumnId;
+  id: PipelineStage;
   label: string;
-  /** Application statuses grouped into this column */
   statuses: ApplicationStatus[];
-  /** Interview sub-phases shown inside the Interview column */
   interviewPhases?: InterviewPhase[];
+}
+
+export const PIPELINE_STAGE_ORDER: PipelineStage[] = [
+  PipelineStage.Applied,
+  PipelineStage.Reviewing,
+  PipelineStage.Shortlisted,
+  PipelineStage.Interview,
+  PipelineStage.Offer,
+  PipelineStage.Hired,
+  PipelineStage.Rejected,
+];
+
+/** Pending normalizes to Applied — not a distinct pipeline column. */
+export function normalizeApplicationStatus(status: ApplicationStatus): ApplicationStatus {
+  return status === ApplicationStatus.Pending ? ApplicationStatus.Applied : status;
 }
 
 export const PIPELINE_COLUMNS: PipelineColumnDefinition[] = [
   {
-    id: 'applied',
+    id: PipelineStage.Applied,
     label: 'Applied',
-    statuses: [ApplicationStatus.Pending, ApplicationStatus.Applied],
+    statuses: [ApplicationStatus.Applied],
   },
   {
-    id: 'reviewing',
+    id: PipelineStage.Reviewing,
     label: 'Reviewing',
     statuses: [ApplicationStatus.UnderReview],
   },
   {
-    id: 'shortlisted',
+    id: PipelineStage.Shortlisted,
     label: 'Shortlisted',
     statuses: [ApplicationStatus.Shortlisted],
   },
   {
-    id: 'interview',
+    id: PipelineStage.Interview,
     label: 'Interview',
     statuses: [ApplicationStatus.InterviewInvited, ApplicationStatus.Interviewing],
-    interviewPhases: ['requested', 'scheduled', 'completed'],
+    interviewPhases: [InterviewPhase.Requested, InterviewPhase.Scheduled, InterviewPhase.Completed],
   },
   {
-    id: 'offer',
+    id: PipelineStage.Offer,
     label: 'Offer',
     statuses: [ApplicationStatus.OfferSent],
   },
   {
-    id: 'hired',
+    id: PipelineStage.Hired,
     label: 'Hired',
     statuses: [ApplicationStatus.Hired],
   },
   {
-    id: 'rejected',
+    id: PipelineStage.Rejected,
     label: 'Rejected',
     statuses: [ApplicationStatus.Rejected, ApplicationStatus.Withdrawn],
   },
 ];
 
 export const INTERVIEW_PHASE_LABELS: Record<InterviewPhase, string> = {
-  none: 'Interview',
-  requested: 'Interview requested',
-  scheduled: 'Interview scheduled',
-  completed: 'Interview completed',
+  [InterviewPhase.None]: 'Interview',
+  [InterviewPhase.Requested]: 'Interview requested',
+  [InterviewPhase.Scheduled]: 'Interview scheduled',
+  [InterviewPhase.Completed]: 'Interview completed',
 };
 
-export function resolvePipelineColumn(status: ApplicationStatus): PipelineColumnId {
-  const match = PIPELINE_COLUMNS.find((column) => column.statuses.includes(status));
-  return match?.id ?? 'applied';
+export function resolvePipelineStage(status: ApplicationStatus): PipelineStage {
+  const normalized = normalizeApplicationStatus(status);
+  const match = PIPELINE_COLUMNS.find((column) => column.statuses.includes(normalized));
+  return match?.id ?? PipelineStage.Applied;
 }

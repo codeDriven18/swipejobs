@@ -54,7 +54,13 @@ public record PortalApplicationDto(
     string? ApplicantProfileImageUrl,
     int ReapplicationCount,
     int ApplicationNumber,
-    CandidateTrustLevel CandidateTrustLevel);
+    CandidateTrustLevel CandidateTrustLevel,
+    PipelineStage PipelineStage,
+    InterviewPhase InterviewPhase,
+    DateTime? InterviewScheduledAtUtc,
+    bool HasResume,
+    int UnreadMessageCount,
+    bool IsWithdrawn);
 
 public record PortalUpdateApplicationStatusDto(ApplicationStatus Status);
 

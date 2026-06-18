@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using SwipeJobs.Application.Common;
 using SwipeJobs.Application.Common.Dtos;
+using SwipeJobs.Application.Common.Mapping;
 using SwipeJobs.Application.Common.Interfaces;
 using SwipeJobs.Application.Common.Interfaces.Repositories;
 using SwipeJobs.Application.Modules.Messaging;
@@ -325,6 +326,8 @@ public class MessagingService : IMessagingService
 
         var changedAt = DateTime.UtcNow;
         application.Status = ApplicationStatus.InterviewInvited;
+        application.InterviewPhase = InterviewPhase.Requested;
+        application.InterviewScheduledAtUtc = null;
         application.StatusHistoryJson = ApplicationStatusHistorySerializer.Append(
             application.StatusHistoryJson, ApplicationStatus.InterviewInvited, changedAt);
         await _applicationRepository.UpdateAsync(application, cancellationToken);
@@ -380,7 +383,7 @@ public class MessagingService : IMessagingService
             cancellationToken);
 
         var refreshed = await _applicationRepository.GetByIdForCompanyAsync(applicationId, companyId, cancellationToken);
-        return refreshed is null ? null : ToPortalApplicationDto(refreshed);
+        return refreshed is null ? null : PortalApplicationMapper.ToDto(refreshed);
     }
 
     public async Task<MessagingMetricsDto> GetMetricsAsync(CancellationToken cancellationToken = default)
@@ -808,28 +811,5 @@ public class MessagingService : IMessagingService
             companyName,
             preview,
             cancellationToken);
-    }
-
-    private static PortalApplicationDto ToPortalApplicationDto(Domain.Entities.Application a)
-    {
-        var profile = a.UserProfile;
-        var trust = profile is null
-            ? CandidateTrustLevel.None
-            : CandidateTrustCalculator.Compute(profile);
-
-        return new PortalApplicationDto(
-            a.Id,
-            a.Status,
-            a.AppliedAt,
-            a.JobId,
-            a.Job?.Title ?? "Job",
-            a.UserProfileId,
-            $"{profile?.FirstName} {profile?.LastName}".Trim(),
-            profile?.Email ?? string.Empty,
-            profile?.Phone,
-            profile?.ProfileImageUrl,
-            a.ReapplicationCount,
-            ApplicationWorkflow.ToApplicationNumber(a.ReapplicationCount),
-            trust);
     }
 }

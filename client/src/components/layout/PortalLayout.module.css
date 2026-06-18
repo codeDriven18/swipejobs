@@ -1,5 +1,6 @@
 .layout {
   --employer-sidebar-width: 15.5rem;
+  --employer-pipeline-column-width: 17.5rem;
   --employer-header-height: 4rem;
   --employer-radius-lg: 1.125rem;
   --employer-surface: var(--color-bg);
@@ -41,6 +42,10 @@
   min-width: 0;
   padding: var(--space-4) var(--space-4) calc(var(--nav-height) + var(--space-8));
   overflow-x: hidden;
+}
+
+.mainPipelineReady {
+  overflow-x: auto;
 }
 
 .mainFullscreen {

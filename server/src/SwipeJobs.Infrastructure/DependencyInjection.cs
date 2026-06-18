@@ -91,6 +91,7 @@ public static class DependencyInjection
         services.AddScoped<IMessageAttachmentStorage, LocalMessageAttachmentStorage>();
         services.AddScoped<IDataSeeder, DataSeeder>();
         services.AddScoped<ShowcaseJobSeeder>();
+        services.AddScoped<PipelineDemoSeeder>();
 
         return services;
     }

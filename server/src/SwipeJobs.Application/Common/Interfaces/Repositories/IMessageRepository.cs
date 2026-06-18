@@ -11,4 +11,8 @@ public interface IMessageRepository : IRepository<Message>
     Task MarkReadForConversationAsync(Guid conversationId, Guid readerUserId, CancellationToken cancellationToken = default);
     Task<int> CountAllAsync(CancellationToken cancellationToken = default);
     Task<int> CountInterviewInvitationsAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyDictionary<Guid, int>> CountUnreadForCompanyByConversationIdsAsync(
+        Guid companyId,
+        IReadOnlyList<Guid> conversationIds,
+        CancellationToken cancellationToken = default);
 }
