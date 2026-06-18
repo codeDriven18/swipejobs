@@ -1,0 +1,53 @@
+/**
+ * SwipeJobs Employer Design System
+ * Single visual language for the recruiting workspace.
+ * Manrope only · Black / white / yellow · Premium layered surfaces
+ */
+
+.employerWorkspace {
+  --employer-ink: #0a0a0a;
+  --employer-ink-soft: #1a1a1a;
+  --employer-muted: #6b7280;
+  --employer-muted-soft: #9ca3af;
+  --employer-canvas: #ececee;
+  --employer-canvas-deep: #e4e4e8;
+  --employer-surface: #ffffff;
+  --employer-surface-muted: #f8f8fa;
+  --employer-surface-hover: #f3f3f6;
+  --employer-border: rgba(10, 10, 10, 0.08);
+  --employer-border-strong: rgba(10, 10, 10, 0.12);
+  --employer-brand: var(--color-accent, #ffd100);
+  --employer-brand-soft: color-mix(in srgb, var(--employer-brand) 14%, #ffffff);
+  --employer-brand-glow: color-mix(in srgb, var(--employer-brand) 22%, transparent);
+  --employer-radius-sm: 0.625rem;
+  --employer-radius-md: 0.875rem;
+  --employer-radius-lg: 1.125rem;
+  --employer-radius-xl: 1.375rem;
+  --employer-radius-2xl: 1.75rem;
+  --employer-shadow-xs: 0 1px 2px rgba(10, 10, 10, 0.04);
+  --employer-shadow-sm: 0 2px 8px rgba(10, 10, 10, 0.05);
+  --employer-shadow-md: 0 8px 28px rgba(10, 10, 10, 0.07);
+  --employer-shadow-lg: 0 16px 48px rgba(10, 10, 10, 0.09);
+  --employer-space-section: 2rem;
+  --employer-space-block: 1.5rem;
+  --employer-space-inline: 1.25rem;
+  font-family: 'Manrope', system-ui, sans-serif;
+}
+
+[data-theme='dark'] .employerWorkspace {
+  --employer-ink: #f5f5f5;
+  --employer-ink-soft: #e5e5e5;
+  --employer-muted: #a1a1aa;
+  --employer-muted-soft: #71717a;
+  --employer-canvas: #0c0c0e;
+  --employer-canvas-deep: #050506;
+  --employer-surface: #141416;
+  --employer-surface-muted: #1a1a1e;
+  --employer-surface-hover: #222228;
+  --employer-border: rgba(255, 255, 255, 0.08);
+  --employer-border-strong: rgba(255, 255, 255, 0.14);
+  --employer-brand-soft: color-mix(in srgb, var(--employer-brand) 12%, #141416);
+  --employer-shadow-sm: 0 2px 12px rgba(0, 0, 0, 0.35);
+  --employer-shadow-md: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --employer-shadow-lg: 0 20px 56px rgba(0, 0, 0, 0.55);
+}

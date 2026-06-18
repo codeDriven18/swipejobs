@@ -18,7 +18,7 @@ function getErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : 'Something went wrong';
 }
 
-export function AccountSettingsPage() {
+export function AccountSettingsPage({ hideHeader = false }: { hideHeader?: boolean }) {
   const { user, logout } = useAuth();
   const { profile, loading: profileLoading } = useProfile();
   const navigate = useNavigate();
@@ -73,7 +73,7 @@ export function AccountSettingsPage() {
 
   return (
     <section className={styles.section}>
-      <PageHeader title="Account" subtitle="Manage your sign-in and security." />
+      {!hideHeader && <PageHeader title="Account" subtitle="Manage your sign-in and security." />}
 
       <div className={styles.card}>
         <h2 className={styles.cardTitle}>Signed in as</h2>

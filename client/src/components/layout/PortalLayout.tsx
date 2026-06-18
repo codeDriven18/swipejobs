@@ -7,6 +7,7 @@ import { PortalHeader } from '@/components/employer/PortalHeader';
 import { PortalSidebar } from '@/components/employer/PortalSidebar';
 import { PortalMobileNav } from '@/components/employer/PortalMobileNav';
 import { resolvePortalPageTitle } from '@/components/employer/portalNav';
+import '@/styles/employerDesignSystem.css';
 import styles from './PortalLayout.module.css';
 
 function PortalLayoutShell() {
@@ -29,7 +30,7 @@ function PortalLayoutShell() {
 
   if (isConversation) {
     return (
-      <div className={`${styles.layout} ${styles.layoutFullscreen}`} style={layoutStyle}>
+      <div className={`${styles.layout} ${styles.layoutFullscreen} ${styles.employerWorkspace}`} style={layoutStyle}>
         <main className={styles.mainFullscreen}>
           <Outlet />
         </main>
@@ -38,7 +39,7 @@ function PortalLayoutShell() {
   }
 
   return (
-    <div className={styles.layout} style={layoutStyle}>
+    <div className={`${styles.layout} ${styles.employerWorkspace}`} style={layoutStyle}>
       <PortalSidebar unreadMessages={unreadMessages} className={styles.desktopSidebar} />
 
       <AnimatePresence>

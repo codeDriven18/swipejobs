@@ -1,0 +1,84 @@
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  width: fit-content;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--employer-muted);
+  text-decoration: none;
+  transition: color var(--duration-fast) var(--ease-out);
+}
+
+.backLink:hover {
+  color: var(--employer-ink);
+}
+
+.heroBanner {
+  height: 7rem;
+  background:
+    linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 45%, color-mix(in srgb, var(--employer-brand) 35%, #1a1a1a) 100%);
+}
+
+.heroMeta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+
+.actionPanel {
+  composes: surface from '@/components/employer/ui/employerUi.module.css';
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-4) var(--employer-space-block);
+}
+
+.bodyText {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--employer-ink-soft);
+  line-height: 1.65;
+}
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tag {
+  padding: 0.35rem 0.75rem;
+  border-radius: var(--radius-full);
+  background: var(--employer-surface-muted);
+  border: 1px solid var(--employer-border);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--employer-ink-soft);
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.timelineItem {
+  padding-bottom: var(--space-4);
+  border-bottom: 1px solid var(--employer-border);
+}
+
+.timelineItem:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.timelineMeta {
+  font-size: var(--text-sm);
+  color: var(--employer-muted);
+}

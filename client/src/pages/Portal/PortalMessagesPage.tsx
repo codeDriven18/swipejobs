@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { portalMessagingApi } from '@/api/messagingApi';
 import { ConversationList } from '@/components/messaging/ConversationList';
+import { EmployerPageHeader } from '@/components/employer/EmployerPageHeader';
+import ui from '@/components/employer/ui/employerUi.module.css';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { PageHeader } from '@/components/ui/PageHeader';
 import { useUnreadMessages } from '@/hooks/useUnreadMessages';
 import type { ConversationSummary } from '@/models/messaging';
-import styles from './PortalMessagesPage.module.css';
 
 const FILTERS = [
   { id: '', label: 'All' },
   { id: 'active', label: 'Active' },
   { id: 'interviewing', label: 'Interviewing' },
-  { id: 'offer', label: 'Offer Sent' },
+  { id: 'offer', label: 'Offer' },
   { id: 'unread', label: 'Unread' },
 ] as const;
 
@@ -33,37 +33,29 @@ export function PortalMessagesPage() {
   }, [filter, location.pathname, refreshUnread]);
 
   return (
-    <section className={styles.page}>
-      <PageHeader title="Messages" subtitle="Hiring conversations tied to applications." />
+    <section className={ui.page}>
+      <EmployerPageHeader
+        title="Messages"
+        subtitle="Hiring conversations with your candidates."
+        actions={<Link to="/portal/pipeline" className={ui.btnGhost}>Pipeline</Link>}
+      />
 
-      <div className={styles.filters} role="tablist" aria-label="Conversation filters">
+      <div className={ui.pillRow} role="tablist" aria-label="Conversation filters">
         {FILTERS.map((item) => (
-          <button
-            key={item.id || 'all'}
-            type="button"
-            className={filter === item.id ? styles.filterActive : styles.filter}
-            onClick={() => setFilter(item.id)}
-          >
+          <button key={item.id || 'all'} type="button" className={filter === item.id ? ui.pillActive : ui.pill} onClick={() => setFilter(item.id)}>
             {item.label}
           </button>
         ))}
       </div>
 
       {loading ? (
-        <p className={styles.status}>Loading conversations…</p>
+        <p className={ui.statusText}>Loading conversations…</p>
       ) : conversations.length === 0 ? (
-        <EmptyState
-          illustration="applications"
-          title="No conversations yet"
-          description="Invite candidates to interview to unlock messaging."
-          actions={[{ label: 'View applicants', to: '/portal/applications', primary: true }]}
-        />
+        <EmptyState illustration="applications" title="No conversations yet" description="Invite candidates to interview to unlock messaging." actions={[{ label: 'Open pipeline', to: '/portal/pipeline', primary: true }]} />
       ) : (
-        <ConversationList
-          conversations={conversations}
-          basePath="/portal/messages"
-          showCandidate
-        />
+        <div className={ui.inboxPanel}>
+          <ConversationList conversations={conversations} basePath="/portal/messages" showCandidate />
+        </div>
       )}
     </section>
   );

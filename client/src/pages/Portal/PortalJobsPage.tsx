@@ -2,13 +2,14 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { portalApi } from '@/api/portalApi';
 import { ApiError } from '@/api/client';
+import { EmployerPageHeader } from '@/components/employer/EmployerPageHeader';
+import ui from '@/components/employer/ui/employerUi.module.css';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/context/ToastContext';
 import { getFriendlyErrorMessage } from '@/lib/friendlyError';
 import { JobCategory, JobLevel } from '@/models/enums';
 import { CompanyStatus, CompanyStatusLabels } from '@/models/operations';
 import type { PortalJob } from '@/models/portal';
-import styles from './PortalPage.module.css';
 
 const emptyForm = {
   title: '',
@@ -27,7 +28,7 @@ function getCreateErrorMessage(error: unknown): string {
   if (error instanceof ApiError && error.body && typeof error.body === 'object') {
     const body = error.body as { error?: string; code?: string };
     if (body.code === 'company_not_approved') {
-      return 'Your company must be approved before posting jobs. Contact support or wait for admin approval.';
+      return 'Your company must be approved before posting jobs.';
     }
     if (body.error) return body.error;
   }
@@ -49,10 +50,7 @@ export function PortalJobsPage() {
   const load = () => {
     setLoading(true);
     setFailed(false);
-    Promise.all([
-      portalApi.getJobs(),
-      portalApi.getStats(),
-    ])
+    Promise.all([portalApi.getJobs(), portalApi.getStats()])
       .then(([jobList, stats]) => {
         setJobs(jobList);
         setCompanyStatus(stats.companyStatus);
@@ -65,9 +63,7 @@ export function PortalJobsPage() {
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
 
   const canPublish = companyStatus === CompanyStatus.Approved;
 
@@ -116,15 +112,13 @@ export function PortalJobsPage() {
         salaryMin: form.salaryMin ? Number(form.salaryMin) : undefined,
         salaryMax: form.salaryMax ? Number(form.salaryMax) : undefined,
       };
-
       if (editingId) {
         await portalApi.updateJob(editingId, { ...payload, isActive: form.isActive });
-        showToast('Job updated', 'success');
+        showToast('Role updated', 'success');
       } else {
         await portalApi.createJob(payload);
-        showToast('Job created', 'success');
+        showToast('Role published', 'success');
       }
-
       setShowForm(false);
       setEditingId(null);
       setForm(emptyForm);
@@ -138,76 +132,55 @@ export function PortalJobsPage() {
     }
   };
 
-  const handleArchive = async (id: string) => {
-    await portalApi.archiveJob(id);
-    load();
-  };
-
   return (
-    <section className={styles.page}>
-      <header className={styles.header}>
-        <h1 className={styles.title}>Jobs</h1>
-        <p className={styles.subtitle}>Create, edit, and archive your listings.</p>
-      </header>
+    <section className={ui.page}>
+      <EmployerPageHeader
+        title="Active hiring campaigns"
+        subtitle="Manage the roles you're recruiting for."
+        actions={(
+          <button type="button" className={ui.btnPrimary} disabled={!canPublish && !showForm} onClick={() => (showForm && !editingId ? setShowForm(false) : openCreate())}>
+            {showForm && !editingId ? 'Cancel' : 'Post new role'}
+          </button>
+        )}
+      />
 
       {!canPublish && companyStatus !== null && (
-        <div className={styles.approvalNotice}>
-          Company status: {CompanyStatusLabels[companyStatus]}. Jobs can be created once your company is approved.
-        </div>
+        <div className={ui.notice}>Company status: {CompanyStatusLabels[companyStatus]}. Publishing unlocks after approval.</div>
       )}
 
-      <div className={styles.actions}>
-        <button
-          type="button"
-          className={styles.btnAccent}
-          disabled={!canPublish && !showForm}
-          onClick={() => {
-            if (showForm && !editingId) {
-              setShowForm(false);
-            } else {
-              openCreate();
-            }
-          }}
-        >
-          {showForm && !editingId ? 'Cancel' : 'Post new job'}
-        </button>
-      </div>
-
       {showForm && (
-        <form className={styles.form} onSubmit={(e) => void handleSubmit(e)}>
-          <h2 className={styles.title} style={{ fontSize: '1.0625rem' }}>
-            {editingId ? 'Edit job' : 'New job'}
-          </h2>
-          {formError && <p className={styles.formError} role="alert">{formError}</p>}
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="title">Title</label>
-            <input id="title" className={styles.input} required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+        <form className={ui.formPanel} onSubmit={(e) => void handleSubmit(e)}>
+          <h2 className={ui.formTitle}>{editingId ? 'Edit role' : 'New role'}</h2>
+          {formError && <p className={ui.formError} role="alert">{formError}</p>}
+          <div className={ui.field}>
+            <label className={ui.label} htmlFor="title">Title</label>
+            <input id="title" className={ui.input} required value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
           </div>
-          <div className={styles.field}>
-            <label className={styles.label} htmlFor="description">Description</label>
-            <textarea id="description" className={styles.textarea} required rows={5} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+          <div className={ui.field}>
+            <label className={ui.label} htmlFor="description">Description</label>
+            <textarea id="description" className={ui.textarea} required rows={5} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </div>
-          <div className={styles.row}>
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="city">City</label>
-              <input id="city" className={styles.input} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+          <div className={ui.fieldRow}>
+            <div className={ui.field}>
+              <label className={ui.label} htmlFor="city">City</label>
+              <input id="city" className={ui.input} value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
             </div>
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="location">Location</label>
-              <input id="location" className={styles.input} value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+            <div className={ui.field}>
+              <label className={ui.label} htmlFor="location">Location</label>
+              <input id="location" className={ui.input} value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
             </div>
           </div>
-          <div className={styles.row}>
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="category">Category</label>
-              <select id="category" className={styles.select} value={form.category} onChange={(e) => setForm({ ...form, category: Number(e.target.value) })}>
+          <div className={ui.fieldRow}>
+            <div className={ui.field}>
+              <label className={ui.label} htmlFor="category">Category</label>
+              <select id="category" className={ui.select} value={form.category} onChange={(e) => setForm({ ...form, category: Number(e.target.value) })}>
                 <option value={JobCategory.It}>IT</option>
                 <option value={JobCategory.Gig}>Gig</option>
               </select>
             </div>
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="level">Level</label>
-              <select id="level" className={styles.select} value={form.level} onChange={(e) => setForm({ ...form, level: Number(e.target.value) })}>
+            <div className={ui.field}>
+              <label className={ui.label} htmlFor="level">Level</label>
+              <select id="level" className={ui.select} value={form.level} onChange={(e) => setForm({ ...form, level: Number(e.target.value) })}>
                 <option value={JobLevel.Internship}>Internship</option>
                 <option value={JobLevel.Junior}>Junior</option>
                 <option value={JobLevel.MidLevel}>Mid-Level</option>
@@ -215,72 +188,35 @@ export function PortalJobsPage() {
               </select>
             </div>
           </div>
-          <div className={styles.row}>
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="salaryMin">Salary min</label>
-              <input id="salaryMin" type="number" className={styles.input} value={form.salaryMin} onChange={(e) => setForm({ ...form, salaryMin: e.target.value })} />
-            </div>
-            <div className={styles.field}>
-              <label className={styles.label} htmlFor="salaryMax">Salary max</label>
-              <input id="salaryMax" type="number" className={styles.input} value={form.salaryMax} onChange={(e) => setForm({ ...form, salaryMax: e.target.value })} />
-            </div>
-          </div>
-          <label className={styles.checkboxRow}>
-            <input type="checkbox" checked={form.isRemote} onChange={(e) => setForm({ ...form, isRemote: e.target.checked })} />
-            Remote role
-          </label>
+          <label className={ui.checkboxRow}><input type="checkbox" checked={form.isRemote} onChange={(e) => setForm({ ...form, isRemote: e.target.checked })} /> Remote role</label>
           {editingId && (
-            <label className={styles.checkboxRow}>
-              <input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />
-              Active listing
-            </label>
+            <label className={ui.checkboxRow}><input type="checkbox" checked={form.isActive} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} /> Active listing</label>
           )}
-          <button type="submit" className={styles.btnAccent} disabled={saving}>
-            {saving ? 'Saving...' : editingId ? 'Update job' : 'Create job'}
-          </button>
+          <button type="submit" className={ui.btnPrimary} disabled={saving} style={{ alignSelf: 'flex-start' }}>{saving ? 'Saving…' : editingId ? 'Update role' : 'Publish role'}</button>
         </form>
       )}
 
-      {loading ? (
-        <p className={styles.status}>Loading jobs…</p>
-      ) : failed ? (
-        <EmptyState
-          illustration="generic"
-          title="Could not load jobs"
-          description="Check your connection and try again."
-          actions={[{ label: 'Retry', onClick: load, primary: true }]}
-        />
+      {loading ? <p className={ui.statusText}>Loading roles…</p> : failed ? (
+        <EmptyState illustration="generic" title="Could not load jobs" description="Check your connection." actions={[{ label: 'Retry', onClick: load, primary: true }]} />
       ) : jobs.length === 0 ? (
-        <EmptyState
-          illustration="generic"
-          title="No jobs yet"
-          description={canPublish ? 'Post your first listing to start receiving applicants.' : 'Jobs can be created once your company is approved.'}
-          actions={canPublish ? [{ label: 'Post new job', onClick: openCreate, primary: true }] : []}
-        />
+        <EmptyState illustration="generic" title="No active roles yet" description="Publish your first role to start hiring." actions={canPublish ? [{ label: 'Post new role', onClick: openCreate, primary: true }] : []} />
       ) : (
-        <div className={styles.list}>
+        <div className={ui.listStack}>
           {jobs.map((job) => (
-            <article key={job.id} className={styles.card}>
-              <div className={styles.cardHeader}>
+            <article key={job.id} className={ui.campaignCard}>
+              <div className={ui.campaignHeader}>
                 <div>
-                  <h2 className={styles.cardTitle}>{job.title}</h2>
-                  <p className={styles.cardMeta}>
-                    {job.city ?? job.location ?? 'No location'} · {job.isRemote ? 'Remote' : 'On-site'}
-                  </p>
+                  <h2 className={ui.campaignTitle}>{job.title}</h2>
+                  <p className={ui.campaignMeta}>{job.city ?? job.location ?? 'No location'} · {job.isRemote ? 'Remote' : 'On-site'}</p>
                 </div>
-                <span className={job.isActive ? styles.badge : styles.badgeMuted}>
-                  {job.isActive ? 'Active' : 'Archived'}
-                </span>
+                <span className={job.isActive ? ui.badgeSuccess : ui.badgeMuted}>{job.isActive ? 'Active' : 'Archived'}</span>
               </div>
-              <p className={styles.cardMeta}>{job.description.slice(0, 140)}{job.description.length > 140 ? '…' : ''}</p>
-              <div className={styles.actions}>
-                <button type="button" className={styles.btn} onClick={() => openEdit(job)}>Edit</button>
-                <Link to={`/portal/applications?jobId=${job.id}`} className={styles.btn}>Applicants</Link>
-                {job.isActive && (
-                  <button type="button" className={styles.btnDanger} onClick={() => void handleArchive(job.id)}>
-                    Archive
-                  </button>
-                )}
+              <p className={ui.campaignExcerpt}>{job.description.slice(0, 160)}{job.description.length > 160 ? '…' : ''}</p>
+              <div className={ui.campaignActions}>
+                <button type="button" className={ui.btnGhost} onClick={() => openEdit(job)}>Edit</button>
+                <Link to={`/portal/applications?jobId=${job.id}`} className={ui.btnGhost}>Candidates</Link>
+                <Link to="/portal/pipeline" className={ui.btnGhost}>Pipeline</Link>
+                {job.isActive && <button type="button" className={ui.btnDanger} onClick={() => void handleArchive(job.id)}>Archive</button>}
               </div>
             </article>
           ))}
@@ -288,4 +224,9 @@ export function PortalJobsPage() {
       )}
     </section>
   );
+
+  async function handleArchive(id: string) {
+    await portalApi.archiveJob(id);
+    load();
+  }
 }

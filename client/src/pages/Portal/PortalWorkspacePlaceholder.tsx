@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { EmployerPageHeader } from '@/components/employer/EmployerPageHeader';
-import styles from './PortalWorkspacePage.module.css';
+import ui from '@/components/employer/ui/employerUi.module.css';
 
 interface PortalWorkspacePlaceholderProps {
   title: string;
@@ -9,22 +9,15 @@ interface PortalWorkspacePlaceholderProps {
   ctaTo?: string;
 }
 
-export function PortalWorkspacePlaceholder({
-  title,
-  subtitle,
-  ctaLabel,
-  ctaTo,
-}: PortalWorkspacePlaceholderProps) {
+export function PortalWorkspacePlaceholder({ title, subtitle, ctaLabel, ctaTo }: PortalWorkspacePlaceholderProps) {
   return (
-    <section className={styles.page}>
+    <section className={ui.page}>
       <EmployerPageHeader title={title} subtitle={subtitle} />
-      <div className={styles.placeholder}>
-        <p className={styles.placeholderText}>
-          This section is part of the employer redesign and will ship in the next phase.
+      <div className={ui.placeholderPanel}>
+        <p className={ui.placeholderText}>
+          This workspace is being prepared. Core hiring workflows live in Dashboard, Pipeline, Candidates, and Messages.
         </p>
-        {ctaLabel && ctaTo && (
-          <Link to={ctaTo} className={styles.cta}>{ctaLabel}</Link>
-        )}
+        {ctaLabel && ctaTo && <Link to={ctaTo} className={ui.btnPrimary}>{ctaLabel}</Link>}
       </div>
     </section>
   );
