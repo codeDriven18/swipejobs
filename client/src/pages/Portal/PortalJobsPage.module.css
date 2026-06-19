@@ -1,0 +1,50 @@
+.campaignList {
+  composes: compactRows from '@/styles/employerComposition.module.css';
+}
+
+.campaignRow {
+  composes: surface surfacePad from '@/components/employer/ui/employerUi.module.css';
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.campaignRowMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.campaignTitle {
+  margin: 0;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.campaignMeta {
+  margin: 0.25rem 0 0;
+  font-size: var(--text-sm);
+  color: var(--employer-muted);
+}
+
+.campaignEdit {
+  flex-shrink: 0;
+}
+
+.pageHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.pageTitle {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}

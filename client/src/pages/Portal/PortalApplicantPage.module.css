@@ -28,12 +28,20 @@
   margin-top: var(--space-2);
 }
 
-.actionPanel {
-  composes: surface from '@/components/employer/ui/employerUi.module.css';
+.stageMenu {
+  display: inline-block;
+}
+
+.stageActions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-2);
-  padding: var(--space-4) var(--employer-space-block);
+  margin-top: var(--space-2);
+}
+
+.historyDetails {
+  font-size: var(--text-sm);
+  color: var(--employer-muted);
 }
 
 .bodyText {

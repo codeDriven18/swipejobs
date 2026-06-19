@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { portalApi } from '@/api/portalApi';
-import { CandidateTrustBadge } from '@/components/portal/CandidateTrustBadge';
 import { UserAvatar } from '@/components/profile/UserAvatar';
-import { EmployerPageHeader } from '@/components/employer/EmployerPageHeader';
 import ui from '@/components/employer/ui/employerUi.module.css';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ApplicationStatusLabels } from '@/models/enums';
 import type { PortalApplication } from '@/models/portal';
+import styles from './PortalApplicationsPage.module.css';
 
 export function PortalApplicationsPage() {
   const [searchParams] = useSearchParams();
@@ -27,10 +26,10 @@ export function PortalApplicationsPage() {
 
   useEffect(() => { load(); }, [load]);
 
-  const filteredTitle = useMemo(() => {
+  const pageTitle = useMemo(() => {
     if (!jobIdFilter) return 'Candidates';
     const jobTitle = applications[0]?.jobTitle;
-    return jobTitle ? `Candidates · ${jobTitle}` : 'Candidates';
+    return jobTitle ?? 'Candidates';
   }, [jobIdFilter, applications]);
 
   if (loading) return <p className={ui.statusText}>Loading candidates…</p>;
@@ -45,39 +44,34 @@ export function PortalApplicationsPage() {
 
   return (
     <section className={ui.page}>
-      <EmployerPageHeader
-        title={filteredTitle}
-        subtitle={`${applications.length} candidate${applications.length === 1 ? '' : 's'} in your hiring pool`}
-        actions={jobIdFilter ? <Link to="/portal/applications" className={ui.btnGhost}>View all</Link> : <Link to="/portal/pipeline" className={ui.btnPrimary}>Open pipeline</Link>}
-      />
+      <header>
+        <h1 className={styles.pageTitle}>{pageTitle}</h1>
+        <p className={styles.pageMeta}>
+          {applications.length} {applications.length === 1 ? 'person' : 'people'} to evaluate
+          {jobIdFilter && (
+            <>
+              {' · '}
+              <Link to="/portal/applications">All candidates</Link>
+            </>
+          )}
+        </p>
+      </header>
 
       {applications.length === 0 ? (
         <EmptyState illustration="applications" title="No candidates yet" description="Applications appear when candidates apply to your roles." actions={[{ label: 'View pipeline', to: '/portal/pipeline', primary: true }]} />
       ) : (
-        <div className={ui.listStack}>
+        <div className={styles.candidateList}>
           {applications.map((app) => {
             const parts = app.applicantName.trim().split(/\s+/);
             return (
-              <article key={app.id} className={ui.candidateCard}>
-                <div className={ui.candidateRow}>
-                  <UserAvatar profile={{ firstName: parts[0] ?? '', lastName: parts.slice(1).join(' '), email: app.applicantEmail, profileImageUrl: app.applicantProfileImageUrl }} size="lg" />
-                  <div className={ui.candidateIdentity}>
-                    <h2 className={ui.candidateName}>{app.applicantName || 'Candidate'}</h2>
-                    <CandidateTrustBadge level={app.candidateTrustLevel} />
-                    <p className={ui.candidateSub}>{app.jobTitle}</p>
-                  </div>
-                  <span className={ui.badge}>{ApplicationStatusLabels[app.status]}</span>
+              <Link key={app.id} to={`/portal/applications/${app.id}`} className={styles.candidateRow}>
+                <UserAvatar profile={{ firstName: parts[0] ?? '', lastName: parts.slice(1).join(' '), email: app.applicantEmail, profileImageUrl: app.applicantProfileImageUrl }} size="lg" />
+                <div className={styles.candidateRowMain}>
+                  <h2 className={styles.candidateName}>{app.applicantName || 'Candidate'}</h2>
+                  <p className={styles.candidateRole}>{app.jobTitle}</p>
                 </div>
-                <p className={ui.candidateDetail}>
-                  Applied {new Date(app.appliedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                  {app.hasResume && ' · Resume on file'}
-                  {app.unreadMessageCount > 0 && ` · ${app.unreadMessageCount} unread`}
-                </p>
-                <div className={ui.candidateActions}>
-                  <Link to={`/portal/applications/${app.id}`} className={ui.btnPrimary}>Open profile</Link>
-                  <Link to="/portal/pipeline" className={ui.btnGhost}>Pipeline</Link>
-                </div>
-              </article>
+                <span className={ui.badge}>{ApplicationStatusLabels[app.status]}</span>
+              </Link>
             );
           })}
         </div>

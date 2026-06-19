@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { portalApi } from '@/api/portalApi';
-import { EmployerPageHeader } from '@/components/employer/EmployerPageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { usePipelineBoard } from '@/hooks/usePipelineBoard';
 import { PIPELINE_COLUMNS } from '@/lib/employer/pipelineArchitecture';
 import { PipelineStage } from '@/models/enums';
 import type { PortalJob } from '@/models/portal';
+import comp from '@/styles/employerComposition.module.css';
 import {
   EMPTY_COLUMN_MESSAGES,
   PipelineColumn,
@@ -73,6 +73,8 @@ export function PipelineBoard() {
     [grouped],
   );
 
+  const selectedJobTitle = jobs.find((job) => job.id === jobId)?.title;
+
   if (loading) {
     return <p className={styles.boardMeta}>Loading pipeline…</p>;
   }
@@ -89,16 +91,15 @@ export function PipelineBoard() {
   }
 
   return (
-    <div className={styles.pipelineBoardPage}>
-      <EmployerPageHeader
-        title="Hiring pipeline"
-        subtitle={`${totalCount} candidate${totalCount === 1 ? '' : 's'} across ${columns.length} stages`}
-      />
-
+    <div className={`${styles.pipelineBoardPage} ${comp.focalPage} ${comp.fillViewport}`}>
       <div className={styles.boardToolbar}>
-        <span className={styles.boardMeta}>
-          Drag candidates between stages or use the card menu for quick actions.
-        </span>
+        <h1 className={styles.boardTitle}>
+          Pipeline
+          <span className={styles.boardMeta}>
+            {totalCount} candidate{totalCount === 1 ? '' : 's'}
+            {selectedJobTitle ? ` · ${selectedJobTitle}` : ''}
+          </span>
+        </h1>
         {jobs.length > 0 && (
           <select
             className={styles.jobFilter}
@@ -106,7 +107,7 @@ export function PipelineBoard() {
             aria-label="Filter by job"
             onChange={(event) => handleJobFilter(event.target.value)}
           >
-            <option value="">All jobs</option>
+            <option value="">All roles</option>
             {jobs.map((job) => (
               <option key={job.id} value={job.id}>{job.title}</option>
             ))}
@@ -114,7 +115,7 @@ export function PipelineBoard() {
         )}
       </div>
 
-      <div className={styles.boardShell}>
+      <div className={`${styles.boardShell} ${comp.focalDominant}`}>
         <div className={styles.boardScroll} role="region" aria-label="Hiring pipeline board">
           <div className={styles.boardGrid}>
             {columns.map((column) => (

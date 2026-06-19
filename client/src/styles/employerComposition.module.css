@@ -1,0 +1,68 @@
+/* Layout-only composition helpers — no visual token changes */
+
+.focalPage {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.focalDominant {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.fillViewport {
+  min-height: calc(100dvh - var(--employer-header-height) - var(--space-16));
+}
+
+.compactRows {
+  display: flex;
+  flex-direction: column;
+}
+
+.compactRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.compactRowMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.profileBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--employer-space-block);
+}
+
+.profileBlock {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.profileBlock + .profileBlock {
+  padding-top: var(--employer-space-block);
+  border-top: 1px solid var(--employer-border);
+}
+
+.twoColumn {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--employer-space-section);
+}
+
+@media (min-width: 900px) {
+  .twoColumn {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}

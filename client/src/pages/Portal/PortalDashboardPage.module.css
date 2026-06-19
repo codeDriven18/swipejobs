@@ -1,51 +1,22 @@
-.attentionCard {
+.primaryFocus {
   composes: surfaceHero from '@/components/employer/ui/employerUi.module.css';
-  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 0.375rem;
+  align-items: flex-start;
+  gap: var(--space-3);
   text-decoration: none;
   color: inherit;
-  transition: transform var(--duration-fast) var(--ease-out), box-shadow var(--duration-fast) var(--ease-out);
+  min-height: 12rem;
 }
 
-.attentionCard:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--employer-shadow-lg);
-}
-
-.attentionTitle {
-  font-weight: 700;
-  font-size: 0.9375rem;
-  letter-spacing: -0.02em;
-}
-
-.attentionDesc {
-  color: var(--employer-muted);
-  font-size: var(--text-sm);
-  line-height: 1.55;
-  padding-right: 2rem;
-}
-
-.attentionCount {
-  position: absolute;
-  top: 1.25rem;
-  right: 1.25rem;
-  min-width: 1.75rem;
-  height: 1.75rem;
-  padding: 0 0.45rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: var(--radius-full);
-  background: var(--employer-brand);
-  color: var(--employer-ink);
-  font-size: var(--text-sm);
+.primaryCount {
+  font-size: clamp(2.5rem, 6vw, 3.5rem);
   font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.04em;
 }
 
-.glanceTitle {
-  margin: 0 0 var(--space-4);
+.primaryLabel {
   font-size: 0.6875rem;
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -53,14 +24,73 @@
   color: var(--employer-muted);
 }
 
-.metricsRow {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
+.primaryTitle {
+  font-size: clamp(1.25rem, 2.5vw, 1.625rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
 }
 
-@media (min-width: 900px) {
-  .metricsRow {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
+.primaryDesc {
+  font-size: var(--text-sm);
+  color: var(--employer-muted);
+  line-height: 1.55;
+  max-width: 32rem;
+}
+
+.secondaryList {
+  composes: compactRows from '@/styles/employerComposition.module.css';
+}
+
+.secondaryRow {
+  composes: surface surfacePad from '@/components/employer/ui/employerUi.module.css';
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.secondaryCount {
+  flex-shrink: 0;
+  min-width: 1.75rem;
+  height: 1.75rem;
+  padding: 0 0.45rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--employer-brand-soft);
+  font-size: var(--text-sm);
+  font-weight: 700;
+}
+
+.secondaryTitle {
+  font-weight: 600;
+  font-size: var(--text-sm);
+}
+
+.contextLine {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--employer-muted);
+}
+
+.contextLine a {
+  color: var(--employer-ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.contextLine a:hover {
+  text-decoration: underline;
+}
+
+.blockedBanner {
+  composes: notice from '@/components/employer/ui/employerUi.module.css';
+}
+
+.blockedBannerDanger {
+  composes: noticeDanger from '@/components/employer/ui/employerUi.module.css';
 }

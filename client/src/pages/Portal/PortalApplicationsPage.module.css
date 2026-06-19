@@ -1,0 +1,46 @@
+.candidateList {
+  composes: compactRows from '@/styles/employerComposition.module.css';
+}
+
+.candidateRow {
+  composes: surface surfacePad from '@/components/employer/ui/employerUi.module.css';
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+  text-decoration: none;
+  color: inherit;
+}
+
+.candidateRowMain {
+  composes: compactRowMain from '@/styles/employerComposition.module.css';
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.candidateName {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.candidateRole {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--employer-muted);
+}
+
+.pageTitle {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.pageMeta {
+  margin: 0.25rem 0 0;
+  font-size: var(--text-sm);
+  color: var(--employer-muted);
+}
