@@ -14,6 +14,7 @@ export interface JobCampaignMetrics {
   reviewing: number;
   interviewing: number;
   offers: number;
+  hires: number;
 }
 
 export function countPipelineStages(applications: PortalApplication[]): PipelineStageCount[] {
@@ -35,6 +36,7 @@ export function getJobCampaignMetrics(jobId: string, applications: PortalApplica
     }).length,
     interviewing: apps.filter((app) => resolvePipelineStage(app.status) === PipelineStage.Interview).length,
     offers: apps.filter((app) => resolvePipelineStage(app.status) === PipelineStage.Offer).length,
+    hires: apps.filter((app) => resolvePipelineStage(app.status) === PipelineStage.Hired).length,
   };
 }
 

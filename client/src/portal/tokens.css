@@ -1,0 +1,47 @@
+/**
+ * SwipeJobs Employer Portal — workspace tokens only.
+ * Scoped to .employer-portal root.
+ */
+
+.employer-portal {
+  --ws-ink: #0a0a0a;
+  --ws-muted: #6b7280;
+  --ws-canvas: #f0f0f2;
+  --ws-panel: #ffffff;
+  --ws-panel-muted: #f7f7f9;
+  --ws-border: rgba(10, 10, 10, 0.08);
+  --ws-brand: var(--color-accent, #ffd100);
+  --ws-brand-soft: color-mix(in srgb, var(--ws-brand) 14%, #fff);
+  --ws-radius: 0.875rem;
+  --ws-radius-lg: 1.125rem;
+  --ws-gap: 1.25rem;
+  --ws-gap-lg: 1.75rem;
+  --ws-nav-width: 15.5rem;
+  --ws-header-height: 3.75rem;
+  font-family: 'Manrope', system-ui, sans-serif;
+
+  /* Pipeline board compatibility (legacy component vars) */
+  --employer-ink: var(--ws-ink);
+  --employer-ink-soft: color-mix(in srgb, var(--ws-ink) 88%, var(--ws-muted));
+  --employer-muted: var(--ws-muted);
+  --employer-canvas: var(--ws-canvas);
+  --employer-canvas-deep: color-mix(in srgb, var(--ws-canvas) 92%, #000);
+  --employer-surface: var(--ws-panel);
+  --employer-surface-muted: var(--ws-panel-muted);
+  --employer-surface-hover: color-mix(in srgb, var(--ws-panel-muted) 85%, var(--ws-ink));
+  --employer-border: var(--ws-border);
+  --employer-brand: var(--ws-brand);
+  --employer-brand-soft: var(--ws-brand-soft);
+  --employer-radius-md: var(--ws-radius);
+  --employer-header-height: var(--ws-header-height);
+}
+
+[data-theme='dark'] .employer-portal {
+  --ws-ink: #f5f5f5;
+  --ws-muted: #a1a1aa;
+  --ws-canvas: #0c0c0e;
+  --ws-panel: #141416;
+  --ws-panel-muted: #1a1a1e;
+  --ws-border: rgba(255, 255, 255, 0.08);
+  --ws-brand-soft: color-mix(in srgb, var(--ws-brand) 12%, #141416);
+}

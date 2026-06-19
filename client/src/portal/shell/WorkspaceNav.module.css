@@ -1,0 +1,131 @@
+.nav {
+  display: none;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 1.25rem 1rem;
+  background: var(--ws-panel);
+  border-right: 1px solid var(--ws-border);
+  min-height: 100dvh;
+}
+
+@media (min-width: 768px) {
+  .nav {
+    display: flex;
+  }
+}
+
+.brand {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+}
+
+.links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: var(--ws-radius);
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--ws-muted);
+  text-decoration: none;
+}
+
+.link:hover {
+  color: var(--ws-ink);
+  background: var(--ws-panel-muted);
+}
+
+.linkActive {
+  color: var(--ws-ink);
+  background: var(--ws-brand-soft);
+  box-shadow: inset 3px 0 0 var(--ws-brand);
+}
+
+.linkIcon {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.badge {
+  margin-left: auto;
+  min-width: 1.125rem;
+  height: 1.125rem;
+  padding: 0 0.3rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: var(--ws-brand);
+  font-size: 0.625rem;
+  font-weight: 800;
+}
+
+.footer {
+  margin-top: auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--ws-border);
+  font-size: 0.8125rem;
+}
+
+.footer a {
+  color: var(--ws-muted);
+  text-decoration: none;
+}
+
+.footer a:hover {
+  color: var(--ws-ink);
+}
+
+.menuBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1px solid var(--ws-border);
+  border-radius: var(--ws-radius);
+  background: var(--ws-panel);
+  cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .menuBtn {
+    display: none;
+  }
+}
+
+.drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+}
+
+.drawerBackdrop {
+  flex: 1;
+  border: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.drawerNav {
+  display: flex;
+  width: min(18rem, 88vw);
+  background: var(--ws-panel);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+@media (min-width: 768px) {
+  .drawer {
+    display: none;
+  }
+}

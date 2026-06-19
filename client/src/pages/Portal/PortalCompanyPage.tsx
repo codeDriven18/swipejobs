@@ -1,1 +1,1 @@
-export { EmployerProfilePage as PortalCompanyPage } from '@/pages/Profile/EmployerProfilePage';
+export { CompanyPage as PortalCompanyPage } from '@/portal/pages/CompanyPage';

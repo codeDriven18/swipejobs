@@ -1,5 +1,1 @@
-import { PipelineBoard } from '@/components/employer/pipeline/PipelineBoard';
-
-export function PortalPipelinePage() {
-  return <PipelineBoard />;
-}
+export { PipelinePage as PortalPipelinePage } from '@/portal/pages/PipelinePage';
