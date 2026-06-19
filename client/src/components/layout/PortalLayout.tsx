@@ -16,8 +16,8 @@ function PortalLayoutShell() {
   const { count: unreadMessages } = useUnreadMessages();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
-  const isConversation = /^\/portal\/messages\/[^/]+$/.test(location.pathname);
   const isPipeline = location.pathname === '/portal/pipeline' || location.pathname.startsWith('/portal/pipeline/');
+  const isMessages = location.pathname.startsWith('/portal/messages');
   const pageTitle = useMemo(
     () => resolvePortalPageTitle(location.pathname),
     [location.pathname],
@@ -27,16 +27,6 @@ function PortalLayoutShell() {
     () => ({ '--employer-brand': brandColor }) as React.CSSProperties,
     [brandColor],
   );
-
-  if (isConversation) {
-    return (
-      <div className={`${styles.layout} ${styles.layoutFullscreen} ${styles.employerWorkspace}`} style={layoutStyle}>
-        <main className={styles.mainFullscreen}>
-          <Outlet />
-        </main>
-      </div>
-    );
-  }
 
   return (
     <div className={`${styles.layout} ${styles.employerWorkspace}`} style={layoutStyle}>
@@ -67,7 +57,11 @@ function PortalLayoutShell() {
           onOpenMenu={() => setDrawerOpen(true)}
         />
 
-        <main className={[styles.main, isPipeline ? styles.mainPipelineReady : ''].filter(Boolean).join(' ')}>
+        <main className={[
+          styles.main,
+          isPipeline ? styles.mainPipelineReady : '',
+          isMessages ? styles.mainMessagesReady : '',
+        ].filter(Boolean).join(' ')}>
           <motion.div
             key={location.pathname}
             initial={{ opacity: 0, y: 8 }}

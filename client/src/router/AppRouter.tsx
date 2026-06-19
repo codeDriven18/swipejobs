@@ -1,4 +1,4 @@
-import { Routes, Route, Outlet } from 'react-router-dom';
+import { Navigate, Routes, Route, Outlet } from 'react-router-dom';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { UserAppGate } from '@/components/layout/UserAppGate';
 import { AdminGate } from '@/components/layout/AdminGate';
@@ -46,10 +46,10 @@ import { PortalDashboardPage } from '@/pages/Portal/PortalDashboardPage';
 import { PortalJobsPage } from '@/pages/Portal/PortalJobsPage';
 import { PortalApplicationsPage } from '@/pages/Portal/PortalApplicationsPage';
 import { PortalApplicantPage } from '@/pages/Portal/PortalApplicantPage';
-import { PortalMessagesPage } from '@/pages/Portal/PortalMessagesPage';
+import { PortalMessagesLayout } from '@/pages/Portal/PortalMessagesLayout';
+import { PortalMessagesEmptyPanel } from '@/pages/Portal/PortalMessagesEmptyPanel';
 import { PortalConversationPage } from '@/pages/Portal/PortalConversationPage';
 import { PortalPipelinePage } from '@/pages/Portal/PortalPipelinePage';
-import { PortalAnalyticsPage } from '@/pages/Portal/PortalAnalyticsPage';
 import { PortalCompanyPage } from '@/pages/Portal/PortalCompanyPage';
 import { PortalSettingsPage } from '@/pages/Portal/PortalSettingsPage';
 import { MessagesPage } from '@/pages/Messages/MessagesPage';
@@ -107,9 +107,11 @@ export function AppRouter() {
           <Route path="jobs" element={<PortalJobsPage />} />
           <Route path="applications" element={<PortalApplicationsPage />} />
           <Route path="applications/:applicationId" element={<PortalApplicantPage />} />
-          <Route path="messages" element={<PortalMessagesPage />} />
-          <Route path="messages/:conversationId" element={<PortalConversationPage />} />
-          <Route path="analytics" element={<PortalAnalyticsPage />} />
+          <Route path="messages" element={<PortalMessagesLayout />}>
+            <Route index element={<PortalMessagesEmptyPanel />} />
+            <Route path=":conversationId" element={<PortalConversationPage />} />
+          </Route>
+          <Route path="analytics" element={<Navigate to="/portal" replace />} />
           <Route path="company" element={<PortalCompanyPage />} />
           <Route path="settings" element={<PortalSettingsPage />} />
         </Route>

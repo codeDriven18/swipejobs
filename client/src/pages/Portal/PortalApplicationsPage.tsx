@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { portalApi } from '@/api/portalApi';
-import { UserAvatar } from '@/components/profile/UserAvatar';
+import { CandidateEntityCard } from '@/components/employer/entities/CandidateEntityCard';
 import ui from '@/components/employer/ui/employerUi.module.css';
+import layout from '@/styles/employerComposition.module.css';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { ApplicationStatusLabels } from '@/models/enums';
 import type { PortalApplication } from '@/models/portal';
 
 export function PortalApplicationsPage() {
@@ -42,65 +42,31 @@ export function PortalApplicationsPage() {
 
   return (
     <section className={ui.page}>
-      <div className={ui.workboard}>
-        <div className={ui.workboardToolbar}>
-          <div>
-            <h1 className={ui.workboardToolbarTitle}>{pageTitle}</h1>
+      <header className={layout.workspaceSectionHeader}>
+        <div>
+          <h1 className={ui.workboardToolbarTitle}>{pageTitle}</h1>
+          <p className={ui.workboardToolbarMeta}>
+            {applications.length} candidates to evaluate
             {jobIdFilter && (
-              <p className={ui.workboardToolbarMeta}>
-                <Link to="/portal/applications">View all candidates</Link>
-              </p>
+              <>
+                {' · '}
+                <Link to="/portal/applications">All candidates</Link>
+              </>
             )}
-          </div>
-          <span className={ui.workboardToolbarMeta}>{applications.length} total</span>
+          </p>
         </div>
+        <Link to="/portal/pipeline" className={ui.btnPrimary}>Open pipeline</Link>
+      </header>
 
-        {applications.length === 0 ? (
-          <EmptyState illustration="applications" title="No candidates yet" description="Applications appear when candidates apply to your roles." actions={[{ label: 'View pipeline', to: '/portal/pipeline', primary: true }]} />
-        ) : (
-          <div className={ui.workboardWrap}>
-            <table className={ui.workboardTable}>
-              <thead>
-                <tr>
-                  <th>Candidate</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th>Applied</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {applications.map((app) => {
-                  const parts = app.applicantName.trim().split(/\s+/);
-                  const applied = new Date(app.appliedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
-                  return (
-                    <tr key={app.id}>
-                      <td>
-                        <div className={ui.workboardCellName}>
-                          <UserAvatar profile={{ firstName: parts[0] ?? '', lastName: parts.slice(1).join(' '), email: app.applicantEmail, profileImageUrl: app.applicantProfileImageUrl }} size="md" />
-                          <div className={ui.workboardCellStack}>
-                            <span className={ui.workboardCellTitle}>{app.applicantName || 'Candidate'}</span>
-                            <span className={ui.workboardCellSub}>{app.applicantEmail}</span>
-                          </div>
-                        </div>
-                      </td>
-                      <td>{app.jobTitle}</td>
-                      <td><span className={ui.badge}>{ApplicationStatusLabels[app.status]}</span></td>
-                      <td>{applied}{app.unreadMessageCount > 0 ? ` · ${app.unreadMessageCount} unread` : ''}</td>
-                      <td>
-                        <div className={ui.workboardActions}>
-                          <Link to={`/portal/applications/${app.id}`} className={ui.btnPrimary}>Profile</Link>
-                          <Link to="/portal/pipeline" className={ui.btnGhost}>Pipeline</Link>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {applications.length === 0 ? (
+        <EmptyState illustration="applications" title="No candidates yet" description="Applications appear when candidates apply to your roles." actions={[{ label: 'View pipeline', to: '/portal/pipeline', primary: true }]} />
+      ) : (
+        <div className={`${layout.entityGrid} ${layout.entityGridWide}`}>
+          {applications.map((app) => (
+            <CandidateEntityCard key={app.id} application={app} />
+          ))}
+        </div>
+      )}
     </section>
   );
 }

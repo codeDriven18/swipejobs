@@ -53,6 +53,14 @@
   overflow-x: auto;
 }
 
+.mainMessagesReady {
+  padding-bottom: var(--space-6);
+}
+
+.mainMessagesReady .page {
+  max-width: none;
+}
+
 .mainFullscreen {
   flex: 1;
   min-height: 100dvh;

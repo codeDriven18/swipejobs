@@ -29,7 +29,7 @@ export function PortalConversationPage() {
         illustration="applications"
         title="Conversation not found"
         description="This chat may have been removed or you do not have access."
-        actions={[{ label: 'Back to messages', to: '/portal/messages', primary: true }]}
+        actions={[{ label: 'Back to inbox', to: '/portal/messages', primary: true }]}
       />
     );
   }
@@ -38,11 +38,12 @@ export function PortalConversationPage() {
     <ChatView
       conversation={conversation}
       backTo="/portal/messages"
-      backLabel="Back to messages"
+      backLabel="Back to inbox"
       title={conversation.candidateName}
       subtitle={conversation.jobTitle}
       layout="portal"
-      fullscreen
+      fullscreen={false}
+      embedded
       api={{
         getMessages: portalMessagingApi.getMessages,
         sendMessage: portalMessagingApi.sendMessage,

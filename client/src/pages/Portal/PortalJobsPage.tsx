@@ -1,8 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react';
-import { Link } from 'react-router-dom';
 import { portalApi } from '@/api/portalApi';
 import { ApiError } from '@/api/client';
+import { JobCampaignCard } from '@/components/employer/entities/JobCampaignCard';
 import ui from '@/components/employer/ui/employerUi.module.css';
+import layout from '@/styles/employerComposition.module.css';
+import { useEmployerWorkspaceData } from '@/hooks/useEmployerWorkspaceData';
+import { getJobCampaignMetrics } from '@/lib/employer/employerWorkspaceData';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useToast } from '@/context/ToastContext';
 import { getFriendlyErrorMessage } from '@/lib/friendlyError';
@@ -36,10 +39,8 @@ function getCreateErrorMessage(error: unknown): string {
 
 export function PortalJobsPage() {
   const { showToast } = useToast();
-  const [jobs, setJobs] = useState<PortalJob[]>([]);
+  const { applications, activeJobs, loading, failed, refresh } = useEmployerWorkspaceData();
   const [companyStatus, setCompanyStatus] = useState<CompanyStatus | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [failed, setFailed] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
@@ -47,26 +48,11 @@ export function PortalJobsPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [archivingId, setArchivingId] = useState<string | null>(null);
 
-  const load = () => {
-    setLoading(true);
-    setFailed(false);
-    Promise.all([portalApi.getJobs(), portalApi.getStats()])
-      .then(([jobList, stats]) => {
-        setJobs(jobList);
-        setCompanyStatus(stats.companyStatus);
-      })
-      .catch(() => {
-        setJobs([]);
-        setCompanyStatus(null);
-        setFailed(true);
-      })
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    portalApi.getStats().then((stats) => setCompanyStatus(stats.companyStatus)).catch(() => setCompanyStatus(null));
+  }, []);
 
   const canPublish = companyStatus === CompanyStatus.Approved;
-  const activeJobs = jobs.filter((job) => job.isActive);
 
   const openCreate = () => {
     if (!canPublish) {
@@ -101,7 +87,7 @@ export function PortalJobsPage() {
     setArchivingId(id);
     try {
       await portalApi.archiveJob(id);
-      load();
+      await refresh();
     } finally {
       setArchivingId(null);
     }
@@ -133,7 +119,7 @@ export function PortalJobsPage() {
       setShowForm(false);
       setEditingId(null);
       setForm(emptyForm);
-      load();
+      await refresh();
     } catch (err) {
       const message = getCreateErrorMessage(err);
       setFormError(message);
@@ -146,10 +132,10 @@ export function PortalJobsPage() {
   if (showForm) {
     return (
       <section className={ui.page}>
-        <div className={ui.workboardToolbar}>
-          <h1 className={ui.workboardToolbarTitle}>{editingId ? 'Edit role' : 'New role'}</h1>
+        <header className={layout.workspaceSectionHeader}>
+          <h1 className={ui.workboardToolbarTitle}>{editingId ? 'Edit hiring campaign' : 'New hiring campaign'}</h1>
           <button type="button" className={ui.btnGhost} onClick={() => { setShowForm(false); setEditingId(null); }}>Back to roles</button>
-        </div>
+        </header>
         <form className={ui.formPanel} onSubmit={(e) => void handleSubmit(e)}>
           {formError && <p className={ui.formError} role="alert">{formError}</p>}
           <div className={ui.field}>
@@ -204,51 +190,32 @@ export function PortalJobsPage() {
         <div className={ui.notice}>Blocked — {CompanyStatusLabels[companyStatus]}. Publishing unlocks after approval.</div>
       )}
 
-      <div className={ui.workboard}>
-        <div className={ui.workboardToolbar}>
-          <h1 className={ui.workboardToolbarTitle}>Active roles</h1>
-          <div className={ui.workboardActions}>
-            <span className={ui.workboardToolbarMeta}>{activeJobs.length} total</span>
-            <button type="button" className={ui.btnPrimary} disabled={!canPublish} onClick={openCreate}>Post role</button>
-          </div>
+      <header className={layout.workspaceSectionHeader}>
+        <div>
+          <h1 className={ui.workboardToolbarTitle}>Hiring campaigns</h1>
+          <p className={ui.workboardToolbarMeta}>{activeJobs.length} active campaigns</p>
         </div>
+        <button type="button" className={ui.btnPrimary} disabled={!canPublish} onClick={openCreate}>Post role</button>
+      </header>
 
-        {loading ? <p className={ui.statusText}>Loading roles…</p> : failed ? (
-          <EmptyState illustration="generic" title="Could not load jobs" description="Check your connection." actions={[{ label: 'Retry', onClick: load, primary: true }]} />
-        ) : activeJobs.length === 0 ? (
-          <EmptyState illustration="generic" title="No active roles" description="Publish a role to start receiving candidates." actions={canPublish ? [{ label: 'Post role', onClick: openCreate, primary: true }] : []} />
-        ) : (
-          <div className={ui.workboardWrap}>
-            <table className={ui.workboardTable}>
-              <thead>
-                <tr>
-                  <th>Role</th>
-                  <th>Location</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {activeJobs.map((job) => (
-                  <tr key={job.id}>
-                    <td className={ui.workboardCellTitle}>{job.title}</td>
-                    <td>{job.city ?? job.location ?? '—'} · {job.isRemote ? 'Remote' : 'On-site'}</td>
-                    <td><span className={ui.badgeSuccess}>Active</span></td>
-                    <td>
-                      <div className={ui.workboardActions}>
-                        <Link to={`/portal/pipeline?jobId=${job.id}`} className={ui.btnPrimary}>Pipeline</Link>
-                        <Link to={`/portal/applications?jobId=${job.id}`} className={ui.btnGhost}>Candidates</Link>
-                        <button type="button" className={ui.btnGhost} onClick={() => openEdit(job)}>Edit</button>
-                        <button type="button" className={ui.btnDanger} disabled={archivingId === job.id} onClick={() => void handleArchive(job.id)}>Archive</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      {loading ? <p className={ui.statusText}>Loading campaigns…</p> : failed ? (
+        <EmptyState illustration="generic" title="Could not load jobs" description="Check your connection." actions={[{ label: 'Retry', onClick: () => void refresh(), primary: true }]} />
+      ) : activeJobs.length === 0 ? (
+        <EmptyState illustration="generic" title="No active campaigns" description="Publish a role to start receiving candidates." actions={canPublish ? [{ label: 'Post role', onClick: openCreate, primary: true }] : []} />
+      ) : (
+        <div className={`${layout.entityGrid} ${layout.entityGridWide}`}>
+          {activeJobs.map((job) => (
+            <JobCampaignCard
+              key={job.id}
+              job={job}
+              metrics={getJobCampaignMetrics(job.id, applications)}
+              onEdit={() => openEdit(job)}
+              onArchive={() => void handleArchive(job.id)}
+              archiving={archivingId === job.id}
+            />
+          ))}
+        </div>
+      )}
     </section>
   );
 }

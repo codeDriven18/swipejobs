@@ -5,6 +5,7 @@ import { portalApi } from '@/api/portalApi';
 import { CompanyAvatar } from '@/components/profile/CompanyAvatar';
 import ui from '@/components/employer/ui/employerUi.module.css';
 import comp from '@/styles/employerComposition.module.css';
+import layout from '@/styles/employerComposition.module.css';
 import { useToast } from '@/context/ToastContext';
 import { getApiErrorMessage } from '@/lib/apiErrors';
 import type { Company } from '@/models/company';
@@ -112,7 +113,7 @@ export function EmployerProfilePage() {
 
       {editing && (
         <form className={ui.formPanel} onSubmit={(e) => { e.preventDefault(); void save(); }}>
-          <h2 className={ui.formTitle}>Edit company profile</h2>
+          <h2 className={ui.formTitle}>Edit company showcase</h2>
           <Field label="Description">
             <textarea className={ui.textarea} rows={5} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
           </Field>
@@ -140,51 +141,56 @@ export function EmployerProfilePage() {
             <input className={ui.input} value={form.bannerUrl ?? ''} onChange={(e) => setForm({ ...form, bannerUrl: e.target.value })} placeholder="https://..." />
           </Field>
           <button type="submit" className={ui.btnPrimary} disabled={saving} style={{ alignSelf: 'flex-start' }}>
-            {saving ? 'Saving…' : 'Save company profile'}
+            {saving ? 'Saving…' : 'Save showcase'}
           </button>
         </form>
       )}
 
-      <article className={`${ui.profileSection} ${comp.profileBody}`}>
-        <section className={comp.profileBlock}>
-          <h2 className={ui.profileSectionTitle}>About</h2>
-          <p className={styles.aboutText}>
-            {company.description.trim() || 'Describe your mission, culture, and what makes your team unique.'}
-          </p>
-        </section>
-
-        <section className={comp.profileBlock}>
-          <h2 className={ui.profileSectionTitle}>At a glance</h2>
-          <div className={styles.metaGrid}>
-            <div>
-              <span className={styles.metaLabel}>Industry</span>
-              <span>{company.industry || '—'}</span>
-            </div>
-            <div>
-              <span className={styles.metaLabel}>Size</span>
-              <span>{company.companySize || '—'}</span>
-            </div>
-            <div>
-              <span className={styles.metaLabel}>Location</span>
-              <span>{company.location || '—'}</span>
-            </div>
-            <div>
-              <span className={styles.metaLabel}>Open roles</span>
-              <span>{company.openJobsCount}</span>
-            </div>
-          </div>
-        </section>
-
-        {(company.website || company.linkedInUrl) && (
+      <div className={layout.companyShowcase}>
+        <article className={`${ui.profileSection} ${comp.profileBody}`}>
           <section className={comp.profileBlock}>
-            <h2 className={ui.profileSectionTitle}>Links</h2>
-            <ul className={styles.linkList}>
-              {company.website && <li><a href={company.website} target="_blank" rel="noopener noreferrer">Website</a></li>}
-              {company.linkedInUrl && <li><a href={company.linkedInUrl} target="_blank" rel="noopener noreferrer">LinkedIn</a></li>}
-            </ul>
+            <h2 className={ui.profileSectionTitle}>Company overview</h2>
+            <p className={styles.aboutText}>
+              {company.description.trim() || 'Describe your mission, culture, and what makes your team unique.'}
+            </p>
           </section>
-        )}
-      </article>
+
+          <section className={comp.profileBlock}>
+            <h2 className={ui.profileSectionTitle}>Culture</h2>
+            <p className={styles.aboutText}>
+              {company.description.trim()
+                ? 'Your public company page highlights this story to candidates before they apply.'
+                : 'Add a description to showcase your culture and values to candidates.'}
+            </p>
+          </section>
+
+          {(company.website || company.linkedInUrl) && (
+            <section className={comp.profileBlock}>
+              <h2 className={ui.profileSectionTitle}>Links</h2>
+              <ul className={styles.linkList}>
+                {company.website && <li><a href={company.website} target="_blank" rel="noopener noreferrer">Website</a></li>}
+                {company.linkedInUrl && <li><a href={company.linkedInUrl} target="_blank" rel="noopener noreferrer">LinkedIn</a></li>}
+              </ul>
+            </section>
+          )}
+        </article>
+
+        <aside className={layout.workspaceSection}>
+          <article className={ui.profileSidebar}>
+            <h2 className={ui.profileSidebarTitle}>Team size</h2>
+            <p className={styles.aboutText}>{company.companySize || 'Add company size'}</p>
+          </article>
+          <article className={ui.profileSidebar}>
+            <h2 className={ui.profileSidebarTitle}>Open roles</h2>
+            <p className={styles.aboutText}>{company.openJobsCount} active {company.openJobsCount === 1 ? 'role' : 'roles'}</p>
+            <Link to="/portal/jobs" className={ui.btnPrimary}>Manage roles</Link>
+          </article>
+          <article className={ui.profileSidebar}>
+            <h2 className={ui.profileSidebarTitle}>Benefits</h2>
+            <p className={styles.aboutText}>Highlight benefits on your public company page as you expand your employer brand.</p>
+          </article>
+        </aside>
+      </div>
     </section>
   );
 }

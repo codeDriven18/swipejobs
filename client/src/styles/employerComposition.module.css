@@ -66,3 +66,152 @@
     align-items: start;
   }
 }
+
+.commandCenter {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--employer-space-section);
+}
+
+@media (min-width: 1100px) {
+  .commandCenter {
+    grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.entityGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 768px) {
+  .entityGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1200px) {
+  .entityGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .entityGridWide {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.workspaceSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.workspaceSectionHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.workspaceSectionTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.pipelineOverview {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.pipelineStageChip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 5.5rem;
+  padding: 0.625rem 0.75rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+.splitInbox {
+  display: grid;
+  grid-template-columns: 1fr;
+  min-height: calc(100dvh - var(--employer-header-height) - var(--space-16));
+  gap: 0;
+}
+
+@media (min-width: 900px) {
+  .splitInbox {
+    grid-template-columns: minmax(18rem, 22rem) minmax(0, 1fr);
+    border: 1px solid var(--employer-border);
+    border-radius: var(--employer-radius-xl);
+    overflow: hidden;
+  }
+
+  .splitInboxList {
+    border-right: 1px solid var(--employer-border);
+  }
+}
+
+@media (max-width: 899px) {
+  .splitInboxActive .splitInboxList {
+    display: none;
+  }
+}
+
+.splitInboxList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--space-4);
+}
+
+.splitInboxDetail {
+  min-height: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.splitInboxDetailInner {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.settingsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-4);
+}
+
+@media (min-width: 900px) {
+  .settingsGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .settingsGridWide {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+  }
+}
+
+.companyShowcase {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--employer-space-section);
+}
+
+@media (min-width: 900px) {
+  .companyShowcase {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  }
+}

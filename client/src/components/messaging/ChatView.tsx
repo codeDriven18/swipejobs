@@ -33,6 +33,7 @@ interface ChatViewProps {
   onMessagesRead?: () => void;
   layout?: 'seeker' | 'portal';
   fullscreen?: boolean;
+  embedded?: boolean;
 }
 
 function normalizeLoadedMessage(message: ChatMessage): ChatMessage {
@@ -85,6 +86,7 @@ export function ChatView({
   onMessagesRead,
   layout = 'seeker',
   fullscreen = true,
+  embedded = false,
 }: ChatViewProps) {
   useKeyboardViewport();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -228,6 +230,7 @@ export function ChatView({
       className={[
         styles.page,
         layout === 'portal' ? styles.pagePortal : '',
+        embedded ? styles.pageEmbedded : '',
         fullscreen ? styles.pageFullscreen : '',
       ].filter(Boolean).join(' ')}
     >
