@@ -382,13 +382,50 @@ public class CompanyPortalService : ICompanyPortalService
         Guid companyId, Guid applicationId, CancellationToken cancellationToken = default)
     {
         var application = await _applicationRepository.GetByIdForCompanyAsync(applicationId, companyId, cancellationToken);
-        if (application?.UserProfile is null || string.IsNullOrWhiteSpace(application.UserProfile.ResumeUrl))
+
+        if (application is null)
+        {
+            _logger.LogWarning(
+                "Resume download 404: application not found or not owned by company. applicationId={ApplicationId} companyId={CompanyId} reason=application_not_found",
+                applicationId, companyId);
             return null;
+        }
 
-        var opened = await _resumeStorage.OpenReadAsync(application.UserProfile.ResumeUrl, cancellationToken);
-        if (opened is null) return null;
+        var profile = application.UserProfile;
+        if (profile is null)
+        {
+            _logger.LogWarning(
+                "Resume download 404: application has no UserProfile loaded. applicationId={ApplicationId} companyId={CompanyId} userProfileId={UserProfileId} reason=profile_null",
+                applicationId, companyId, application.UserProfileId);
+            return null;
+        }
 
-        var fileName = application.UserProfile.ResumeFileName ?? opened.Value.FileName;
+        _logger.LogInformation(
+            "Resume download attempt applicationId={ApplicationId} companyId={CompanyId} userProfileId={UserProfileId} status={Status} resumeUrl={ResumeUrl} resumeFileName={ResumeFileName} resumeUploadedAt={ResumeUploadedAt}",
+            applicationId, companyId, profile.Id, application.Status,
+            profile.ResumeUrl ?? "(null)", profile.ResumeFileName ?? "(null)", profile.ResumeUploadedAt);
+
+        if (string.IsNullOrWhiteSpace(profile.ResumeUrl))
+        {
+            _logger.LogWarning(
+                "Resume download 404: ResumeUrl is empty. applicationId={ApplicationId} userProfileId={UserProfileId} resumeFileName={ResumeFileName} reason=resume_url_empty",
+                applicationId, profile.Id, profile.ResumeFileName ?? "(null)");
+            return null;
+        }
+
+        var opened = await _resumeStorage.OpenReadAsync(profile.ResumeUrl, cancellationToken);
+        if (opened is null)
+        {
+            _logger.LogWarning(
+                "Resume download 404: stored file not found in resume storage. applicationId={ApplicationId} userProfileId={UserProfileId} resumeUrl={ResumeUrl} reason=file_missing_in_storage",
+                applicationId, profile.Id, profile.ResumeUrl);
+            return null;
+        }
+
+        var fileName = profile.ResumeFileName ?? opened.Value.FileName;
+        _logger.LogInformation(
+            "Resume download success applicationId={ApplicationId} userProfileId={UserProfileId} fileName={FileName}",
+            applicationId, profile.Id, fileName);
         return (opened.Value.Content, opened.Value.ContentType, fileName);
     }
 

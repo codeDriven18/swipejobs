@@ -2,6 +2,7 @@ import { IconChevronLeft } from '@/components/icons/Icons';
 import { useCallback, useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { portalApi } from '@/api/portalApi';
+import { ApiError } from '@/api/client';
 import { CandidateTrustBadge } from '@/components/portal/CandidateTrustBadge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { UserAvatar } from '@/components/profile/UserAvatar';
@@ -16,6 +17,26 @@ const PIPELINE_STATUSES = [
   ApplicationStatus.OfferSent,
   ApplicationStatus.Hired,
 ] as const;
+
+/** Surfaces the actual backend error so download failures are diagnosable. */
+function resolveResumeDownloadError(err: unknown): string {
+  if (err instanceof ApiError) {
+    let serverMessage: string | undefined;
+    if (typeof err.body === 'string') {
+      try {
+        serverMessage = (JSON.parse(err.body) as { error?: string }).error;
+      } catch {
+        serverMessage = err.body || undefined;
+      }
+    }
+    const detail = serverMessage ?? err.message;
+    return `Couldn't download resume (${err.status}): ${detail}`;
+  }
+  if (err instanceof Error && err.message) {
+    return `Couldn't download resume: ${err.message}`;
+  }
+  return 'Couldn\'t download resume. Please try again.';
+}
 
 export function CandidateProfilePage() {
   const { applicationId } = useParams<{ applicationId: string }>();
@@ -98,8 +119,8 @@ export function CandidateProfilePage() {
       anchor.download = applicant.resumeFileName ?? 'resume.pdf';
       anchor.click();
       URL.revokeObjectURL(url);
-    } catch {
-      setError('Failed to download resume.');
+    } catch (err) {
+      setError(resolveResumeDownloadError(err));
     } finally {
       setDownloading(false);
     }

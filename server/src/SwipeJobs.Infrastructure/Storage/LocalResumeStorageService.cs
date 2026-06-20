@@ -12,9 +12,41 @@ public class LocalResumeStorageService : IResumeStorageService
     public LocalResumeStorageService(IConfiguration configuration, ILogger<LocalResumeStorageService> logger)
     {
         _logger = logger;
-        _basePath = configuration["ResumeStorage:BasePath"]?.Trim()
-            ?? Path.Combine(AppContext.BaseDirectory, "App_Data", "resumes");
+        _basePath = ResolveBasePath(configuration["ResumeStorage:BasePath"]);
         Directory.CreateDirectory(_basePath);
+        _logger.LogInformation("Resume storage base path resolved to {BasePath}", _basePath);
+    }
+
+    /// <summary>
+    /// Resolves the storage root to an absolute, durable path.
+    /// A relative path resolves against the process working directory, which on Azure
+    /// App Service is ephemeral and wiped on restart/redeploy — the cause of resume 404s.
+    /// When no absolute path is configured we prefer the App Service persistent volume
+    /// (%HOME%, e.g. C:\home) so uploaded resumes survive deployments.
+    /// </summary>
+    private static string ResolveBasePath(string? configured)
+    {
+        var trimmed = configured?.Trim();
+        if (!string.IsNullOrWhiteSpace(trimmed))
+        {
+            // Allow %HOME%/$HOME style values to be set via configuration.
+            var expanded = Environment.ExpandEnvironmentVariables(trimmed);
+            if (Path.IsPathRooted(expanded))
+                return Path.GetFullPath(expanded);
+
+            // Relative path configured: anchor it to the persistent home dir if available.
+            var homeRoot = Environment.GetEnvironmentVariable("HOME");
+            return string.IsNullOrWhiteSpace(homeRoot)
+                ? Path.GetFullPath(expanded)
+                : Path.GetFullPath(Path.Combine(homeRoot, "site", "data", expanded));
+        }
+
+        // No configuration: use the App Service persistent volume when running on Azure.
+        var home = Environment.GetEnvironmentVariable("HOME");
+        if (!string.IsNullOrWhiteSpace(home))
+            return Path.GetFullPath(Path.Combine(home, "data", "resumes"));
+
+        return Path.Combine(AppContext.BaseDirectory, "App_Data", "resumes");
     }
 
     public async Task<string> SaveAsync(
@@ -52,11 +84,20 @@ public class LocalResumeStorageService : IResumeStorageService
         CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(storageKey) || storageKey.StartsWith("data:", StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogWarning(
+                "Resume storage open skipped: storageKey is empty or inline data. storageKey={StorageKey}", storageKey);
             return Task.FromResult<(Stream Content, string ContentType, string FileName)?>(null);
+        }
 
         var fullPath = GetFullPath(storageKey);
         if (!File.Exists(fullPath))
+        {
+            _logger.LogWarning(
+                "Resume storage open failed: file does not exist. storageKey={StorageKey} resolvedPath={ResolvedPath} basePath={BasePath}",
+                storageKey, fullPath, _basePath);
             return Task.FromResult<(Stream Content, string ContentType, string FileName)?>(null);
+        }
 
         var ext = Path.GetExtension(fullPath).ToLowerInvariant();
         var contentType = ext switch

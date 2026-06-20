@@ -87,7 +87,17 @@ public static class DependencyInjection
         services.AddScoped<IJobReportRepository, JobReportRepository>();
         services.AddScoped<ISourceIngestionLogRepository, SourceIngestionLogRepository>();
         services.AddScoped<IAuditLogService, Audit.AuditLogService>();
-        services.AddScoped<IResumeStorageService, Storage.LocalResumeStorageService>();
+
+        // Resume storage: prefer durable Azure Blob storage when a connection string is
+        // configured; otherwise fall back to local disk (dev / on-prem). Local storage on
+        // Azure App Service is ephemeral and loses files on redeploy — see ResolveBasePath.
+        var resumeBlobConnection = configuration["ResumeStorage:AzureBlobConnectionString"]
+            ?? configuration.GetConnectionString("ResumeBlobStorage");
+        if (!string.IsNullOrWhiteSpace(resumeBlobConnection))
+            services.AddScoped<IResumeStorageService, Storage.BlobResumeStorageService>();
+        else
+            services.AddScoped<IResumeStorageService, Storage.LocalResumeStorageService>();
+
         services.AddScoped<IMessageAttachmentStorage, LocalMessageAttachmentStorage>();
         services.AddScoped<IDataSeeder, DataSeeder>();
         services.AddScoped<ShowcaseJobSeeder>();
