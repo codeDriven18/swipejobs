@@ -1301,33 +1301,29 @@
   letter-spacing: -0.03em;
 }
 
-.themeToggle {
+.themeIconBtn {
   display: inline-flex;
-  padding: 0.2rem;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
   border-radius: 999px;
   border: 1px solid var(--ws-border);
   background: var(--ws-panel-muted);
-}
-
-.themeToggleBtn {
-  padding: 0.4rem 0.75rem;
-  border: none;
-  border-radius: 999px;
-  background: transparent;
-  font-family: inherit;
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--ws-muted);
-  cursor: pointer;
-}
-
-.themeToggleBtn:hover {
   color: var(--ws-ink);
+  cursor: pointer;
+  transition: background var(--duration-fast, 0.12s) var(--ease-out, ease),
+    border-color var(--duration-fast, 0.12s) var(--ease-out, ease),
+    color var(--duration-fast, 0.12s) var(--ease-out, ease);
 }
 
-.themeToggleBtnActive {
-  background: var(--ws-brand);
-  color: #0a0a0a;
+.themeIconBtn:hover {
+  border-color: color-mix(in srgb, var(--ws-brand) 45%, var(--ws-border));
+  background: var(--ws-nav-hover);
+}
+
+.themeIconBtn:active {
+  transform: scale(0.94);
 }
 
 .settingsWorkspace {
