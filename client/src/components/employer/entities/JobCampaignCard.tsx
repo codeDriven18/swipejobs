@@ -38,7 +38,7 @@ export function JobCampaignCard({ job, metrics, onEdit, onArchive, archiving, re
       </div>
       <div className={ui.campaignActions}>
         <Link to={`/portal/pipeline?jobId=${job.id}`} className={ui.btnPrimary}>Open pipeline</Link>
-        <Link to={`/portal/applications?jobId=${job.id}`} className={ui.btnGhost}>View candidates</Link>
+        <Link to={`/portal/pipeline?view=list&jobId=${job.id}`} className={ui.btnGhost}>View candidates</Link>
         {!readonly && onEdit && (
           <button type="button" className={ui.btnGhost} onClick={onEdit}>Edit</button>
         )}

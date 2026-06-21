@@ -8,6 +8,16 @@
   overflow: hidden;
 }
 
+.pipelineBoardEmbedded {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.pipelineBoardEmbedded .boardToolbar {
+  display: none;
+}
+
 .boardToolbar {
   display: flex;
   flex-wrap: wrap;

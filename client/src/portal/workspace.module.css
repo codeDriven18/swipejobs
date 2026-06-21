@@ -33,9 +33,34 @@
 
 .headerTitle {
   margin: 0;
-  font-size: 1.125rem;
+  font-size: 1.0625rem;
   font-weight: 700;
   letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.headerContext {
+  min-width: 0;
+  flex: 1;
+}
+
+.headerBreadcrumb {
+  margin: 0;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ws-muted);
+}
+
+.mainMobilePad {
+  padding-bottom: 5.5rem;
+}
+
+@media (min-width: 768px) {
+  .mainMobilePad {
+    padding-bottom: 1.25rem;
+  }
 }
 
 .main {
@@ -4304,5 +4329,240 @@
 @media (max-width: 899px) {
   .inboxActive .inboxList {
     display: none;
+  }
+}
+
+/* ── Today workspace ── */
+.todayShell {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  max-width: 52rem;
+}
+
+.todayHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.todayHeadline {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+}
+
+.todaySubline {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--ws-muted);
+  line-height: 1.5;
+}
+
+.todayClear {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1rem 1.125rem;
+  border-radius: var(--ws-radius);
+  border: 1px solid var(--ws-border);
+  background: var(--ws-surface);
+}
+
+.todaySectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.todayQueue {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pipelineToolbarMain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.pipelineToolbarMeta {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ws-muted);
+}
+
+.pipelineToolbarActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.pipelineJobFilter {
+  padding: 0.45rem 0.65rem;
+  border-radius: var(--ws-radius-sm);
+  border: 1px solid var(--ws-border);
+  background: var(--ws-surface);
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+.todaySection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+}
+
+.todaySectionTitle {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--ws-muted);
+}
+
+.todayEmpty {
+  margin: 0;
+  padding: 1rem 1.125rem;
+  border-radius: var(--ws-radius);
+  border: 1px dashed var(--ws-border);
+  color: var(--ws-muted);
+  font-size: 0.875rem;
+}
+
+.workRowAction {
+  flex-shrink: 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ws-accent);
+}
+
+/* ── Pipeline page ── */
+.pipelinePage {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 0;
+  flex: 1;
+}
+
+.pipelineToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.pipelineViewToggle {
+  display: inline-flex;
+  padding: 0.2rem;
+  border-radius: 999px;
+  border: 1px solid var(--ws-border);
+  background: var(--ws-surface);
+}
+
+.pipelineViewBtn {
+  padding: 0.4rem 0.85rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ws-muted);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.pipelineViewBtnActive {
+  background: var(--ws-accent);
+  color: #111;
+}
+
+.pipelineListShell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+.pipelineListToolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.pipelineListSearch {
+  flex: 1;
+  min-width: 12rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: var(--ws-radius-sm);
+  border: 1px solid var(--ws-border);
+  background: var(--ws-surface);
+  font: inherit;
+}
+
+.pipelineListSelect {
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--ws-radius-sm);
+  border: 1px solid var(--ws-border);
+  background: var(--ws-surface);
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+.pipelineListGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pipelineListEmpty {
+  margin: 0;
+  padding: 2rem 1rem;
+  text-align: center;
+  color: var(--ws-muted);
+  font-size: 0.9375rem;
+}
+
+.pipelineListFoot {
+  margin-top: 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+/* ── Loading shell ── */
+.loadingShell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  min-height: 40vh;
+  color: var(--ws-muted);
+}
+
+.loadingShellSpinner {
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 2px solid var(--ws-border);
+  border-top-color: var(--ws-accent);
+  border-radius: 50%;
+  animation: wsSpin 0.7s linear infinite;
+}
+
+@keyframes wsSpin {
+  to {
+    transform: rotate(360deg);
   }
 }

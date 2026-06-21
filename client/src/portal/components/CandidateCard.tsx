@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { UserAvatar } from '@/components/profile/UserAvatar';
 import { pipelineStageLabel } from '@/lib/employer/employerWorkspaceData';
+import { candidateProfilePath, type HiringOrigin } from '@/lib/employer/hiringNavigation';
 import { ApplicationStatusLabels } from '@/models/enums';
 import type { PortalApplication } from '@/models/portal';
 import { RecruiterMetaRow } from '@/portal/components/RecruiterMetaRow';
@@ -9,9 +10,11 @@ import ws from '@/portal/workspace.module.css';
 interface CandidateCardProps {
   application: PortalApplication;
   compact?: boolean;
+  profileFrom?: HiringOrigin;
+  jobId?: string;
 }
 
-export function CandidateCard({ application, compact = false }: CandidateCardProps) {
+export function CandidateCard({ application, compact = false, profileFrom = 'pipeline', jobId }: CandidateCardProps) {
   const parts = application.applicantName.trim().split(/\s+/);
   const applied = new Date(application.appliedAt).toLocaleDateString(undefined, {
     month: 'short',
@@ -48,13 +51,15 @@ export function CandidateCard({ application, compact = false }: CandidateCardPro
           <span className={ws.badgeMuted}>{pipelineStageLabel(application)}</span>
         </div>
       </div>
+      {!compact && (
       <div className={ws.candidateActions}>
-        <Link to={`/portal/applications/${application.id}`} className={ws.btnPrimary}>View profile</Link>
+        <Link to={candidateProfilePath(application.id, { from: profileFrom, jobId })} className={ws.btnPrimary}>View profile</Link>
         {application.unreadMessageCount > 0 && (
           <Link to="/portal/messages" className={ws.btnGhost}>Message</Link>
         )}
-        <Link to="/portal/pipeline" className={ws.btnGhost}>Pipeline</Link>
+        <Link to={jobId ? `/portal/pipeline?jobId=${jobId}` : '/portal/pipeline'} className={ws.btnGhost}>Pipeline</Link>
       </div>
+      )}
     </article>
   );
 }

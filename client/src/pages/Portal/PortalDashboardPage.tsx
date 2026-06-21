@@ -1,1 +1,1 @@
-export { CommandCenterPage as PortalDashboardPage } from '@/portal/pages/CommandCenterPage';
+export { TodayPage as PortalDashboardPage } from '@/portal/pages/TodayPage';

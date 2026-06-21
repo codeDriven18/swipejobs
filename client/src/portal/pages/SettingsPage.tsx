@@ -125,14 +125,6 @@ export function SettingsPage() {
 
   return (
     <PageFrame>
-      <header className={ws.settingsPageHeader}>
-        <div>
-          <p className={ws.homeEyebrow}>Workspace</p>
-          <h2 className={ws.settingsPageTitle}>Settings</h2>
-          <p className={ws.settingsPageLead}>Account, hiring preferences, and organization controls.</p>
-        </div>
-      </header>
-
       <div className={ws.settingsShell}>
         <aside className={ws.settingsAside}>
           <nav className={ws.settingsNav} aria-label="Settings sections">

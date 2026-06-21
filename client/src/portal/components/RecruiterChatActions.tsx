@@ -5,6 +5,7 @@ import { ApiError } from '@/api/client';
 import { ApplicationStatus, ApplicationStatusLabels } from '@/models/enums';
 import { InterviewScheduler } from '@/portal/components/InterviewScheduler';
 import { RejectCandidateDialog } from '@/portal/components/RejectCandidateDialog';
+import { candidateProfilePath } from '@/lib/employer/hiringNavigation';
 import ws from '@/portal/workspace.module.css';
 
 const NEXT_STAGE: Partial<Record<ApplicationStatus, ApplicationStatus>> = {
@@ -125,7 +126,7 @@ export function RecruiterChatActions({ applicationId, status, onChanged, variant
           </div>
         )}
 
-        <Link to={`/portal/applications/${applicationId}`} className={ws.recruiterActionsLink}>
+        <Link to={candidateProfilePath(applicationId, { from: 'inbox' })} className={ws.recruiterActionsLink}>
           View full profile
         </Link>
       </div>

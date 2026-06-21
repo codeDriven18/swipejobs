@@ -1,1 +1,1 @@
-export { CandidatesPage as PortalApplicationsPage } from '@/portal/pages/CandidatesPage';
+export { ApplicationsIndexRedirect as PortalApplicationsPage } from '@/portal/pages/ApplicationsIndexRedirect';

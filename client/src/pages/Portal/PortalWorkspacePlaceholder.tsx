@@ -15,7 +15,7 @@ export function PortalWorkspacePlaceholder({ title, subtitle, ctaLabel, ctaTo }:
       <EmployerPageHeader title={title} subtitle={subtitle} />
       <div className={ui.placeholderPanel}>
         <p className={ui.placeholderText}>
-          This workspace is being prepared. Core hiring workflows live in Dashboard, Pipeline, Candidates, and Messages.
+          This workspace is being prepared. Core hiring workflows live in Today, Pipeline, Inbox, and Roles.
         </p>
         {ctaLabel && ctaTo && <Link to={ctaTo} className={ui.btnPrimary}>{ctaLabel}</Link>}
       </div>

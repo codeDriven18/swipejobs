@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { UserAvatar } from '@/components/profile/UserAvatar';
 import ui from '@/components/employer/ui/employerUi.module.css';
+import { candidateProfilePath } from '@/lib/employer/hiringNavigation';
 import { pipelineStageLabel } from '@/lib/employer/employerWorkspaceData';
 import { ApplicationStatusLabels } from '@/models/enums';
 import type { PortalApplication } from '@/models/portal';
@@ -47,7 +48,7 @@ export function CandidateEntityCard({ application, compact = false }: CandidateE
         </div>
       </div>
       <div className={ui.candidateActions}>
-        <Link to={`/portal/applications/${application.id}`} className={ui.btnPrimary}>View profile</Link>
+        <Link to={candidateProfilePath(application.id, { from: 'list', jobId: application.jobId })} className={ui.btnPrimary}>View profile</Link>
         {application.unreadMessageCount > 0 && (
           <Link to="/portal/messages" className={ui.btnSecondary}>Message</Link>
         )}

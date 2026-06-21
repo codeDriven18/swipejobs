@@ -1,12 +1,19 @@
 import { Link } from 'react-router-dom';
 import { UserAvatar } from '@/components/profile/UserAvatar';
 import { pipelineStageLabel } from '@/lib/employer/employerWorkspaceData';
+import { candidateProfilePath, type HiringOrigin } from '@/lib/employer/hiringNavigation';
 import type { PortalApplication } from '@/models/portal';
 import type { ConversationSummary } from '@/models/messaging';
 import type { PortalJob } from '@/models/portal';
 import ws from '@/portal/workspace.module.css';
 
-export function ApplicantWorkRow({ application }: { application: PortalApplication }) {
+interface ApplicantWorkRowProps {
+  application: PortalApplication;
+  from?: HiringOrigin;
+  actionLabel?: string;
+}
+
+export function ApplicantWorkRow({ application, from, actionLabel = 'Review' }: ApplicantWorkRowProps) {
   const parts = application.applicantName.trim().split(/\s+/);
   const applied = new Date(application.appliedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   const interviewAt = application.interviewScheduledAtUtc
@@ -16,7 +23,10 @@ export function ApplicantWorkRow({ application }: { application: PortalApplicati
     : null;
 
   return (
-    <Link to={`/portal/applications/${application.id}`} className={ws.workRow}>
+    <Link
+      to={candidateProfilePath(application.id, { from, jobId: application.jobId })}
+      className={ws.workRow}
+    >
       <UserAvatar
         profile={{
           firstName: parts[0] ?? '',
@@ -32,18 +42,25 @@ export function ApplicantWorkRow({ application }: { application: PortalApplicati
           {interviewAt ? `${application.jobTitle} · Interview ${interviewAt}` : `${application.jobTitle} · Applied ${applied}`}
         </span>
       </div>
+      <span className={ws.workRowAction}>{actionLabel}</span>
       <span className={ws.badgeMuted}>{pipelineStageLabel(application)}</span>
     </Link>
   );
 }
 
-export function ConversationWorkRow({ conversation }: { conversation: ConversationSummary }) {
+interface ConversationWorkRowProps {
+  conversation: ConversationSummary;
+  actionLabel?: string;
+}
+
+export function ConversationWorkRow({ conversation, actionLabel = 'Reply' }: ConversationWorkRowProps) {
   return (
     <Link to={`/portal/messages/${conversation.id}`} className={ws.workRow}>
       <div className={ws.workRowBody}>
         <span className={ws.workRowTitle}>{conversation.candidateName}</span>
         <span className={ws.workRowMeta}>{conversation.jobTitle}</span>
       </div>
+      <span className={ws.workRowAction}>{actionLabel}</span>
       {conversation.unreadCount > 0 && <span className={ws.badge}>{conversation.unreadCount}</span>}
     </Link>
   );

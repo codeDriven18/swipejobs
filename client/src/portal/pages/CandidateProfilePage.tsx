@@ -1,6 +1,6 @@
 import { IconChevronLeft, IconChevronRight, IconFileText } from '@/components/icons/Icons';
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { portalApi } from '@/api/portalApi';
 import { ApiError } from '@/api/client';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -17,6 +17,7 @@ import {
   getApplicantCompleteness,
   getApplicantProofLinks,
 } from '@/lib/candidateProfileMeta';
+import { resolveBackNavigation } from '@/lib/employer/hiringNavigation';
 import ws from '@/portal/workspace.module.css';
 import { ApplicationStatus, ApplicationStatusLabels } from '@/models/enums';
 import type { PortalApplicantDetail } from '@/models/portalApplicant';
@@ -48,6 +49,8 @@ function resolveResumeDownloadError(err: unknown): string {
 
 export function CandidateProfilePage() {
   const { applicationId } = useParams<{ applicationId: string }>();
+  const [searchParams] = useSearchParams();
+  const backNav = resolveBackNavigation(searchParams.get('from'), searchParams.get('jobId'));
   const [applicant, setApplicant] = useState<PortalApplicantDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
@@ -161,7 +164,7 @@ export function CandidateProfilePage() {
           description={error ?? 'This application may have been removed.'}
           actions={[
             { label: 'Try again', onClick: () => void loadApplicant(), primary: true },
-            { label: 'Back to candidates', to: '/portal/applications' },
+            { label: `Back to ${backNav.label.toLowerCase()}`, to: backNav.to },
           ]}
         />
       </PageFrame>
@@ -179,8 +182,8 @@ export function CandidateProfilePage() {
 
   return (
     <PageFrame>
-      <Link to="/portal/applications" className={ws.backLink}>
-        <IconChevronLeft size={16} /> Candidates
+      <Link to={backNav.to} className={ws.backLink}>
+        <IconChevronLeft size={16} /> {backNav.label}
       </Link>
 
       <CandidateProfileHero

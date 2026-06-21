@@ -5,6 +5,7 @@ import { UserAvatar } from '@/components/profile/UserAvatar';
 import { ApplicationStatusLabels } from '@/models/enums';
 import type { PortalApplicantDetail } from '@/models/portalApplicant';
 import { RecruiterStarRating } from '@/portal/components/RecruiterStarRating';
+import { candidateProfilePath } from '@/lib/employer/hiringNavigation';
 import ws from '@/portal/workspace.module.css';
 
 interface ConversationContextPanelProps {
@@ -83,7 +84,7 @@ export function ConversationContextPanel({ applicationId, onUpdated }: Conversat
     return (
       <aside className={ws.msgContext} aria-label="Candidate context">
         <p className={ws.msgContextEmpty}>Could not load candidate details.</p>
-        <Link to={`/portal/applications/${applicationId}`} className={ws.btnGhost}>Open profile</Link>
+        <Link to={candidateProfilePath(applicationId, { from: 'inbox' })} className={ws.btnGhost}>Open profile</Link>
       </aside>
     );
   }
@@ -160,7 +161,7 @@ export function ConversationContextPanel({ applicationId, onUpdated }: Conversat
             {downloading ? 'Downloading…' : 'Download resume'}
           </button>
         )}
-        <Link to={`/portal/applications/${applicationId}`} className={ws.btnPrimary}>
+        <Link to={candidateProfilePath(applicationId, { from: 'inbox' })} className={ws.btnPrimary}>
           Full profile
         </Link>
       </div>

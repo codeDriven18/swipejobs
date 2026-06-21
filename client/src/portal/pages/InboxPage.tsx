@@ -81,14 +81,12 @@ export function InboxPage() {
       <div className={ws.inboxList}>
         <header className={ws.msgInboxHeader}>
           <div>
-            <p className={ws.homeEyebrow}>Inbox</p>
-            <h2 className={ws.msgInboxTitle}>Messages</h2>
             <p className={ws.msgInboxMeta}>
               {conversations.length} conversations
               {unreadCount > 0 && (
                 <>
                   {' · '}
-                  <span className={ws.msgInboxUnread}>{unreadCount} unread</span>
+                  <span className={ws.msgInboxUnread}>{unreadCount} need a reply</span>
                 </>
               )}
             </p>
@@ -192,8 +190,6 @@ export function InboxPage() {
 export function InboxEmptyPanel() {
   return (
     <div className={ws.inboxEmpty}>
-      <p className={ws.homeEyebrow}>Recruiter inbox</p>
-      <h2 className={ws.panelTitle}>Select a conversation</h2>
       <p className={ws.candidateSub}>
         Choose a candidate thread to read and reply. On desktop you can open a second chat in split view while you compare candidates.
       </p>

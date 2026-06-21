@@ -32,6 +32,8 @@ import type { PortalApplication } from '@/models/portal';
 
 import { RecruiterMetaRow } from '@/portal/components/RecruiterMetaRow';
 
+import { candidateProfilePath } from '@/lib/employer/hiringNavigation';
+
 import styles from './PipelineBoard.module.css';
 
 
@@ -49,6 +51,8 @@ interface PipelineCardProps {
   onDragEnd: () => void;
 
   onMove: (applicationId: string, targetStage: PipelineStage) => void;
+
+  jobId?: string;
 
 }
 
@@ -68,6 +72,8 @@ export const PipelineCard = memo(function PipelineCard({
 
   onMove,
 
+  jobId,
+
 }: PipelineCardProps) {
 
   const [menuOpen, setMenuOpen] = useState(false);
@@ -77,6 +83,8 @@ export const PipelineCard = memo(function PipelineCard({
   const attention = getPipelineCardAttention(application);
 
   const draggable = !application.isWithdrawn;
+
+  const profileTo = candidateProfilePath(application.id, { from: 'pipeline', jobId });
 
 
 
@@ -200,7 +208,7 @@ export const PipelineCard = memo(function PipelineCard({
 
             <h3 className={styles.cardName}>
 
-              <Link to={`/portal/applications/${application.id}`} className={styles.cardNameLink}>
+              <Link to={profileTo} className={styles.cardNameLink}>
 
                 {application.applicantName}
 
@@ -256,7 +264,7 @@ export const PipelineCard = memo(function PipelineCard({
 
               <Link
 
-                to={`/portal/applications/${application.id}`}
+                to={profileTo}
 
                 className={styles.menuItem}
 
@@ -292,7 +300,7 @@ export const PipelineCard = memo(function PipelineCard({
 
                 <Link
 
-                  to={`/portal/applications/${application.id}`}
+                  to={profileTo}
 
                   className={styles.menuItem}
 
@@ -468,6 +476,8 @@ interface PipelineColumnProps {
 
   onMove: (applicationId: string, targetStage: PipelineStage) => void;
 
+  jobId?: string;
+
 }
 
 
@@ -501,6 +511,8 @@ export const PipelineColumn = memo(function PipelineColumn({
   onDrop,
 
   onMove,
+
+  jobId,
 
 }: PipelineColumnProps) {
 
@@ -612,6 +624,8 @@ export const PipelineColumn = memo(function PipelineColumn({
 
               onMove={onMove}
 
+              jobId={jobId}
+
             />
 
           ))
@@ -692,15 +706,15 @@ export const EMPTY_COLUMN_ACTIONS: Record<PipelineStage, EmptyAction[]> = {
 
   [PipelineStage.Reviewing]: [
 
-    { label: 'Review applicants', to: '/portal/applications', primary: true },
+    { label: 'Review applicants', to: '/portal/pipeline?view=list', primary: true },
 
-    { label: 'Open command center', to: '/portal' },
+    { label: 'Open Today', to: '/portal' },
 
   ],
 
   [PipelineStage.Shortlisted]: [
 
-    { label: 'Review candidates', to: '/portal/applications', primary: true },
+    { label: 'Review candidates', to: '/portal/pipeline?view=list', primary: true },
 
     { label: 'Move from review', to: '/portal/pipeline' },
 
@@ -708,7 +722,7 @@ export const EMPTY_COLUMN_ACTIONS: Record<PipelineStage, EmptyAction[]> = {
 
   [PipelineStage.Interview]: [
 
-    { label: 'Invite to interview', to: '/portal/applications', primary: true },
+    { label: 'Invite to interview', to: '/portal/pipeline?view=list', primary: true },
 
     { label: 'Open inbox', to: '/portal/messages' },
 
@@ -724,7 +738,7 @@ export const EMPTY_COLUMN_ACTIONS: Record<PipelineStage, EmptyAction[]> = {
 
   [PipelineStage.Hired]: [
 
-    { label: 'Review hired candidates', to: '/portal/applications', primary: true },
+    { label: 'Review hired candidates', to: '/portal/pipeline?view=list', primary: true },
 
   ],
 

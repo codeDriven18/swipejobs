@@ -20,6 +20,7 @@ export function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: string } | null)?.from ?? '/';
+  const isEmployerLogin = from.startsWith('/portal');
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,9 +46,11 @@ export function LoginPage() {
     <section className={styles.page}>
       <div className={styles.hero}>
         <AppIcon size="lg" className={styles.logoIcon} />
-        <h1 className={styles.title}>Welcome back</h1>
+        <h1 className={styles.title}>{isEmployerLogin ? 'Sign in to hiring workspace' : 'Welcome back'}</h1>
         <p className={styles.subtitle}>
-          Pick up where you left off — your saved roles and applications are waiting.
+          {isEmployerLogin
+            ? 'Review candidates, reply to conversations, and move your pipeline forward.'
+            : 'Pick up where you left off — your saved roles and applications are waiting.'}
         </p>
       </div>
 
