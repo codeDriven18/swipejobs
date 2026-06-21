@@ -293,6 +293,10 @@
   color: var(--color-text-muted);
 }
 
+.companyProfileLink {
+  margin-top: 0.25rem;
+}
+
 .title {
   font-size: var(--text-card-title);
   font-weight: var(--weight-bold);

@@ -145,3 +145,7 @@
   font-size: var(--text-sm);
   font-weight: 600;
 }
+
+.companyProfileLink {
+  margin: 0.15rem 0 0.35rem;
+}

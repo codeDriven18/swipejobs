@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import type { Job } from '@/models/job';
 import { CompanyLogo } from '@/components/jobs/CompanyLogo';
+import { ViewCompanyProfileButton } from '@/components/jobs/ViewCompanyProfileButton';
 import styles from './CompanyIdentityStrip.module.css';
 
 interface CompanyIdentityStripProps {
@@ -47,6 +48,9 @@ export function CompanyIdentityStrip({ job, variant = 'compact', onDark = false 
             </a>
           )}
         </div>
+      )}
+      {job.companySlug && (
+        <ViewCompanyProfileButton slug={job.companySlug} variant="ghost" className={styles.profileBtn} />
       )}
     </div>
   );

@@ -11,6 +11,7 @@ import { isMessagingUnlocked } from '@/lib/messagingHelpers';
 import { getJobCardPreview } from '@/lib/jobPreview';
 import { getWorkType } from '@/lib/jobCardMeta';
 import { resolveJobImage } from '@/lib/resolveJobImage';
+import { ViewCompanyProfileButton } from '@/components/jobs/ViewCompanyProfileButton';
 import styles from './ApplicationCard.module.css';
 
 interface ApplicationCardProps {
@@ -89,6 +90,7 @@ export function ApplicationCard({
       <div className={styles.body}>
         <h3 className={styles.title}>{preview.title}</h3>
         <p className={styles.company}>{preview.company}</p>
+        <ViewCompanyProfileButton slug={job.companySlug} variant="inline" className={styles.companyProfileLink} />
         <p className={styles.salary}>{preview.salary}</p>
         <p className={styles.location}>{locationLine}</p>
         <p className={styles.appliedDate}>Applied {formatAppliedDate(application.appliedAt)}</p>

@@ -3,7 +3,7 @@
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  border-radius: var(--radius-lg);
+  border-radius: 50%;
   background: var(--color-surface);
   box-shadow: var(--shadow-sm);
   overflow: hidden;
@@ -11,7 +11,7 @@
 }
 
 .frame.xl {
-  border-radius: var(--radius-xl);
+  border-radius: 50%;
   box-shadow: var(--shadow-md);
   padding: 2px;
   background: linear-gradient(
@@ -45,5 +45,4 @@
 .xl {
   width: 4.75rem;
   height: 4.75rem;
-  border-radius: var(--radius-xl);
 }

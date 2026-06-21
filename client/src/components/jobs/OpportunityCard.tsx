@@ -12,6 +12,7 @@ import { resolveJobImage } from '@/lib/resolveJobImage';
 import { JobHeroImage } from '@/components/jobs/JobHeroImage';
 import { SourceBadge } from '@/components/jobs/SourceBadge';
 import { CompanyIdentityStrip } from '@/components/jobs/CompanyIdentityStrip';
+import { ViewCompanyProfileButton } from '@/components/jobs/ViewCompanyProfileButton';
 import { CompanyLogo } from '@/components/jobs/CompanyLogo';
 import { JobShareMenu } from '@/components/jobs/JobShareMenu';
 import { IconBookmark, IconMapPin } from '@/components/icons/Icons';
@@ -152,6 +153,9 @@ export function OpportunityCard({
         <div className={styles.body}>
           <h3 className={styles.title}>{preview.title}</h3>
           <p className={styles.companyLine}>{preview.company}</p>
+          {job.companySlug && (
+            <ViewCompanyProfileButton slug={job.companySlug} variant="inline" className={styles.companyProfileLink} />
+          )}
 
           <div className={styles.pills}>
             <span className={styles.pillAccent}>{preview.salary}</span>

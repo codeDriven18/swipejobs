@@ -56,6 +56,10 @@
   text-decoration: none;
 }
 
+.profileBtn {
+  margin-top: 0.65rem;
+}
+
 .onDark .name {
   color: #fff;
 }

@@ -84,6 +84,14 @@
   color: var(--color-text);
 }
 
+.companyProfileBtn {
+  margin-top: 0.5rem;
+}
+
+.companyProfileBtnBlock {
+  margin-top: 1rem;
+}
+
 .heroLocation {
   font-size: var(--text-secondary);
   font-weight: var(--weight-normal);

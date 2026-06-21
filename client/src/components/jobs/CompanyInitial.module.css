@@ -2,7 +2,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-md);
+  border-radius: 50%;
   font-weight: var(--weight-extrabold);
   letter-spacing: var(--tracking-tight);
   flex-shrink: 0;
@@ -31,13 +31,11 @@
   width: 4rem;
   height: 4rem;
   font-size: var(--text-xl);
-  border-radius: var(--radius-lg);
 }
 
 .xl {
   width: 4.75rem;
   height: 4.75rem;
   font-size: var(--text-2xl);
-  border-radius: var(--radius-xl);
   box-shadow: var(--shadow-sm);
 }

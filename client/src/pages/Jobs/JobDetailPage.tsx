@@ -24,6 +24,7 @@ import {
   getLatestApplicationForJob,
 } from '@/lib/applicationHelpers';
 import { CompanyLink } from '@/components/jobs/CompanyLink';
+import { ViewCompanyProfileButton } from '@/components/jobs/ViewCompanyProfileButton';
 import { Button } from '@/components/ui/Button';
 import { JobDetailSkeleton } from '@/components/ui/Skeleton';
 import { ContactLinkText } from '@/components/ui/ContactLinkText';
@@ -222,6 +223,7 @@ export function JobDetailPage() {
           <div className={styles.heroText}>
             <h1 className={styles.title}>{cardPreview?.title ?? job.title}</h1>
             <CompanyLink name={job.company} slug={job.companySlug} className={styles.companyLink} />
+            <ViewCompanyProfileButton slug={job.companySlug} variant="ghost" className={styles.companyProfileBtn} />
             <p className={styles.heroLocation}>
               {cardPreview?.location ?? (job.city ?? job.location ?? 'Flexible')} · {getWorkType(job)}
             </p>
@@ -265,14 +267,18 @@ export function JobDetailPage() {
         </div>
       )}
 
-      {job.companyDescription && (
+      {(job.companyDescription || job.companySlug) && (
         <article className={styles.section}>
           <h2 className={styles.sectionTitle}>About the company</h2>
-          <ContactLinkText
-            text={job.companyDescription}
-            className={`${styles.sectionText} copyable-content`}
-            as="p"
-          />
+          {job.companyDescription ? (
+            <ContactLinkText
+              text={job.companyDescription}
+              className={`${styles.sectionText} copyable-content`}
+              as="p"
+            />
+          ) : (
+            <p className={styles.sectionText}>Learn more about {job.company} and their open opportunities.</p>
+          )}
           {(job.companyWebsite || job.companyLinkedInUrl) && (
             <div className={styles.companyLinks}>
               {job.companyWebsite && (
@@ -287,6 +293,7 @@ export function JobDetailPage() {
               )}
             </div>
           )}
+          <ViewCompanyProfileButton slug={job.companySlug} variant="primary" className={styles.companyProfileBtnBlock} />
         </article>
       )}
 

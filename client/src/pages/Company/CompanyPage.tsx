@@ -1,28 +1,37 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   IconBuilding,
   IconCheck,
   IconChevronLeft,
-  IconChevronRight,
   IconHeart,
-  IconList,
   IconMapPin,
   IconSpark,
-  IconUser,
 } from '@/components/icons/Icons';
 import { companiesApi } from '@/api/companiesApi';
 import { companyFollowsApi } from '@/api/companyFollowsApi';
 import { jobsApi } from '@/api/jobsApi';
-import { JobCard } from '@/components/jobs/JobCard';
+import { OpportunityCard } from '@/components/jobs/OpportunityCard';
 import { CompanyAvatar } from '@/components/profile/CompanyAvatar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useAuth } from '@/context/AuthContext';
 import { useActivityTracking } from '@/hooks/useActivityTracking';
+import { resolveMediaUrl } from '@/lib/mediaUrl';
+import { LandingBackground } from '@/pages/Marketing/landing/LandingBackground';
+import { CompanyStatus } from '@/models/operations';
 import type { Company } from '@/models/company';
 import type { Job } from '@/models/job';
 import styles from './CompanyPage.module.css';
+
+const HIRING_STEPS = ['Apply', 'Review', 'Interview', 'Offer', 'Welcome'] as const;
+
+const sectionMotion = {
+  initial: { opacity: 0, y: 20 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: '-60px' },
+  transition: { duration: 0.45, ease: [0.22, 1, 0.36, 1] as const },
+};
 
 function splitContentLines(text: string): string[] {
   return text
@@ -31,35 +40,24 @@ function splitContentLines(text: string): string[] {
     .filter(Boolean);
 }
 
-function ContentSection({
-  icon,
-  title,
-  content,
-  asList = false,
-}: {
-  icon: ReactNode;
-  title: string;
-  content: string;
-  asList?: boolean;
-}) {
-  const lines = splitContentLines(content);
+function firstSentence(text: string): string {
+  const trimmed = text.trim();
+  if (!trimmed) return '';
+  const match = trimmed.match(/^[^.!?]+[.!?]?/);
+  return match?.[0]?.trim() ?? trimmed.slice(0, 120);
+}
 
+function ValueCard({ icon, title, lines }: { icon: ReactNode; title: string; lines: string[] }) {
   return (
-    <section className={styles.section}>
-      <div className={styles.sectionHead}>
-        <span className={styles.sectionIcon} aria-hidden>{icon}</span>
-        <h2 className={styles.sectionTitle}>{title}</h2>
-      </div>
-      {asList && lines.length > 1 ? (
-        <ul className={styles.bulletList}>
-          {lines.map((line) => (
-            <li key={line}>{line}</li>
-          ))}
-        </ul>
-      ) : (
-        <p className={styles.sectionBody}>{content}</p>
-      )}
-    </section>
+    <article className={styles.valueCard}>
+      <span className={styles.valueIcon} aria-hidden>{icon}</span>
+      <h3 className={styles.valueTitle}>{title}</h3>
+      <ul className={styles.valueList}>
+        {lines.map((line) => (
+          <li key={line}>{line}</li>
+        ))}
+      </ul>
+    </article>
   );
 }
 
@@ -74,6 +72,8 @@ export function CompanyPage() {
   const [followLoading, setFollowLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [locationFilter, setLocationFilter] = useState('');
+  const [deptFilter, setDeptFilter] = useState('');
 
   useEffect(() => {
     if (!slug) return;
@@ -82,7 +82,7 @@ export function CompanyPage() {
 
     Promise.all([
       companiesApi.getBySlug(slug),
-      jobsApi.search({ companySlug: slug, pageSize: 20, sortBy: 'createdAt', sortOrder: 'desc' }),
+      jobsApi.search({ companySlug: slug, pageSize: 40, sortBy: 'createdAt', sortOrder: 'desc' }),
     ])
       .then(([c, result]) => {
         setCompany(c);
@@ -97,6 +97,39 @@ export function CompanyPage() {
       .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [slug, isAuthenticated, trackCompanyView]);
+
+  const locations = useMemo(() => {
+    const set = new Set<string>();
+    jobs.forEach((j) => {
+      const loc = j.city ?? j.location;
+      if (loc) set.add(loc);
+    });
+    return [...set].sort();
+  }, [jobs]);
+
+  const departments = useMemo(() => {
+    const set = new Set<string>();
+    jobs.forEach((j) => {
+      if (j.category) set.add(String(j.category));
+    });
+    return [...set].sort();
+  }, [jobs]);
+
+  const filteredJobs = useMemo(() => jobs.filter((j) => {
+    if (locationFilter && (j.city ?? j.location) !== locationFilter) return false;
+    if (deptFilter && String(j.category) !== deptFilter) return false;
+    return true;
+  }), [jobs, locationFilter, deptFilter]);
+
+  const galleryImages = useMemo(() => {
+    if (!company) return [];
+    const items: { src: string; label: string }[] = [];
+    const banner = resolveMediaUrl(company.bannerUrl);
+    const logo = resolveMediaUrl(company.logoUrl);
+    if (banner) items.push({ src: banner, label: 'Office / brand cover' });
+    if (logo) items.push({ src: logo, label: `${company.name} logo` });
+    return items;
+  }, [company]);
 
   const toggleFollow = async () => {
     if (!isAuthenticated || !company) {
@@ -123,256 +156,261 @@ export function CompanyPage() {
 
   if (loading) {
     return (
-      <div className={styles.loadingShell} aria-busy="true" aria-label="Loading company">
-        <div className={styles.loadingCover} />
-        <div className={styles.loadingCard} />
-        <div className={styles.loadingBlock} />
-        <div className={styles.loadingBlock} />
+      <div className={styles.careersSite} aria-busy="true" aria-label="Loading company">
+        <LandingBackground />
+        <div className={styles.loadingShell}>
+          <div className={styles.loadingHero} />
+          <div className={styles.loadingBlock} />
+          <div className={styles.loadingBlock} />
+        </div>
       </div>
     );
   }
 
   if (error || !company) {
     return (
-      <section className={styles.page}>
-        <p className={styles.error}>Company not found.</p>
-        <EmptyState
-          icon={<IconBuilding size={28} />}
-          title="Unknown company"
-          description="This company page doesn't exist or was removed."
-          actions={[{ label: 'Browse jobs', to: '/jobs', primary: true }]}
-        />
-      </section>
+      <div className={styles.careersSite}>
+        <LandingBackground />
+        <div className={styles.pageInner}>
+          <EmptyState
+            icon={<IconBuilding size={28} />}
+            title="Company not found"
+            description="This careers page doesn't exist or was removed."
+            actions={[{ label: 'Browse jobs', to: '/jobs', primary: true }]}
+          />
+        </div>
+      </div>
     );
   }
 
-  const bannerStyle = company.bannerUrl
-    ? {
-        backgroundImage: `url(${company.bannerUrl})`,
-        backgroundSize: 'cover' as const,
-        backgroundPosition: 'center' as const,
-      }
-    : undefined;
-
-  const hasSocial = company.website || company.linkedInUrl || company.twitterUrl || company.instagramUrl;
-  const followButton = (
-    <button
-      type="button"
-      className={following ? styles.followBtnActive : styles.followBtn}
-      disabled={followLoading}
-      onClick={() => void toggleFollow()}
-    >
-      {following ? (
-        <>
-          <IconCheck size={16} /> Following
-        </>
-      ) : (
-        '+ Follow company'
-      )}
-    </button>
-  );
+  const bannerUrl = resolveMediaUrl(company.bannerUrl);
+  const tagline = firstSentence(company.description) || company.industry;
+  const isVerified = company.status === CompanyStatus.Approved;
+  const cultureLines = splitContentLines(company.culture ?? '');
+  const benefitLines = splitContentLines(company.benefits ?? '');
 
   return (
-    <motion.section
-      className={styles.page}
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, ease: [0.4, 0, 0.2, 1] }}
-    >
-      <button type="button" className={styles.back} onClick={() => navigate(-1)}>
-        <IconChevronLeft size={18} /> Back
-      </button>
+    <div className={styles.careersSite}>
+      <LandingBackground />
 
-      <header className={styles.showcase}>
-        <div className={styles.coverWrap}>
-          <div className={styles.cover} style={bannerStyle} aria-hidden />
-          <div className={styles.coverScrim} aria-hidden />
-          {!company.bannerUrl && (
-            <div className={styles.coverPlaceholder} aria-hidden>
-              <span>Employer brand</span>
-            </div>
-          )}
-        </div>
+      <div className={styles.pageInner}>
+        <button type="button" className={styles.back} onClick={() => navigate(-1)}>
+          <IconChevronLeft size={18} /> Back
+        </button>
 
-        <div className={styles.identityCard}>
-          <div className={styles.identityRow}>
-            <CompanyAvatar company={company} size="lg" className={styles.logo} />
-            <div className={styles.identityText}>
-              {company.industry && <p className={styles.eyebrow}>{company.industry}</p>}
-              <h1 className={styles.heroTitle}>{company.name}</h1>
-              {company.location && (
-                <p className={styles.heroTagline}>
-                  <IconMapPin size={15} /> {company.location}
-                </p>
-              )}
-            </div>
-            <div className={styles.heroActions}>{followButton}</div>
-          </div>
-
-          <div className={styles.statStrip}>
-            <div className={styles.statCard}>
-              <span className={styles.statLabel}>Location</span>
-              <span className={styles.statValue}>{company.location || 'Remote / TBD'}</span>
-            </div>
-            <div className={styles.statCard}>
-              <span className={styles.statLabel}>Team size</span>
-              <span className={styles.statValue}>{company.companySize || 'Growing team'}</span>
-            </div>
-            <div className={styles.statCard}>
-              <span className={styles.statLabel}>Open roles</span>
-              <span className={`${styles.statValue} ${styles.statValueAccent}`}>
-                {company.openJobsCount}
-              </span>
-            </div>
-          </div>
-
-          <div className={styles.followBtnMobileWrap}>
-            <div className={styles.followBtnMobile}>{followButton}</div>
-          </div>
-        </div>
-      </header>
-
-      <div className={styles.contentGrid}>
-        <main className={styles.main}>
-          <ContentSection
-            icon={<IconBuilding size={16} />}
-            title={`About ${company.name}`}
-            content={company.description || 'This company has not added a description yet.'}
+        {/* Hero */}
+        <header className={styles.hero}>
+          <div
+            className={styles.heroMedia}
+            style={bannerUrl ? { backgroundImage: `url("${bannerUrl}")` } : undefined}
+            aria-hidden
           />
+          <div className={styles.heroGradientTop} aria-hidden />
+          <div className={styles.heroGradientBottom} aria-hidden />
+        </header>
 
-          {company.culture?.trim() && (
-            <ContentSection
-              icon={<IconHeart size={16} />}
-              title="Culture"
-              content={company.culture}
-              asList
-            />
-          )}
-
-          {company.benefits?.trim() && (
-            <ContentSection
-              icon={<IconSpark size={16} />}
-              title="Benefits & perks"
-              content={company.benefits}
-              asList
-            />
-          )}
-
-          {company.hiringPhilosophy?.trim() && (
-            <ContentSection
-              icon={<IconUser size={16} />}
-              title="How we hire"
-              content={company.hiringPhilosophy}
-            />
-          )}
-
-          <section className={styles.jobsSection} id="open-roles">
-            <div className={styles.jobsHeader}>
-              <h2 className={styles.jobsTitle}>Open roles</h2>
-              <span className={styles.jobsCount}>
-                {jobs.length} listing{jobs.length !== 1 ? 's' : ''}
-              </span>
-            </div>
-
-            {jobs.length === 0 ? (
-              <EmptyState
-                icon={<IconList size={28} />}
-                title="No open jobs"
-                description="This company has no active listings right now. Check back later."
-                actions={[{ label: 'Browse all jobs', to: '/jobs', primary: true }]}
-              />
-            ) : (
-              <div className={styles.jobList}>
-                {jobs.map((job, index) => (
-                  <JobCard
-                    key={job.id}
-                    job={job}
-                    index={index}
-                    onClick={() => navigate(`/jobs/${job.id}`)}
-                  />
-                ))}
+        <motion.div
+          className={styles.heroContent}
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        >
+          <div className={styles.heroIdentity}>
+            <CompanyAvatar company={company} size="lg" circular className={styles.heroLogo} />
+            <div className={styles.heroCopy}>
+              <div className={styles.heroBadges}>
+                {company.industry && <span className={styles.heroBadge}>{company.industry}</span>}
+                {isVerified && (
+                  <span className={styles.heroBadgeVerified}>
+                    <IconCheck size={14} /> Verified employer
+                  </span>
+                )}
               </div>
-            )}
-          </section>
-        </main>
+              <h1 className={styles.heroTitle}>{company.name}</h1>
+              {tagline && <p className={styles.heroTagline}>{tagline}</p>}
+              <div className={styles.heroMeta}>
+                {company.location && (
+                  <span><IconMapPin size={15} /> {company.location}</span>
+                )}
+                {company.companySize && <span>{company.companySize} employees</span>}
+                <span className={styles.heroMetaAccent}>
+                  {company.openJobsCount} open {company.openJobsCount === 1 ? 'role' : 'roles'}
+                </span>
+              </div>
+            </div>
+          </div>
 
-        <aside className={styles.sidebar}>
-          <div className={styles.ctaCard}>
-            <h3 className={styles.ctaCardTitle}>Join the team</h3>
-            <p className={styles.ctaCardBody}>
-              Explore opportunities at {company.name} and find a role that fits your goals.
-            </p>
-            <span className={styles.ctaCardCount}>{company.openJobsCount}</span>
-            <button type="button" className={styles.ctaBrowse} onClick={scrollToJobs}>
+          <div className={styles.heroActions}>
+            <button type="button" className={styles.btnPrimary} onClick={scrollToJobs}>
               View open roles
             </button>
+            {company.website && (
+              <a
+                href={company.website}
+                className={styles.btnSecondary}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Visit website
+              </a>
+            )}
+            <button
+              type="button"
+              className={following ? styles.btnFollowActive : styles.btnFollow}
+              disabled={followLoading}
+              onClick={() => void toggleFollow()}
+            >
+              {following ? 'Following' : 'Follow company'}
+            </button>
+          </div>
+        </motion.div>
+
+        {/* About */}
+        <motion.section className={styles.section} {...sectionMotion}>
+          <p className={styles.sectionEyebrow}>About us</p>
+          <h2 className={styles.sectionTitle}>Building the future at {company.name}</h2>
+          <p className={styles.aboutBody}>{company.description || 'This company is preparing their story.'}</p>
+        </motion.section>
+
+        {/* Culture & Benefits */}
+        {(cultureLines.length > 0 || benefitLines.length > 0) && (
+          <motion.section className={styles.section} {...sectionMotion}>
+            <p className={styles.sectionEyebrow}>Life here</p>
+            <h2 className={styles.sectionTitle}>Culture & benefits</h2>
+            <div className={styles.valueGrid}>
+              {cultureLines.length > 0 && (
+                <ValueCard icon={<IconHeart size={18} />} title="Our culture" lines={cultureLines} />
+              )}
+              {benefitLines.length > 0 && (
+                <ValueCard icon={<IconSpark size={18} />} title="Benefits & perks" lines={benefitLines} />
+              )}
+            </div>
+          </motion.section>
+        )}
+
+        {/* Hiring process */}
+        <motion.section className={styles.section} {...sectionMotion}>
+          <p className={styles.sectionEyebrow}>How we hire</p>
+          <h2 className={styles.sectionTitle}>Your path to joining the team</h2>
+          {company.hiringPhilosophy?.trim() && (
+            <p className={styles.processLead}>{company.hiringPhilosophy}</p>
+          )}
+          <ol className={styles.processSteps}>
+            {HIRING_STEPS.map((step, index) => (
+              <li key={step} className={styles.processStep}>
+                <span className={styles.processNum}>{index + 1}</span>
+                <span className={styles.processLabel}>{step}</span>
+              </li>
+            ))}
+          </ol>
+        </motion.section>
+
+        {/* Gallery */}
+        {galleryImages.length > 1 && (
+          <motion.section className={styles.section} {...sectionMotion}>
+            <p className={styles.sectionEyebrow}>Inside {company.name}</p>
+            <h2 className={styles.sectionTitle}>Company gallery</h2>
+            <div className={styles.gallery}>
+              {galleryImages.map((item) => (
+                <figure key={item.label} className={styles.galleryItem}>
+                  <img src={item.src} alt={item.label} className={styles.galleryImg} loading="lazy" />
+                </figure>
+              ))}
+            </div>
+          </motion.section>
+        )}
+
+        {/* Open roles */}
+        <motion.section className={styles.section} id="open-roles" {...sectionMotion}>
+          <div className={styles.rolesHead}>
+            <div>
+              <p className={styles.sectionEyebrow}>Careers</p>
+              <h2 className={styles.sectionTitle}>Open roles</h2>
+            </div>
+            <span className={styles.rolesCount}>{filteredJobs.length} positions</span>
           </div>
 
-          <div className={styles.sidebarCard}>
-            <h3 className={styles.sidebarTitle}>Company at a glance</h3>
-            <ul className={styles.infoList}>
-              <li className={styles.infoItem}>
-                <span className={styles.infoLabel}>Industry</span>
-                <span className={styles.infoValue}>{company.industry || '—'}</span>
-              </li>
-              <li className={styles.infoItem}>
-                <span className={styles.infoLabel}>Headquarters</span>
-                <span className={styles.infoValue}>{company.location || '—'}</span>
-              </li>
-              <li className={styles.infoItem}>
-                <span className={styles.infoLabel}>Company size</span>
-                <span className={styles.infoValue}>{company.companySize || '—'}</span>
-              </li>
-              <li className={styles.infoItem}>
-                <span className={styles.infoLabel}>Active listings</span>
-                <span className={styles.infoValue}>{company.openJobsCount}</span>
-              </li>
-            </ul>
-          </div>
-
-          {hasSocial && (
-            <div className={styles.sidebarCard}>
-              <h3 className={styles.sidebarTitle}>Connect</h3>
-              <div className={styles.socialList}>
-                {company.website && (
-                  <a href={company.website} className={styles.socialLink} target="_blank" rel="noopener noreferrer">
-                    Website <IconChevronRight size={16} />
-                  </a>
-                )}
-                {company.linkedInUrl && (
-                  <a href={company.linkedInUrl} className={styles.socialLink} target="_blank" rel="noopener noreferrer">
-                    LinkedIn <IconChevronRight size={16} />
-                  </a>
-                )}
-                {company.twitterUrl && (
-                  <a href={company.twitterUrl} className={styles.socialLink} target="_blank" rel="noopener noreferrer">
-                    X / Twitter <IconChevronRight size={16} />
-                  </a>
-                )}
-                {company.instagramUrl && (
-                  <a href={company.instagramUrl} className={styles.socialLink} target="_blank" rel="noopener noreferrer">
-                    Instagram <IconChevronRight size={16} />
-                  </a>
-                )}
-              </div>
+          {(locations.length > 1 || departments.length > 1) && (
+            <div className={styles.filters}>
+              {locations.length > 1 && (
+                <select
+                  className={styles.filterSelect}
+                  value={locationFilter}
+                  onChange={(e) => setLocationFilter(e.target.value)}
+                  aria-label="Filter by location"
+                >
+                  <option value="">All locations</option>
+                  {locations.map((loc) => (
+                    <option key={loc} value={loc}>{loc}</option>
+                  ))}
+                </select>
+              )}
+              {departments.length > 1 && (
+                <select
+                  className={styles.filterSelect}
+                  value={deptFilter}
+                  onChange={(e) => setDeptFilter(e.target.value)}
+                  aria-label="Filter by department"
+                >
+                  <option value="">All departments</option>
+                  {departments.map((dept) => (
+                    <option key={dept} value={dept}>{dept}</option>
+                  ))}
+                </select>
+              )}
             </div>
           )}
 
-          {(company.culture?.trim() || company.benefits?.trim()) && (
-            <div className={styles.sidebarCard}>
-              <h3 className={styles.sidebarTitle}>Why candidates choose us</h3>
-              <ul className={styles.bulletList}>
-                {company.culture?.trim() && splitContentLines(company.culture).slice(0, 2).map((line) => (
-                  <li key={`culture-${line}`}>{line}</li>
-                ))}
-                {company.benefits?.trim() && splitContentLines(company.benefits).slice(0, 2).map((line) => (
-                  <li key={`benefit-${line}`}>{line}</li>
-                ))}
-              </ul>
+          {filteredJobs.length === 0 ? (
+            <EmptyState
+              icon={<IconBuilding size={28} />}
+              title="No open roles right now"
+              description="Check back soon — new opportunities are added regularly."
+              actions={[{ label: 'Browse all jobs', to: '/jobs', primary: true }]}
+            />
+          ) : (
+            <div className={styles.roleGrid}>
+              {filteredJobs.map((job) => (
+                <div key={job.id} className={styles.roleCardWrap}>
+                  <OpportunityCard
+                    job={job}
+                    variant="discover"
+                    interactive={false}
+                    footerExtra={(
+                      <button
+                        type="button"
+                        className={styles.roleCta}
+                        onClick={() => navigate(`/jobs/${job.id}`)}
+                      >
+                        View role
+                      </button>
+                    )}
+                  />
+                </div>
+              ))}
             </div>
           )}
-        </aside>
+        </motion.section>
+
+        {/* Footer CTA */}
+        <motion.section className={styles.footerCta} {...sectionMotion}>
+          <div className={styles.footerCtaGlow} aria-hidden />
+          <h2 className={styles.footerCtaTitle}>Don&apos;t see the right role?</h2>
+          <p className={styles.footerCtaBody}>
+            We&apos;d still love to hear from you. Follow {company.name} to get notified when new opportunities open.
+          </p>
+          <div className={styles.footerCtaActions}>
+            <button type="button" className={styles.btnPrimary} onClick={() => void toggleFollow()}>
+              {following ? 'Following' : 'Follow for updates'}
+            </button>
+            {company.linkedInUrl && (
+              <a href={company.linkedInUrl} className={styles.btnSecondary} target="_blank" rel="noopener noreferrer">
+                Connect on LinkedIn
+              </a>
+            )}
+          </div>
+        </motion.section>
       </div>
-    </motion.section>
+    </div>
   );
 }

@@ -185,7 +185,7 @@ export function CompanyPage() {
       meta="Build your employer brand — candidates see this before they apply."
       actions={(
         <>
-          <a href={`/companies/${company.slug}`} className={ws.btnGhost} target="_blank" rel="noopener noreferrer">Preview public page</a>
+          <a href={`/companies/${company.slug}`} className={ws.btnGhost} target="_blank" rel="noopener noreferrer">Preview live page</a>
           {editing ? (
             <>
               <button type="button" className={ws.btnGhost} onClick={() => { resetForm(); setEditing(false); }}>Cancel</button>
