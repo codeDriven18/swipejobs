@@ -37,6 +37,8 @@ public class ApplicationRepository : Repository<ApplicationEntity>, IApplication
             .AsNoTracking()
             .Include(a => a.Job)
             .Include(a => a.UserProfile)
+            .Include(a => a.RecruiterTags)
+                .ThenInclude(t => t.Tag)
             .Where(a => a.Job!.CompanyId == companyId);
 
         if (jobId.HasValue)
@@ -56,9 +58,21 @@ public class ApplicationRepository : Repository<ApplicationEntity>, IApplication
                 .ThenInclude(p => p!.Skills)
             .Include(a => a.UserProfile)
                 .ThenInclude(p => p!.Experiences)
+            .Include(a => a.RecruiterTags)
+                .ThenInclude(t => t.Tag)
+            .Include(a => a.RecruiterNotes)
             .FirstOrDefaultAsync(
                 a => a.Id == applicationId && a.Job!.CompanyId == companyId,
                 cancellationToken);
+
+    public async Task<ApplicationEntity?> GetByIdWithRecruiterDataAsync(
+        Guid applicationId, CancellationToken cancellationToken = default)
+        => await DbSet
+            .Include(a => a.Job)
+            .Include(a => a.RecruiterTags)
+                .ThenInclude(t => t.Tag)
+            .Include(a => a.RecruiterNotes)
+            .FirstOrDefaultAsync(a => a.Id == applicationId, cancellationToken);
 
     public Task<int> CountAsync(CancellationToken cancellationToken = default)
         => DbSet.CountAsync(cancellationToken);

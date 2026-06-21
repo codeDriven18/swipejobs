@@ -19,6 +19,11 @@ public class CompanyConfiguration : IEntityTypeConfiguration<Company>
         builder.Property(c => c.BannerUrl).HasMaxLength(1000);
         builder.Property(c => c.Website).HasMaxLength(500);
         builder.Property(c => c.LinkedInUrl).HasMaxLength(500);
+        builder.Property(c => c.TwitterUrl).HasMaxLength(500);
+        builder.Property(c => c.InstagramUrl).HasMaxLength(500);
+        builder.Property(c => c.Culture).HasColumnType("text");
+        builder.Property(c => c.Benefits).HasColumnType("text");
+        builder.Property(c => c.HiringPhilosophy).HasColumnType("text");
 
         builder.HasIndex(c => c.Slug).IsUnique();
         builder.HasIndex(c => c.Name);

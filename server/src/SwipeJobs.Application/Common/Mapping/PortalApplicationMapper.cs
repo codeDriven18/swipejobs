@@ -19,6 +19,13 @@ public static class PortalApplicationMapper
             application.Status,
             application.InterviewPhase);
 
+        var tags = application.RecruiterTags?
+            .Select(t => new RecruiterTagDto(t.TagId, t.Tag?.Name ?? string.Empty))
+            .OrderBy(t => t.Name)
+            .ToList() ?? [];
+
+        var noteCount = application.RecruiterNotes?.Count ?? 0;
+
         return new PortalApplicationDto(
             application.Id,
             normalizedStatus,
@@ -40,7 +47,12 @@ public static class PortalApplicationMapper
             application.InterviewNotes,
             HasResume(profile),
             unreadMessageCount,
-            application.Status == ApplicationStatus.Withdrawn);
+            application.Status == ApplicationStatus.Withdrawn,
+            application.RecruiterRating,
+            application.IsFavorite,
+            application.RejectionReason,
+            tags,
+            noteCount);
     }
 
     private static bool HasResume(UserProfile? profile) =>

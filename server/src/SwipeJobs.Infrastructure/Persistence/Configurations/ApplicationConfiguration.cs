@@ -26,7 +26,11 @@ public class ApplicationConfiguration : IEntityTypeConfiguration<Domain.Entities
         builder.HasIndex(a => a.Status);
         builder.HasIndex(a => new { a.JobId, a.Status });
         builder.Property(a => a.StatusHistoryJson).HasColumnType("text");
+        builder.Property(a => a.ActivityLogJson).HasColumnType("text").HasDefaultValue("[]");
         builder.Property(a => a.ReapplicationCount).HasDefaultValue(0);
+        builder.Property(a => a.RecruiterRating);
+        builder.Property(a => a.IsFavorite).HasDefaultValue(false);
+        builder.Property(a => a.RejectionReason).HasMaxLength(512);
         builder.Property(a => a.InterviewPhase).HasConversion<string>().HasMaxLength(32);
         builder.Property(a => a.InterviewScheduledAtUtc);
         builder.Property(a => a.InterviewLocation).HasMaxLength(512);

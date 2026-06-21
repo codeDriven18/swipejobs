@@ -223,6 +223,47 @@
   margin-top: 0.25rem;
 }
 
+.pagePortal.pageEmbedded .backBtn {
+  display: none;
+}
+
+@media (max-width: 899px) {
+  .pagePortal.pageEmbedded .backBtn {
+    display: flex;
+  }
+}
+
+.pagePortal .mine {
+  background: var(--color-accent, #ffd600);
+  color: #0a0a0a;
+  box-shadow: none;
+}
+
+.pagePortal .mine .messageText {
+  color: #0a0a0a;
+}
+
+.pagePortal .mine .meta {
+  color: color-mix(in srgb, #0a0a0a 55%, transparent);
+}
+
+.pagePortal .receiptSent,
+.pagePortal .receiptRead {
+  color: color-mix(in srgb, #0a0a0a 65%, transparent);
+}
+
+.pagePortal .fileCard {
+  padding: 0.5rem 0.625rem;
+  border-radius: 0.625rem;
+  background: color-mix(in srgb, #0a0a0a 8%, transparent);
+  border: 1px solid color-mix(in srgb, #0a0a0a 12%, transparent);
+}
+
+.pagePortal .theirs .fileCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
 .mine {
   align-self: flex-end;
   background: linear-gradient(135deg, #5b51d8 0%, #7b5cf0 100%);

@@ -62,9 +62,24 @@ public record PortalApplicationDto(
     string? InterviewNotes,
     bool HasResume,
     int UnreadMessageCount,
-    bool IsWithdrawn);
+    bool IsWithdrawn,
+    byte? RecruiterRating,
+    bool IsFavorite,
+    string? RejectionReason,
+    IReadOnlyList<RecruiterTagDto> RecruiterTags,
+    int RecruiterNoteCount);
 
-public record PortalUpdateApplicationStatusDto(ApplicationStatus Status);
+public record RecruiterTagDto(Guid Id, string Name);
+
+public record PortalRecruiterNoteDto(Guid Id, string Text, Guid AuthorUserId, DateTime CreatedAt);
+
+public record PortalRecruiterActivityDto(
+    RecruiterActivityType Type,
+    DateTime OccurredAt,
+    Guid? UserId,
+    string? Details);
+
+public record PortalUpdateApplicationStatusDto(ApplicationStatus Status, string? RejectionReason = null);
 
 public record PortalScheduleInterviewDto(
     DateTime ScheduledAtUtc,
@@ -93,6 +108,9 @@ public record PortalApplicantDetailDto(
     string? Location,
     string JobSeekingStatus,
     string? ProfileImageUrl,
+    string? LinkedInUrl,
+    string? GitHubUrl,
+    string? WebsiteUrl,
     bool HasResume,
     string? ResumeFileName,
     long? ResumeFileSize,
@@ -111,7 +129,25 @@ public record PortalApplicantDetailDto(
     CandidateTrustLevel CandidateTrustLevel,
     int CandidateTrustSignals,
     Guid? ConversationId,
-    bool MessagingUnlocked);
+    bool MessagingUnlocked,
+    byte? RecruiterRating,
+    bool IsFavorite,
+    string? RejectionReason,
+    IReadOnlyList<RecruiterTagDto> RecruiterTags,
+    IReadOnlyList<PortalRecruiterNoteDto> RecruiterNotes,
+    IReadOnlyList<PortalRecruiterActivityDto> ActivityTimeline);
+
+public record PortalAddRecruiterNoteDto(string Text);
+
+public record PortalSetRecruiterRatingDto(byte? Rating);
+
+public record PortalSetFavoriteDto(bool IsFavorite);
+
+public record PortalSetApplicationTagsDto(IReadOnlyList<Guid> TagIds);
+
+public record PortalCreateRecruiterTagDto(string Name);
+
+public record PortalUpdateRecruiterTagDto(string Name);
 
 public record PortalUpdateCompanyDto(
     string Description,
@@ -121,4 +157,9 @@ public record PortalUpdateCompanyDto(
     string? LogoUrl,
     string? BannerUrl,
     string? Website,
-    string? LinkedInUrl);
+    string? LinkedInUrl,
+    string? TwitterUrl,
+    string? InstagramUrl,
+    string? Culture,
+    string? Benefits,
+    string? HiringPhilosophy);

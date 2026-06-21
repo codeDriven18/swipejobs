@@ -10,6 +10,11 @@ export interface Company {
   bannerUrl?: string;
   website?: string;
   linkedInUrl?: string;
+  twitterUrl?: string;
+  instagramUrl?: string;
+  culture?: string;
+  benefits?: string;
+  hiringPhilosophy?: string;
   status: import('./operations').CompanyStatus;
   isActive: boolean;
   openJobsCount: number;

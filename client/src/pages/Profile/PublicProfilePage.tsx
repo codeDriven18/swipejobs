@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { IconMapPin } from '@/components/icons/Icons';
 import { profilesApi } from '@/api/profilesApi';
 import { UserAvatar } from '@/components/profile/UserAvatar';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -51,7 +52,7 @@ export function PublicProfilePage() {
   if (loading) {
     return (
       <section className={styles.page}>
-        <p className={styles.status}>Loading profile…</p>
+        <div className={styles.loadingHero} aria-busy="true" />
       </section>
     );
   }
@@ -72,35 +73,43 @@ export function PublicProfilePage() {
     );
   }
 
-  const signals: string[] = [
-    profile.hasLinkedIn ? 'LinkedIn' : '',
-    profile.hasGitHub ? 'GitHub' : '',
-    profile.hasPortfolio ? 'Portfolio' : '',
+  const proofSignals = [
+    profile.hasLinkedIn ? 'LinkedIn verified' : '',
+    profile.hasGitHub ? 'GitHub connected' : '',
+    profile.hasPortfolio ? 'Portfolio linked' : '',
   ].filter(Boolean);
 
   return (
     <section className={styles.page}>
-      <header className={styles.header}>
-        <UserAvatar
-          profile={{
-            firstName: profile.firstName,
-            lastName: profile.lastName,
-            email: '',
-            profileImageUrl: profile.profileImageUrl,
-          }}
-          size="xl"
-        />
-        <div>
-          <h1 className={styles.name}>{displayName}</h1>
-          {profile.headline && <p className={styles.headline}>{profile.headline}</p>}
-          {profile.location && <p className={styles.meta}>{profile.location}</p>}
+      <header className={styles.showcase}>
+        <div className={styles.banner} aria-hidden />
+        <div className={styles.identityCard}>
+          <UserAvatar
+            profile={{
+              firstName: profile.firstName,
+              lastName: profile.lastName,
+              email: '',
+              profileImageUrl: profile.profileImageUrl,
+            }}
+            size="xl"
+            className={styles.avatar}
+          />
+          <div className={styles.identityText}>
+            <h1 className={styles.name}>{displayName}</h1>
+            {profile.headline && <p className={styles.headline}>{profile.headline}</p>}
+            {profile.location && (
+              <p className={styles.meta}>
+                <IconMapPin size={15} /> {profile.location}
+              </p>
+            )}
+          </div>
         </div>
       </header>
 
-      {signals.length > 0 && (
-        <div className={styles.signals}>
-          {signals.map((signal) => (
-            <span key={signal} className={styles.signal}>{signal}</span>
+      {proofSignals.length > 0 && (
+        <div className={styles.proofRow}>
+          {proofSignals.map((signal) => (
+            <span key={signal} className={styles.proofBadge}>{signal}</span>
           ))}
         </div>
       )}
@@ -118,7 +127,7 @@ export function PublicProfilePage() {
 
       <footer className={styles.footer}>
         <Link to="/jobs" className={styles.cta}>Browse jobs on SwipeJobs</Link>
-        <Link to="/register" className={styles.ctaGhost}>Create your profile</Link>
+        <p className={styles.footerNote}>SwipeJobs profiles highlight skills and proof of work — not just résumé keywords.</p>
       </footer>
     </section>
   );

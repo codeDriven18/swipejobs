@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 
 namespace SwipeJobs.Application.Modules.Portal.Services;
 
-public class CompanyPortalService : ICompanyPortalService
+public partial class CompanyPortalService : ICompanyPortalService
 {
     private static readonly HashSet<ApplicationStatus> EmployerSettableStatuses =
     [
@@ -33,6 +33,9 @@ public class CompanyPortalService : ICompanyPortalService
     private readonly IConversationRepository _conversationRepository;
     private readonly IMessageRepository _messageRepository;
     private readonly IResumeStorageService _resumeStorage;
+    private readonly IRecruiterTagRepository _recruiterTagRepository;
+    private readonly IApplicationRecruiterNoteRepository _recruiterNoteRepository;
+    private readonly ICurrentUserService _currentUser;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<CompanyPortalService> _logger;
 
@@ -47,6 +50,9 @@ public class CompanyPortalService : ICompanyPortalService
         IConversationRepository conversationRepository,
         IMessageRepository messageRepository,
         IResumeStorageService resumeStorage,
+        IRecruiterTagRepository recruiterTagRepository,
+        IApplicationRecruiterNoteRepository recruiterNoteRepository,
+        ICurrentUserService currentUser,
         IUnitOfWork unitOfWork,
         ILogger<CompanyPortalService> logger)
     {
@@ -60,6 +66,9 @@ public class CompanyPortalService : ICompanyPortalService
         _conversationRepository = conversationRepository;
         _messageRepository = messageRepository;
         _resumeStorage = resumeStorage;
+        _recruiterTagRepository = recruiterTagRepository;
+        _recruiterNoteRepository = recruiterNoteRepository;
+        _currentUser = currentUser;
         _unitOfWork = unitOfWork;
         _logger = logger;
     }
@@ -118,7 +127,9 @@ public class CompanyPortalService : ICompanyPortalService
             SalaryMax = dto.SalaryMax,
             ExpiresAt = dto.ExpiresAt,
             ExternalUrl = dto.ExternalUrl,
-            JobImageUrl = dto.JobImageUrl,
+            JobImageUrl = string.IsNullOrWhiteSpace(dto.JobImageUrl)
+                ? JobBrandingDefaults.ResolveDefaultJobImageUrl(dto.Category, dto.Title.Trim())
+                : dto.JobImageUrl.Trim(),
             SourceId = source.Id,
             IsActive = true,
             IsArchived = false,
@@ -279,6 +290,9 @@ public class CompanyPortalService : ICompanyPortalService
             profile.Location,
             profile.JobSeekingStatus.ToString(),
             profile.ProfileImageUrl,
+            profile.LinkedInUrl,
+            profile.GitHubUrl,
+            profile.WebsiteUrl,
             !string.IsNullOrWhiteSpace(profile.ResumeUrl) || !string.IsNullOrWhiteSpace(profile.ResumeFileName),
             profile.ResumeFileName,
             profile.ResumeFileSize,
@@ -299,11 +313,25 @@ public class CompanyPortalService : ICompanyPortalService
             CandidateTrustCalculator.Compute(profile),
             CandidateTrustCalculator.CountSignals(profile),
             conversation?.Id,
-            messagingUnlocked);
+            messagingUnlocked,
+            application.RecruiterRating,
+            application.IsFavorite,
+            application.RejectionReason,
+            application.RecruiterTags
+                .Select(t => new RecruiterTagDto(t.TagId, t.Tag?.Name ?? string.Empty))
+                .OrderBy(t => t.Name)
+                .ToList(),
+            application.RecruiterNotes
+                .OrderByDescending(n => n.CreatedAt)
+                .Select(n => new PortalRecruiterNoteDto(n.Id, n.Text, n.AuthorUserId, n.CreatedAt))
+                .ToList(),
+            ApplicationActivityLogSerializer.BuildTimeline(application.StatusHistoryJson, application.ActivityLogJson)
+                .Select(e => new PortalRecruiterActivityDto(e.Type, e.OccurredAt, e.UserId, e.Details))
+                .ToList());
     }
 
     public async Task<PortalApplicationDto?> UpdateApplicationStatusAsync(
-        Guid companyId, Guid applicationId, ApplicationStatus status, CancellationToken cancellationToken = default)
+        Guid companyId, Guid applicationId, ApplicationStatus status, string? rejectionReason = null, CancellationToken cancellationToken = default)
     {
         if (!EmployerSettableStatuses.Contains(status))
             throw new InvalidOperationException("Invalid application status for employer update.");
@@ -321,6 +349,23 @@ public class CompanyPortalService : ICompanyPortalService
         var changedAt = DateTime.UtcNow;
         application.Status = status;
         SyncInterviewPhaseForStatus(application, status);
+        if (status == ApplicationStatus.Rejected)
+        {
+            application.RejectionReason = string.IsNullOrWhiteSpace(rejectionReason)
+                ? null
+                : rejectionReason.Trim();
+            application.ActivityLogJson = ApplicationActivityLogSerializer.Append(
+                application.ActivityLogJson,
+                RecruiterActivityType.Rejected,
+                changedAt,
+                _currentUser.GetRequiredUserId(),
+                application.RejectionReason);
+        }
+        else if (status != ApplicationStatus.Rejected)
+        {
+            application.RejectionReason = null;
+        }
+
         application.StatusHistoryJson = ApplicationStatusHistorySerializer.Append(
             application.StatusHistoryJson, status, changedAt);
         await _applicationRepository.UpdateAsync(application, cancellationToken);
@@ -381,6 +426,16 @@ public class CompanyPortalService : ICompanyPortalService
             application.StatusHistoryJson = ApplicationStatusHistorySerializer.Append(
                 application.StatusHistoryJson, ApplicationStatus.Interviewing, changedAt);
         }
+
+        var scheduleDetails = $"{application.InterviewScheduledAtUtc:u}";
+        if (!string.IsNullOrWhiteSpace(application.InterviewLocation))
+            scheduleDetails += $" · {application.InterviewLocation}";
+        application.ActivityLogJson = ApplicationActivityLogSerializer.Append(
+            application.ActivityLogJson,
+            RecruiterActivityType.InterviewScheduled,
+            changedAt,
+            _currentUser.GetRequiredUserId(),
+            scheduleDetails);
 
         await _applicationRepository.UpdateAsync(application, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -515,6 +570,11 @@ public class CompanyPortalService : ICompanyPortalService
         company.BannerUrl = string.IsNullOrWhiteSpace(dto.BannerUrl) ? company.BannerUrl : dto.BannerUrl.Trim();
         company.Website = string.IsNullOrWhiteSpace(dto.Website) ? null : dto.Website.Trim();
         company.LinkedInUrl = string.IsNullOrWhiteSpace(dto.LinkedInUrl) ? null : dto.LinkedInUrl.Trim();
+        company.TwitterUrl = string.IsNullOrWhiteSpace(dto.TwitterUrl) ? null : dto.TwitterUrl.Trim();
+        company.InstagramUrl = string.IsNullOrWhiteSpace(dto.InstagramUrl) ? null : dto.InstagramUrl.Trim();
+        company.Culture = string.IsNullOrWhiteSpace(dto.Culture) ? null : dto.Culture.Trim();
+        company.Benefits = string.IsNullOrWhiteSpace(dto.Benefits) ? null : dto.Benefits.Trim();
+        company.HiringPhilosophy = string.IsNullOrWhiteSpace(dto.HiringPhilosophy) ? null : dto.HiringPhilosophy.Trim();
 
         await _companyRepository.UpdateAsync(company, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);

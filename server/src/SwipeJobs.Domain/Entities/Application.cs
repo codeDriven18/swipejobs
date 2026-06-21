@@ -18,7 +18,17 @@ public class Application : BaseEntity
     /// <summary>Number of prior applications for the same job (0 = first attempt).</summary>
     public int ReapplicationCount { get; set; }
     public string StatusHistoryJson { get; set; } = "[]";
+    public string ActivityLogJson { get; set; } = "[]";
     public string? Notes { get; set; }
+
+    /// <summary>Recruiter-only 1–5 star rating. Null = unrated.</summary>
+    public byte? RecruiterRating { get; set; }
+    public bool IsFavorite { get; set; }
+    /// <summary>Reason recorded when the application was rejected (recruiter-only).</summary>
+    public string? RejectionReason { get; set; }
+
+    public ICollection<ApplicationRecruiterNote> RecruiterNotes { get; set; } = [];
+    public ICollection<ApplicationRecruiterTag> RecruiterTags { get; set; } = [];
 
     public Guid UserProfileId { get; set; }
     public UserProfile UserProfile { get; set; } = null!;

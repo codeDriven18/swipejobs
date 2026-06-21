@@ -28,6 +28,12 @@ namespace SwipeJobs.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("ActivityLogJson")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("[]");
+
                     b.Property<DateTime>("AppliedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -49,6 +55,11 @@ namespace SwipeJobs.Infrastructure.Migrations
                     b.Property<DateTime?>("InterviewScheduledAtUtc")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<bool>("IsFavorite")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
                     b.Property<Guid>("JobId")
                         .HasColumnType("uuid");
 
@@ -59,6 +70,13 @@ namespace SwipeJobs.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("integer")
                         .HasDefaultValue(0);
+
+                    b.Property<byte?>("RecruiterRating")
+                        .HasColumnType("smallint");
+
+                    b.Property<string>("RejectionReason")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
@@ -88,6 +106,53 @@ namespace SwipeJobs.Infrastructure.Migrations
                     b.HasIndex("UserProfileId", "JobId");
 
                     b.ToTable("Applications");
+                });
+
+            modelBuilder.Entity("SwipeJobs.Domain.Entities.ApplicationRecruiterNote", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ApplicationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("AuthorUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationId");
+
+                    b.HasIndex("ApplicationId", "CreatedAt");
+
+                    b.ToTable("ApplicationRecruiterNotes");
+                });
+
+            modelBuilder.Entity("SwipeJobs.Domain.Entities.ApplicationRecruiterTag", b =>
+                {
+                    b.Property<Guid>("ApplicationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TagId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("ApplicationId", "TagId");
+
+                    b.HasIndex("TagId");
+
+                    b.ToTable("ApplicationRecruiterTags");
                 });
 
             modelBuilder.Entity("SwipeJobs.Domain.Entities.AuditLog", b =>
@@ -143,6 +208,9 @@ namespace SwipeJobs.Infrastructure.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
 
+                    b.Property<string>("Benefits")
+                        .HasColumnType("text");
+
                     b.Property<string>("CompanySize")
                         .IsRequired()
                         .HasMaxLength(80)
@@ -151,15 +219,25 @@ namespace SwipeJobs.Infrastructure.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("Culture")
+                        .HasColumnType("text");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(4000)
                         .HasColumnType("character varying(4000)");
 
+                    b.Property<string>("HiringPhilosophy")
+                        .HasColumnType("text");
+
                     b.Property<string>("Industry")
                         .IsRequired()
                         .HasMaxLength(120)
                         .HasColumnType("character varying(120)");
+
+                    b.Property<string>("InstagramUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -189,6 +267,10 @@ namespace SwipeJobs.Infrastructure.Migrations
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
+
+                    b.Property<string>("TwitterUrl")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -977,6 +1059,36 @@ namespace SwipeJobs.Infrastructure.Migrations
                     b.ToTable("Notifications");
                 });
 
+            modelBuilder.Entity("SwipeJobs.Domain.Entities.RecruiterTag", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CompanyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CompanyId");
+
+                    b.HasIndex("CompanyId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("RecruiterTags");
+                });
+
             modelBuilder.Entity("SwipeJobs.Domain.Entities.RefreshToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1525,6 +1637,36 @@ namespace SwipeJobs.Infrastructure.Migrations
                     b.Navigation("UserProfile");
                 });
 
+            modelBuilder.Entity("SwipeJobs.Domain.Entities.ApplicationRecruiterNote", b =>
+                {
+                    b.HasOne("SwipeJobs.Domain.Entities.Application", "Application")
+                        .WithMany("RecruiterNotes")
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Application");
+                });
+
+            modelBuilder.Entity("SwipeJobs.Domain.Entities.ApplicationRecruiterTag", b =>
+                {
+                    b.HasOne("SwipeJobs.Domain.Entities.Application", "Application")
+                        .WithMany("RecruiterTags")
+                        .HasForeignKey("ApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("SwipeJobs.Domain.Entities.RecruiterTag", "Tag")
+                        .WithMany("ApplicationTags")
+                        .HasForeignKey("TagId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Application");
+
+                    b.Navigation("Tag");
+                });
+
             modelBuilder.Entity("SwipeJobs.Domain.Entities.CompanyFollow", b =>
                 {
                     b.HasOne("SwipeJobs.Domain.Entities.Company", "Company")
@@ -1746,6 +1888,17 @@ namespace SwipeJobs.Infrastructure.Migrations
                     b.Navigation("UserProfile");
                 });
 
+            modelBuilder.Entity("SwipeJobs.Domain.Entities.RecruiterTag", b =>
+                {
+                    b.HasOne("SwipeJobs.Domain.Entities.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Company");
+                });
+
             modelBuilder.Entity("SwipeJobs.Domain.Entities.RefreshToken", b =>
                 {
                     b.HasOne("SwipeJobs.Domain.Entities.User", "User")
@@ -1844,6 +1997,13 @@ namespace SwipeJobs.Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("SwipeJobs.Domain.Entities.Application", b =>
+                {
+                    b.Navigation("RecruiterNotes");
+
+                    b.Navigation("RecruiterTags");
+                });
+
             modelBuilder.Entity("SwipeJobs.Domain.Entities.Company", b =>
                 {
                     b.Navigation("Followers");
@@ -1873,6 +2033,11 @@ namespace SwipeJobs.Infrastructure.Migrations
             modelBuilder.Entity("SwipeJobs.Domain.Entities.JobCandidate", b =>
                 {
                     b.Navigation("MessageLinks");
+                });
+
+            modelBuilder.Entity("SwipeJobs.Domain.Entities.RecruiterTag", b =>
+                {
+                    b.Navigation("ApplicationTags");
                 });
 
             modelBuilder.Entity("SwipeJobs.Domain.Entities.Source", b =>

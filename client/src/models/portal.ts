@@ -1,5 +1,8 @@
 import type { ApplicationStatus, CandidateTrustLevel, InterviewPhase, JobCategory, JobLevel, PipelineStage } from './enums';
 import type { Job } from './job';
+import type { RecruiterTag } from './recruiter';
+
+export type { RecruiterTag } from './recruiter';
 
 export interface PortalStats {
   totalJobs: number;
@@ -32,6 +35,11 @@ export interface PortalApplication {
   hasResume: boolean;
   unreadMessageCount: number;
   isWithdrawn: boolean;
+  recruiterRating?: number;
+  isFavorite: boolean;
+  rejectionReason?: string;
+  recruiterTags: RecruiterTag[];
+  recruiterNoteCount: number;
 }
 
 export interface PortalUpdateCompanyRequest {
@@ -43,6 +51,11 @@ export interface PortalUpdateCompanyRequest {
   bannerUrl?: string;
   website?: string;
   linkedInUrl?: string;
+  twitterUrl?: string;
+  instagramUrl?: string;
+  culture?: string;
+  benefits?: string;
+  hiringPhilosophy?: string;
 }
 
 export interface PortalCreateJobRequest {

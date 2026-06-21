@@ -6,6 +6,7 @@ interface ImageDropZoneProps {
   hint?: string;
   value: string;
   onChange: (url: string) => void;
+  onUploadFile?: (file: File) => Promise<string>;
   aspect?: 'banner' | 'square';
   placeholder?: React.ReactNode;
 }
@@ -15,6 +16,7 @@ export function ImageDropZone({
   hint,
   value,
   onChange,
+  onUploadFile,
   aspect = 'banner',
   placeholder,
 }: ImageDropZoneProps) {
@@ -22,18 +24,35 @@ export function ImageDropZone({
   const fileRef = useRef<HTMLInputElement>(null);
   const [localPreview, setLocalPreview] = useState<string | null>(null);
   const [dragging, setDragging] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const preview = value.trim() || localPreview;
 
-  const handleFiles = useCallback((files: FileList | null) => {
-    const file = files?.[0];
-    if (!file?.type.startsWith('image/')) return;
+  const processFile = useCallback(async (file: File) => {
+    if (!file.type.startsWith('image/')) return;
+    if (onUploadFile) {
+      setUploading(true);
+      try {
+        const url = await onUploadFile(file);
+        onChange(url);
+        setLocalPreview(null);
+      } finally {
+        setUploading(false);
+      }
+      return;
+    }
     const objectUrl = URL.createObjectURL(file);
     setLocalPreview((prev) => {
       if (prev) URL.revokeObjectURL(prev);
       return objectUrl;
     });
-  }, []);
+  }, [onChange, onUploadFile]);
+
+  const handleFiles = useCallback((files: FileList | null) => {
+    const file = files?.[0];
+    if (!file) return;
+    void processFile(file);
+  }, [processFile]);
 
   const onDrop = (e: DragEvent) => {
     e.preventDefault();
@@ -68,7 +87,7 @@ export function ImageDropZone({
         {preview ? (
           <img src={preview} alt="" className={ws.dropZonePreview} />
         ) : (
-          placeholder ?? <span className={ws.dropZonePlaceholder}>Drop image or click to browse</span>
+          placeholder ?? <span className={ws.dropZonePlaceholder}>{uploading ? 'Uploading…' : 'Drop image or click to browse'}</span>
         )}
         <input
           ref={fileRef}
@@ -88,7 +107,7 @@ export function ImageDropZone({
           if (e.target.value.trim()) setLocalPreview(null);
         }}
       />
-      {localPreview && !value.trim() && (
+      {localPreview && !value.trim() && !onUploadFile && (
         <p className={ws.dropZoneHint}>Preview only — paste a hosted image URL above to save.</p>
       )}
     </div>

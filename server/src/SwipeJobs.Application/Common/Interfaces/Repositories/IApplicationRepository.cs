@@ -10,6 +10,7 @@ public interface IApplicationRepository : IRepository<ApplicationEntity>
         Guid userProfileId, Guid jobId, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ApplicationEntity>> GetByCompanyIdAsync(Guid companyId, Guid? jobId, CancellationToken cancellationToken = default);
     Task<ApplicationEntity?> GetByIdForCompanyAsync(Guid applicationId, Guid companyId, CancellationToken cancellationToken = default);
+    Task<ApplicationEntity?> GetByIdWithRecruiterDataAsync(Guid applicationId, CancellationToken cancellationToken = default);
     Task<int> CountAsync(CancellationToken cancellationToken = default);
     Task<int> CountByStatusAsync(ApplicationStatus status, CancellationToken cancellationToken = default);
     Task<IReadOnlyList<ApplicationEntity>> GetAllWithDetailsAsync(CancellationToken cancellationToken = default);

@@ -6,21 +6,24 @@
   border-radius: 999px;
   font-size: 0.72rem;
   font-weight: 700;
+  border: 1px solid var(--ws-border, rgba(0, 0, 0, 0.12));
 }
 
 .level1 {
-  background: color-mix(in srgb, #38bdf8 18%, transparent);
-  color: #0284c7;
+  background: color-mix(in srgb, var(--color-accent, #ffd600) 12%, var(--color-bg, #fff));
+  color: var(--color-text, #0a0a0a);
 }
 
 .level2 {
-  background: color-mix(in srgb, #22c55e 18%, transparent);
-  color: #15803d;
+  background: color-mix(in srgb, var(--color-accent, #ffd600) 22%, var(--color-bg, #fff));
+  color: var(--color-text, #0a0a0a);
+  border-color: color-mix(in srgb, var(--color-accent, #ffd600) 35%, var(--color-border, #e5e5e5));
 }
 
 .level3 {
-  background: color-mix(in srgb, #ffd600 22%, transparent);
-  color: #a16207;
+  background: var(--color-accent, #ffd600);
+  color: #0a0a0a;
+  border-color: color-mix(in srgb, var(--color-accent, #ffd600) 80%, #000);
 }
 
 .signals {

@@ -35,6 +35,9 @@ public class AppDbContext : DbContext
     public DbSet<SourceIngestionLog> SourceIngestionLogs => Set<SourceIngestionLog>();
     public DbSet<Conversation> Conversations => Set<Conversation>();
     public DbSet<Message> Messages => Set<Message>();
+    public DbSet<ApplicationRecruiterNote> ApplicationRecruiterNotes => Set<ApplicationRecruiterNote>();
+    public DbSet<RecruiterTag> RecruiterTags => Set<RecruiterTag>();
+    public DbSet<ApplicationRecruiterTag> ApplicationRecruiterTags => Set<ApplicationRecruiterTag>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

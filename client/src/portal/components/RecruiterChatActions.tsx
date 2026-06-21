@@ -4,6 +4,7 @@ import { portalApi } from '@/api/portalApi';
 import { ApiError } from '@/api/client';
 import { ApplicationStatus, ApplicationStatusLabels } from '@/models/enums';
 import { InterviewScheduler } from '@/portal/components/InterviewScheduler';
+import { RejectCandidateDialog } from '@/portal/components/RejectCandidateDialog';
 import ws from '@/portal/workspace.module.css';
 
 const NEXT_STAGE: Partial<Record<ApplicationStatus, ApplicationStatus>> = {
@@ -25,6 +26,7 @@ interface RecruiterChatActionsProps {
   applicationId: string;
   status: ApplicationStatus;
   onChanged: () => void;
+  variant?: 'default' | 'toolbar' | 'compact';
 }
 
 function resolveActionError(err: unknown): string {
@@ -42,10 +44,11 @@ function resolveActionError(err: unknown): string {
   return err instanceof Error ? err.message : 'Action failed. Please try again.';
 }
 
-export function RecruiterChatActions({ applicationId, status, onChanged }: RecruiterChatActionsProps) {
+export function RecruiterChatActions({ applicationId, status, onChanged, variant = 'default' }: RecruiterChatActionsProps) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [scheduling, setScheduling] = useState(false);
+  const [rejectOpen, setRejectOpen] = useState(false);
 
   const isClosed = CLOSED_STATUSES.includes(status);
   const next = NEXT_STAGE[status];
@@ -64,8 +67,14 @@ export function RecruiterChatActions({ applicationId, status, onChanged }: Recru
     }
   };
 
+  const rootClass = [
+    ws.recruiterActions,
+    variant === 'toolbar' ? ws.recruiterActionsToolbar : '',
+    variant === 'compact' ? ws.recruiterActionsCompact : '',
+  ].filter(Boolean).join(' ');
+
   return (
-    <div className={ws.recruiterActions}>
+    <div className={rootClass}>
       <div className={ws.recruiterActionsRow}>
         <span className={ws.recruiterActionsStatus}>
           <span className={ws.recruiterActionsDot} aria-hidden />
@@ -109,7 +118,7 @@ export function RecruiterChatActions({ applicationId, status, onChanged }: Recru
               type="button"
               className={ws.btnDanger}
               disabled={busy}
-              onClick={() => void run(() => portalApi.updateApplicationStatus(applicationId, { status: ApplicationStatus.Rejected }))}
+              onClick={() => setRejectOpen(true)}
             >
               Reject
             </button>
@@ -133,6 +142,19 @@ export function RecruiterChatActions({ applicationId, status, onChanged }: Recru
           onCancel={() => setScheduling(false)}
         />
       )}
+
+      <RejectCandidateDialog
+        open={rejectOpen}
+        busy={busy}
+        onCancel={() => setRejectOpen(false)}
+        onConfirm={(reason) => {
+          setRejectOpen(false);
+          void run(() => portalApi.updateApplicationStatus(applicationId, {
+            status: ApplicationStatus.Rejected,
+            rejectionReason: reason,
+          }));
+        }}
+      />
     </div>
   );
 }

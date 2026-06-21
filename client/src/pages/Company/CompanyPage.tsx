@@ -1,7 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { IconBuilding, IconCheck, IconChevronLeft, IconChevronRight, IconList } from '@/components/icons/Icons';
+import {
+  IconBuilding,
+  IconCheck,
+  IconChevronLeft,
+  IconChevronRight,
+  IconHeart,
+  IconList,
+  IconMapPin,
+  IconSpark,
+  IconUser,
+} from '@/components/icons/Icons';
 import { companiesApi } from '@/api/companiesApi';
 import { companyFollowsApi } from '@/api/companyFollowsApi';
 import { jobsApi } from '@/api/jobsApi';
@@ -13,6 +23,45 @@ import { useActivityTracking } from '@/hooks/useActivityTracking';
 import type { Company } from '@/models/company';
 import type { Job } from '@/models/job';
 import styles from './CompanyPage.module.css';
+
+function splitContentLines(text: string): string[] {
+  return text
+    .split(/\n+/)
+    .map((line) => line.replace(/^[\s•\-–—*]+\s*/, '').trim())
+    .filter(Boolean);
+}
+
+function ContentSection({
+  icon,
+  title,
+  content,
+  asList = false,
+}: {
+  icon: ReactNode;
+  title: string;
+  content: string;
+  asList?: boolean;
+}) {
+  const lines = splitContentLines(content);
+
+  return (
+    <section className={styles.section}>
+      <div className={styles.sectionHead}>
+        <span className={styles.sectionIcon} aria-hidden>{icon}</span>
+        <h2 className={styles.sectionTitle}>{title}</h2>
+      </div>
+      {asList && lines.length > 1 ? (
+        <ul className={styles.bulletList}>
+          {lines.map((line) => (
+            <li key={line}>{line}</li>
+          ))}
+        </ul>
+      ) : (
+        <p className={styles.sectionBody}>{content}</p>
+      )}
+    </section>
+  );
+}
 
 export function CompanyPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -68,7 +117,21 @@ export function CompanyPage() {
     }
   };
 
-  if (loading) return <p className={styles.status}>Loading company...</p>;
+  const scrollToJobs = () => {
+    document.getElementById('open-roles')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  if (loading) {
+    return (
+      <div className={styles.loadingShell} aria-busy="true" aria-label="Loading company">
+        <div className={styles.loadingCover} />
+        <div className={styles.loadingCard} />
+        <div className={styles.loadingBlock} />
+        <div className={styles.loadingBlock} />
+      </div>
+    );
+  }
+
   if (error || !company) {
     return (
       <section className={styles.page}>
@@ -83,6 +146,32 @@ export function CompanyPage() {
     );
   }
 
+  const bannerStyle = company.bannerUrl
+    ? {
+        backgroundImage: `url(${company.bannerUrl})`,
+        backgroundSize: 'cover' as const,
+        backgroundPosition: 'center' as const,
+      }
+    : undefined;
+
+  const hasSocial = company.website || company.linkedInUrl || company.twitterUrl || company.instagramUrl;
+  const followButton = (
+    <button
+      type="button"
+      className={following ? styles.followBtnActive : styles.followBtn}
+      disabled={followLoading}
+      onClick={() => void toggleFollow()}
+    >
+      {following ? (
+        <>
+          <IconCheck size={16} /> Following
+        </>
+      ) : (
+        '+ Follow company'
+      )}
+    </button>
+  );
+
   return (
     <motion.section
       className={styles.page}
@@ -94,89 +183,195 @@ export function CompanyPage() {
         <IconChevronLeft size={18} /> Back
       </button>
 
-      <div
-        className={styles.banner}
-        style={company.bannerUrl ? { backgroundImage: `url(${company.bannerUrl})` } : undefined}
-        aria-hidden
-      />
-
-      <div className={styles.hero}>
-        <div className={styles.heroTop}>
-          <CompanyAvatar company={company} size="lg" className={styles.logo} />
-          <div>
-            <h1 className={styles.heroTitle}>{company.name}</h1>
-            <p className={styles.heroIndustry}>{company.industry}</p>
-          </div>
-        </div>
-
-        <div className={styles.metaGrid}>
-          <div className={styles.metaItem}>
-            <span className={styles.metaLabel}>Location</span>
-            <span className={styles.metaValue}>{company.location || '—'}</span>
-          </div>
-          <div className={styles.metaItem}>
-            <span className={styles.metaLabel}>Company size</span>
-            <span className={styles.metaValue}>{company.companySize || '—'}</span>
-          </div>
-        </div>
-
-        <button
-          type="button"
-          className={following ? styles.followBtnActive : styles.followBtn}
-          disabled={followLoading}
-          onClick={() => void toggleFollow()}
-        >
-          {following ? (
-            <>
-              <IconCheck size={16} /> Following
-            </>
-          ) : (
-            '+ Follow company'
-          )}
-        </button>
-      </div>
-
-      <div className={`${styles.description} copyable-content`}>
-        <h2>About</h2>
-        <p>{company.description || 'This company has not added a description yet.'}</p>
-        <div className={styles.links}>
-          {company.website && (
-            <a href={company.website} className={styles.website} target="_blank" rel="noopener noreferrer">
-              Visit website <IconChevronRight size={16} />
-            </a>
-          )}
-          {company.linkedInUrl && (
-            <a href={company.linkedInUrl} className={styles.website} target="_blank" rel="noopener noreferrer">
-              LinkedIn <IconChevronRight size={16} />
-            </a>
+      <header className={styles.showcase}>
+        <div className={styles.coverWrap}>
+          <div className={styles.cover} style={bannerStyle} aria-hidden />
+          <div className={styles.coverScrim} aria-hidden />
+          {!company.bannerUrl && (
+            <div className={styles.coverPlaceholder} aria-hidden>
+              <span>Employer brand</span>
+            </div>
           )}
         </div>
-      </div>
 
-      <div className={styles.jobsSection}>
-        <div className={styles.jobsHeader}>
-          <h2 className={styles.jobsTitle}>Open jobs</h2>
-          <span className={styles.jobsCount}>{jobs.length} listing{jobs.length !== 1 ? 's' : ''}</span>
+        <div className={styles.identityCard}>
+          <div className={styles.identityRow}>
+            <CompanyAvatar company={company} size="lg" className={styles.logo} />
+            <div className={styles.identityText}>
+              {company.industry && <p className={styles.eyebrow}>{company.industry}</p>}
+              <h1 className={styles.heroTitle}>{company.name}</h1>
+              {company.location && (
+                <p className={styles.heroTagline}>
+                  <IconMapPin size={15} /> {company.location}
+                </p>
+              )}
+            </div>
+            <div className={styles.heroActions}>{followButton}</div>
+          </div>
+
+          <div className={styles.statStrip}>
+            <div className={styles.statCard}>
+              <span className={styles.statLabel}>Location</span>
+              <span className={styles.statValue}>{company.location || 'Remote / TBD'}</span>
+            </div>
+            <div className={styles.statCard}>
+              <span className={styles.statLabel}>Team size</span>
+              <span className={styles.statValue}>{company.companySize || 'Growing team'}</span>
+            </div>
+            <div className={styles.statCard}>
+              <span className={styles.statLabel}>Open roles</span>
+              <span className={`${styles.statValue} ${styles.statValueAccent}`}>
+                {company.openJobsCount}
+              </span>
+            </div>
+          </div>
+
+          <div className={styles.followBtnMobileWrap}>
+            <div className={styles.followBtnMobile}>{followButton}</div>
+          </div>
         </div>
+      </header>
 
-        {jobs.length === 0 ? (
-          <EmptyState
-            icon={<IconList size={28} />}
-            title="No open jobs"
-            description="This company has no active listings right now. Check back later."
-            actions={[{ label: 'Browse all jobs', to: '/jobs', primary: true }]}
+      <div className={styles.contentGrid}>
+        <main className={styles.main}>
+          <ContentSection
+            icon={<IconBuilding size={16} />}
+            title={`About ${company.name}`}
+            content={company.description || 'This company has not added a description yet.'}
           />
-        ) : (
-          <div className={styles.jobList}>
-            {jobs.map((job) => (
-              <JobCard
-                key={job.id}
-                job={job}
-                onClick={() => navigate(`/jobs/${job.id}`)}
+
+          {company.culture?.trim() && (
+            <ContentSection
+              icon={<IconHeart size={16} />}
+              title="Culture"
+              content={company.culture}
+              asList
+            />
+          )}
+
+          {company.benefits?.trim() && (
+            <ContentSection
+              icon={<IconSpark size={16} />}
+              title="Benefits & perks"
+              content={company.benefits}
+              asList
+            />
+          )}
+
+          {company.hiringPhilosophy?.trim() && (
+            <ContentSection
+              icon={<IconUser size={16} />}
+              title="How we hire"
+              content={company.hiringPhilosophy}
+            />
+          )}
+
+          <section className={styles.jobsSection} id="open-roles">
+            <div className={styles.jobsHeader}>
+              <h2 className={styles.jobsTitle}>Open roles</h2>
+              <span className={styles.jobsCount}>
+                {jobs.length} listing{jobs.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+
+            {jobs.length === 0 ? (
+              <EmptyState
+                icon={<IconList size={28} />}
+                title="No open jobs"
+                description="This company has no active listings right now. Check back later."
+                actions={[{ label: 'Browse all jobs', to: '/jobs', primary: true }]}
               />
-            ))}
+            ) : (
+              <div className={styles.jobList}>
+                {jobs.map((job, index) => (
+                  <JobCard
+                    key={job.id}
+                    job={job}
+                    index={index}
+                    onClick={() => navigate(`/jobs/${job.id}`)}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
+        </main>
+
+        <aside className={styles.sidebar}>
+          <div className={styles.ctaCard}>
+            <h3 className={styles.ctaCardTitle}>Join the team</h3>
+            <p className={styles.ctaCardBody}>
+              Explore opportunities at {company.name} and find a role that fits your goals.
+            </p>
+            <span className={styles.ctaCardCount}>{company.openJobsCount}</span>
+            <button type="button" className={styles.ctaBrowse} onClick={scrollToJobs}>
+              View open roles
+            </button>
           </div>
-        )}
+
+          <div className={styles.sidebarCard}>
+            <h3 className={styles.sidebarTitle}>Company at a glance</h3>
+            <ul className={styles.infoList}>
+              <li className={styles.infoItem}>
+                <span className={styles.infoLabel}>Industry</span>
+                <span className={styles.infoValue}>{company.industry || '—'}</span>
+              </li>
+              <li className={styles.infoItem}>
+                <span className={styles.infoLabel}>Headquarters</span>
+                <span className={styles.infoValue}>{company.location || '—'}</span>
+              </li>
+              <li className={styles.infoItem}>
+                <span className={styles.infoLabel}>Company size</span>
+                <span className={styles.infoValue}>{company.companySize || '—'}</span>
+              </li>
+              <li className={styles.infoItem}>
+                <span className={styles.infoLabel}>Active listings</span>
+                <span className={styles.infoValue}>{company.openJobsCount}</span>
+              </li>
+            </ul>
+          </div>
+
+          {hasSocial && (
+            <div className={styles.sidebarCard}>
+              <h3 className={styles.sidebarTitle}>Connect</h3>
+              <div className={styles.socialList}>
+                {company.website && (
+                  <a href={company.website} className={styles.socialLink} target="_blank" rel="noopener noreferrer">
+                    Website <IconChevronRight size={16} />
+                  </a>
+                )}
+                {company.linkedInUrl && (
+                  <a href={company.linkedInUrl} className={styles.socialLink} target="_blank" rel="noopener noreferrer">
+                    LinkedIn <IconChevronRight size={16} />
+                  </a>
+                )}
+                {company.twitterUrl && (
+                  <a href={company.twitterUrl} className={styles.socialLink} target="_blank" rel="noopener noreferrer">
+                    X / Twitter <IconChevronRight size={16} />
+                  </a>
+                )}
+                {company.instagramUrl && (
+                  <a href={company.instagramUrl} className={styles.socialLink} target="_blank" rel="noopener noreferrer">
+                    Instagram <IconChevronRight size={16} />
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+
+          {(company.culture?.trim() || company.benefits?.trim()) && (
+            <div className={styles.sidebarCard}>
+              <h3 className={styles.sidebarTitle}>Why candidates choose us</h3>
+              <ul className={styles.bulletList}>
+                {company.culture?.trim() && splitContentLines(company.culture).slice(0, 2).map((line) => (
+                  <li key={`culture-${line}`}>{line}</li>
+                ))}
+                {company.benefits?.trim() && splitContentLines(company.benefits).slice(0, 2).map((line) => (
+                  <li key={`benefit-${line}`}>{line}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </aside>
       </div>
     </motion.section>
   );

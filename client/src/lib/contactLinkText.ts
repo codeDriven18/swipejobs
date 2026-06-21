@@ -11,7 +11,7 @@ interface Match {
 
 const TELEGRAM_URL_RE = /(?:https?:\/\/)?(?:t\.me|telegram\.me)\/([a-zA-Z][a-zA-Z0-9_]{4,31})(?:\/|\b|$)/gi;
 const TELEGRAM_HANDLE_RE = /(?<![\w/@])@([a-zA-Z][a-zA-Z0-9_]{4,31})\b/g;
-const PHONE_RE = /(?<![\w@])(\+?\d[\d\s().\-]{6,14}\d)(?![\w@])/g;
+const PHONE_RE = /(?<![\w@])(\+?\d[\d\s().-]{6,14}\d)(?![\w@])/g;
 
 function normalizeTel(raw: string): string {
   const trimmed = raw.trim();
@@ -24,7 +24,7 @@ function isLikelyPhone(raw: string): boolean {
   const digits = trimmed.replace(/\D/g, '');
   if (digits.length < 7) return false;
   if (trimmed.startsWith('+')) return digits.length >= 8;
-  if (/[\s().\-]/.test(trimmed)) return digits.length >= 7;
+  if (/[\s().-]/.test(trimmed)) return digits.length >= 7;
   return digits.length >= 10;
 }
 

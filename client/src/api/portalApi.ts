@@ -65,4 +65,48 @@ export const portalApi = {
 
   updateCompany: (data: PortalUpdateCompanyRequest) =>
     apiClient<import('@/models/company').Company>('/portal/company', { method: 'PUT', body: data }),
+
+  getRecruiterTags: () => apiClient<import('@/models/recruiter').RecruiterTag[]>('/portal/recruiter-tags'),
+
+  createRecruiterTag: (name: string) =>
+    apiClient<import('@/models/recruiter').RecruiterTag>('/portal/recruiter-tags', {
+      method: 'POST',
+      body: { name },
+    }),
+
+  updateRecruiterTag: (tagId: string, name: string) =>
+    apiClient<import('@/models/recruiter').RecruiterTag>(`/portal/recruiter-tags/${tagId}`, {
+      method: 'PUT',
+      body: { name },
+    }),
+
+  deleteRecruiterTag: (tagId: string) =>
+    apiClient<void>(`/portal/recruiter-tags/${tagId}`, { method: 'DELETE' }),
+
+  addRecruiterNote: (applicationId: string, text: string) =>
+    apiClient<import('@/models/recruiter').PortalRecruiterNote>(
+      `/portal/applications/${applicationId}/notes`,
+      { method: 'POST', body: { text } },
+    ),
+
+  deleteRecruiterNote: (applicationId: string, noteId: string) =>
+    apiClient<void>(`/portal/applications/${applicationId}/notes/${noteId}`, { method: 'DELETE' }),
+
+  setRecruiterRating: (applicationId: string, rating: number | null) =>
+    apiClient<PortalApplication>(`/portal/applications/${applicationId}/rating`, {
+      method: 'PATCH',
+      body: { rating },
+    }),
+
+  setFavorite: (applicationId: string, isFavorite: boolean) =>
+    apiClient<PortalApplication>(`/portal/applications/${applicationId}/favorite`, {
+      method: 'PATCH',
+      body: { isFavorite },
+    }),
+
+  setApplicationTags: (applicationId: string, tagIds: string[]) =>
+    apiClient<PortalApplication>(`/portal/applications/${applicationId}/tags`, {
+      method: 'PUT',
+      body: { tagIds },
+    }),
 };

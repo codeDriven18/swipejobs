@@ -3,6 +3,7 @@ import { UserAvatar } from '@/components/profile/UserAvatar';
 import { pipelineStageLabel } from '@/lib/employer/employerWorkspaceData';
 import { ApplicationStatusLabels } from '@/models/enums';
 import type { PortalApplication } from '@/models/portal';
+import { RecruiterMetaRow } from '@/portal/components/RecruiterMetaRow';
 import ws from '@/portal/workspace.module.css';
 
 interface CandidateCardProps {
@@ -40,6 +41,7 @@ export function CandidateCard({ application, compact = false }: CandidateCardPro
               {application.unreadMessageCount > 0 ? ` · ${application.unreadMessageCount} unread` : ''}
             </p>
           )}
+          <RecruiterMetaRow application={application} compact={compact} />
         </div>
         <div className={ws.candidateBadges}>
           <span className={ws.badge}>{ApplicationStatusLabels[application.status]}</span>

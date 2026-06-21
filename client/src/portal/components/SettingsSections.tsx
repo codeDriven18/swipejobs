@@ -1,11 +1,12 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ApiError } from '@/api/client';
 import { authApi } from '@/api/authApi';
 import { useAuth } from '@/context/AuthContext';
 import { useProfile } from '@/hooks/useProfile';
 import { UserRole } from '@/models/auth';
 import { PasswordField } from '@/components/forms/PasswordField';
+import { SettingsField, SettingsFields, SettingsSoonBadge } from '@/portal/components/SettingsField';
 import ws from '@/portal/workspace.module.css';
 
 function getErrorMessage(error: unknown): string {
@@ -35,22 +36,39 @@ export function SettingsAccountSection() {
   };
 
   return (
-    <div className={ws.settingsSectionBody}>
-      <div className={ws.settingsRow}>
-        <div>
-          <p className={ws.settingsRowLabel}>Signed in as</p>
-          {profileLoading ? (
-            <p className={ws.candidateSub}>Loading…</p>
-          ) : (
-            <>
-              {displayName && <p className={ws.settingsRowValue}>{displayName}</p>}
-              <p className={ws.candidateSub}>{user?.email}</p>
-            </>
-          )}
-        </div>
-        <button type="button" className={ws.btnGhost} onClick={() => void handleLogout()}>Sign out</button>
-      </div>
-    </div>
+    <SettingsFields>
+      <SettingsField
+        label="Profile"
+        description="Your recruiter identity in the SwipeJobs workspace."
+      >
+        {profileLoading ? (
+          <p className={ws.settingsInlineMuted}>Loading…</p>
+        ) : (
+          <div className={ws.settingsIdentity}>
+            {displayName && <p className={ws.settingsIdentityName}>{displayName}</p>}
+            <p className={ws.settingsIdentityEmail}>{user?.email}</p>
+          </div>
+        )}
+      </SettingsField>
+
+      <SettingsField
+        label="Account type"
+        description="How you access the employer portal."
+      >
+        <span className={ws.settingsPill}>
+          {user?.role === UserRole.Company ? 'Company account' : 'Recruiter account'}
+        </span>
+      </SettingsField>
+
+      <SettingsField
+        label="Sign out"
+        description="End your session on this device."
+      >
+        <button type="button" className={ws.btnGhost} onClick={() => void handleLogout()}>
+          Sign out
+        </button>
+      </SettingsField>
+    </SettingsFields>
   );
 }
 
@@ -91,13 +109,12 @@ export function SettingsSecuritySection() {
   };
 
   return (
-    <div className={ws.settingsSectionBody}>
-      <div className={ws.securityCard}>
-        <div className={ws.securityCardHead}>
-          <h4 className={ws.securityCardTitle}>Password</h4>
-          <p className={ws.candidateSub}>Use at least 8 characters. You will be signed out after updating.</p>
-        </div>
-        <form className={ws.formPanel} onSubmit={(e) => void handleChangePassword(e)}>
+    <SettingsFields>
+      <SettingsField
+        label="Password"
+        description="Use at least 8 characters. You will be signed out after updating."
+      >
+        <form className={ws.settingsFormStack} onSubmit={(e) => void handleChangePassword(e)}>
           <div className={ws.field}>
             <label htmlFor="current-password">Current password</label>
             <PasswordField
@@ -141,7 +158,159 @@ export function SettingsSecuritySection() {
             {loading ? 'Updating…' : 'Update password'}
           </button>
         </form>
-      </div>
-    </div>
+      </SettingsField>
+    </SettingsFields>
+  );
+}
+
+export function SettingsSessionsSection() {
+  return (
+    <SettingsFields>
+      <SettingsField
+        label="Active sessions"
+        description="Review devices signed in to your recruiter account."
+      >
+        <SettingsSoonBadge />
+      </SettingsField>
+      <SettingsField
+        label="Remote sign-out"
+        description="Sign out from other browsers and devices when you leave a shared machine."
+      >
+        <p className={ws.settingsInlineMuted}>Session management will appear here.</p>
+      </SettingsField>
+    </SettingsFields>
+  );
+}
+
+export function SettingsWorkspaceSection() {
+  return (
+    <SettingsFields>
+      <SettingsField
+        label="Default pipeline view"
+        description="Choose how the hiring board opens for your team."
+      >
+        <SettingsSoonBadge />
+      </SettingsField>
+      <SettingsField
+        label="Applicant sorting"
+        description="Set the default order for new candidates in lists and queues."
+      >
+        <SettingsSoonBadge />
+      </SettingsField>
+      <SettingsField
+        label="Review reminders"
+        description="Surface candidates waiting longer than your target response time."
+      >
+        <SettingsSoonBadge />
+      </SettingsField>
+    </SettingsFields>
+  );
+}
+
+export function SettingsNotificationsSection() {
+  const rows = [
+    { label: 'New applicants', description: 'When someone applies to an active role.' },
+    { label: 'Candidate messages', description: 'When a candidate replies in your inbox.' },
+    { label: 'Interview reminders', description: 'Before scheduled interviews on your calendar.' },
+    { label: 'Weekly hiring digest', description: 'Pipeline summary and roles needing attention.' },
+  ];
+
+  return (
+    <SettingsFields>
+      {rows.map((row) => (
+        <SettingsField key={row.label} label={row.label} description={row.description}>
+          <div className={ws.settingsTogglePlaceholder}>
+            <span className={ws.settingsToggleTrack} aria-hidden />
+            <SettingsSoonBadge />
+          </div>
+        </SettingsField>
+      ))}
+    </SettingsFields>
+  );
+}
+
+export function SettingsCompanySection() {
+  return (
+    <SettingsFields>
+      <SettingsField
+        label="Employer brand"
+        description="Logo, cover image, culture, benefits, and your hiring story."
+      >
+        <Link to="/portal/company" className={ws.btnPrimary}>Edit company profile</Link>
+      </SettingsField>
+      <SettingsField
+        label="Public company page"
+        description="Candidates see this when they view your roles and applications."
+      >
+        <ul className={ws.settingsFeatureList}>
+          <li>Logo & cover image</li>
+          <li>Culture, benefits & hiring philosophy</li>
+          <li>Website & social links</li>
+        </ul>
+      </SettingsField>
+    </SettingsFields>
+  );
+}
+
+export function SettingsTeamSection() {
+  return (
+    <SettingsFields>
+      <SettingsField
+        label="Team members"
+        description="Invite recruiters and hiring managers to your workspace."
+      >
+        <SettingsSoonBadge />
+      </SettingsField>
+      <SettingsField
+        label="Roles & permissions"
+        description="Control who can publish jobs, move pipeline stages, and message candidates."
+      >
+        <p className={ws.settingsInlineMuted}>Team management will appear here.</p>
+      </SettingsField>
+    </SettingsFields>
+  );
+}
+
+export function SettingsIntegrationsSection() {
+  return (
+    <SettingsFields>
+      <SettingsField
+        label="Calendar"
+        description="Sync interview schedules with Google Calendar or Outlook."
+      >
+        <SettingsSoonBadge />
+      </SettingsField>
+      <SettingsField
+        label="Applicant tracking"
+        description="Export candidates or connect external ATS tools."
+      >
+        <SettingsSoonBadge />
+      </SettingsField>
+      <SettingsField
+        label="Messaging"
+        description="Extend inbox with email forwarding and templates."
+      >
+        <SettingsSoonBadge />
+      </SettingsField>
+    </SettingsFields>
+  );
+}
+
+export function SettingsBillingSection() {
+  return (
+    <SettingsFields>
+      <SettingsField
+        label="Plan & usage"
+        description="Your subscription tier and active job campaign limits."
+      >
+        <SettingsSoonBadge />
+      </SettingsField>
+      <SettingsField
+        label="Invoices"
+        description="Download receipts and manage payment methods."
+      >
+        <p className={ws.settingsInlineMuted}>Billing details will appear here.</p>
+      </SettingsField>
+    </SettingsFields>
   );
 }

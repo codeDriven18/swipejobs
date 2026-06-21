@@ -149,7 +149,7 @@ public class CompanyPortalController : ControllerBase
 
         try
         {
-            var updated = await _portalService.UpdateApplicationStatusAsync(companyId, id, dto.Status, cancellationToken);
+            var updated = await _portalService.UpdateApplicationStatusAsync(companyId, id, dto.Status, dto.RejectionReason, cancellationToken);
             return updated is null ? NotFound() : Ok(updated);
         }
         catch (InvalidOperationException ex)
@@ -222,6 +222,128 @@ public class CompanyPortalController : ControllerBase
         catch (InvalidOperationException ex)
         {
             return BadRequest(new { error = ex.Message, code = "invalid_status" });
+        }
+    }
+
+    [HttpGet("recruiter-tags")]
+    public async Task<IActionResult> GetRecruiterTags(CancellationToken cancellationToken)
+    {
+        _currentUser.RequireRole(UserRole.Company, UserRole.Admin);
+        var companyId = _currentUser.GetRequiredCompanyId();
+        return Ok(await _portalService.GetRecruiterTagsAsync(companyId, cancellationToken));
+    }
+
+    [HttpPost("recruiter-tags")]
+    public async Task<IActionResult> CreateRecruiterTag(
+        [FromBody] PortalCreateRecruiterTagDto dto, CancellationToken cancellationToken)
+    {
+        _currentUser.RequireRole(UserRole.Company, UserRole.Admin);
+        var companyId = _currentUser.GetRequiredCompanyId();
+        try
+        {
+            var tag = await _portalService.CreateRecruiterTagAsync(companyId, dto, cancellationToken);
+            return Ok(tag);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpPut("recruiter-tags/{tagId:guid}")]
+    public async Task<IActionResult> UpdateRecruiterTag(
+        Guid tagId, [FromBody] PortalUpdateRecruiterTagDto dto, CancellationToken cancellationToken)
+    {
+        _currentUser.RequireRole(UserRole.Company, UserRole.Admin);
+        var companyId = _currentUser.GetRequiredCompanyId();
+        try
+        {
+            var tag = await _portalService.UpdateRecruiterTagAsync(companyId, tagId, dto, cancellationToken);
+            return tag is null ? NotFound() : Ok(tag);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpDelete("recruiter-tags/{tagId:guid}")]
+    public async Task<IActionResult> DeleteRecruiterTag(Guid tagId, CancellationToken cancellationToken)
+    {
+        _currentUser.RequireRole(UserRole.Company, UserRole.Admin);
+        var companyId = _currentUser.GetRequiredCompanyId();
+        var ok = await _portalService.DeleteRecruiterTagAsync(companyId, tagId, cancellationToken);
+        return ok ? NoContent() : NotFound();
+    }
+
+    [HttpPost("applications/{id:guid}/notes")]
+    public async Task<IActionResult> AddRecruiterNote(
+        Guid id, [FromBody] PortalAddRecruiterNoteDto dto, CancellationToken cancellationToken)
+    {
+        _currentUser.RequireRole(UserRole.Company, UserRole.Admin);
+        var companyId = _currentUser.GetRequiredCompanyId();
+        try
+        {
+            var note = await _portalService.AddRecruiterNoteAsync(companyId, id, dto, cancellationToken);
+            return note is null ? NotFound() : Ok(note);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpDelete("applications/{id:guid}/notes/{noteId:guid}")]
+    public async Task<IActionResult> DeleteRecruiterNote(
+        Guid id, Guid noteId, CancellationToken cancellationToken)
+    {
+        _currentUser.RequireRole(UserRole.Company, UserRole.Admin);
+        var companyId = _currentUser.GetRequiredCompanyId();
+        var ok = await _portalService.DeleteRecruiterNoteAsync(companyId, id, noteId, cancellationToken);
+        return ok ? NoContent() : NotFound();
+    }
+
+    [HttpPatch("applications/{id:guid}/rating")]
+    public async Task<IActionResult> SetRecruiterRating(
+        Guid id, [FromBody] PortalSetRecruiterRatingDto dto, CancellationToken cancellationToken)
+    {
+        _currentUser.RequireRole(UserRole.Company, UserRole.Admin);
+        var companyId = _currentUser.GetRequiredCompanyId();
+        try
+        {
+            var updated = await _portalService.SetRecruiterRatingAsync(companyId, id, dto, cancellationToken);
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpPatch("applications/{id:guid}/favorite")]
+    public async Task<IActionResult> SetFavorite(
+        Guid id, [FromBody] PortalSetFavoriteDto dto, CancellationToken cancellationToken)
+    {
+        _currentUser.RequireRole(UserRole.Company, UserRole.Admin);
+        var companyId = _currentUser.GetRequiredCompanyId();
+        var updated = await _portalService.SetFavoriteAsync(companyId, id, dto, cancellationToken);
+        return updated is null ? NotFound() : Ok(updated);
+    }
+
+    [HttpPut("applications/{id:guid}/tags")]
+    public async Task<IActionResult> SetApplicationTags(
+        Guid id, [FromBody] PortalSetApplicationTagsDto dto, CancellationToken cancellationToken)
+    {
+        _currentUser.RequireRole(UserRole.Company, UserRole.Admin);
+        var companyId = _currentUser.GetRequiredCompanyId();
+        try
+        {
+            var updated = await _portalService.SetApplicationTagsAsync(companyId, id, dto, cancellationToken);
+            return updated is null ? NotFound() : Ok(updated);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
         }
     }
 
@@ -401,5 +523,49 @@ public class CompanyPortalController : ControllerBase
         var companyId = _currentUser.GetRequiredCompanyId();
         var company = await _portalService.UpdateCompanyAsync(companyId, dto, cancellationToken);
         return company is null ? NotFound() : Ok(company);
+    }
+
+    [HttpPost("company/logo")]
+    [RequestSizeLimit(512 * 1024)]
+    public async Task<IActionResult> UploadCompanyLogo(IFormFile file, CancellationToken cancellationToken)
+    {
+        _currentUser.RequireRole(UserRole.Company, UserRole.Admin);
+        if (file is null || file.Length == 0)
+            return BadRequest(new { error = "File is required." });
+
+        var companyId = _currentUser.GetRequiredCompanyId();
+        try
+        {
+            await using var stream = file.OpenReadStream();
+            var company = await _portalService.UploadCompanyLogoAsync(
+                companyId, stream, file.ContentType, file.Length, cancellationToken);
+            return company is null ? NotFound() : Ok(new { logoUrl = company.LogoUrl });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
+    }
+
+    [HttpPost("company/banner")]
+    [RequestSizeLimit(2 * 1024 * 1024)]
+    public async Task<IActionResult> UploadCompanyBanner(IFormFile file, CancellationToken cancellationToken)
+    {
+        _currentUser.RequireRole(UserRole.Company, UserRole.Admin);
+        if (file is null || file.Length == 0)
+            return BadRequest(new { error = "File is required." });
+
+        var companyId = _currentUser.GetRequiredCompanyId();
+        try
+        {
+            await using var stream = file.OpenReadStream();
+            var company = await _portalService.UploadCompanyBannerAsync(
+                companyId, stream, file.ContentType, file.Length, cancellationToken);
+            return company is null ? NotFound() : Ok(new { bannerUrl = company.BannerUrl });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new { error = ex.Message });
+        }
     }
 }
