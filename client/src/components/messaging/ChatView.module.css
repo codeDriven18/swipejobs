@@ -4,12 +4,13 @@
   --chat-safe-bottom: env(safe-area-inset-bottom, 0px);
   --chat-composer-gap: 0.5rem;
 
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  display: flex;
+  flex-direction: column;
   width: 100%;
   max-width: 720px;
   height: calc(100dvh - var(--chat-nav-offset) - var(--chat-safe-bottom) - var(--chat-keyboard-offset));
   max-height: calc(100dvh - var(--chat-nav-offset) - var(--chat-safe-bottom) - var(--chat-keyboard-offset));
+  min-height: 0;
   margin: 0 auto;
   overflow: hidden;
   box-sizing: border-box;
@@ -35,9 +36,11 @@
   --chat-nav-offset: 0px;
   max-width: none;
   width: 100%;
+  flex: 1 1 0;
   height: 100%;
   min-height: 0;
   max-height: 100%;
+  align-self: stretch;
   background: var(--employer-surface, var(--color-surface));
 }
 
@@ -56,7 +59,7 @@
 }
 
 .header {
-  flex-shrink: 0;
+  flex: 0 0 auto;
   padding:
     max(0.5rem, env(safe-area-inset-top))
     var(--space-3)
@@ -200,29 +203,52 @@
   flex-shrink: 0;
 }
 
-.body {
+.messagesRegion {
+  flex: 1 1 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  min-height: 0;
   overflow: hidden;
 }
 
 .messages {
+  flex: 1 1 0;
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
   padding: 0.5rem var(--space-3) var(--chat-composer-gap);
   display: flex;
   flex-direction: column;
+  justify-content: flex-end;
 }
 
-.status,
+.emptyState {
+  flex: 0 0 auto;
+  padding: 1.25rem var(--space-3) 0.5rem;
+  align-self: stretch;
+}
+
+.emptyStateText {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 0.8125rem;
+  text-align: center;
+  line-height: 1.45;
+}
+
+.composerDock {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
 .typing {
   color: var(--color-text-muted);
   font-size: 0.8125rem;
   text-align: center;
   margin: var(--space-2) 0;
+  flex-shrink: 0;
 }
 
 .dateSeparator {
@@ -485,11 +511,11 @@
 }
 
 .loadingMessages {
-  flex: 1;
+  flex: 0 0 auto;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  min-height: 12rem;
+  padding-top: 2.5rem;
 }
 
 .loader {
@@ -596,9 +622,10 @@
 
 .error {
   margin: 0;
-  padding: 0 var(--space-3);
+  padding: 0.25rem var(--space-3) 0;
   color: var(--color-danger);
   font-size: 0.8125rem;
+  flex-shrink: 0;
 }
 
 .composer {
@@ -606,7 +633,8 @@
   grid-template-columns: auto 1fr auto;
   gap: 0.5rem;
   align-items: end;
-  flex-shrink: 0;
+  flex: 0 0 auto;
+  width: 100%;
   padding:
     0.5rem var(--space-3)
     calc(0.625rem + var(--chat-safe-bottom) + var(--keyboard-offset, 0px));

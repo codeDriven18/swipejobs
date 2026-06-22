@@ -373,7 +373,7 @@ export function ChatView({
         </div>
       </header>
 
-      <div className={styles.body}>
+      <div className={styles.messagesRegion}>
         {conversation.isReadOnly && (
           <p className={styles.readOnlyBanner}>This conversation is read-only.</p>
         )}
@@ -384,11 +384,13 @@ export function ChatView({
             <span className={styles.loader} aria-hidden />
           </div>
         ) : messages.length === 0 ? (
-          <p className={styles.status}>
-            {conversation.canSendMessages
-              ? 'Say hello to start the conversation.'
-              : 'Messages unlock after an interview invitation.'}
-          </p>
+          <div className={styles.emptyState}>
+            <p className={styles.emptyStateText}>
+              {conversation.canSendMessages
+                ? 'Say hello to start the conversation.'
+                : 'Messages unlock after an interview invitation.'}
+            </p>
+          </div>
         ) : (
           timeline.map((item) => {
             if (item.kind === 'separator') {
@@ -454,16 +456,18 @@ export function ChatView({
         {typingUserId && <p className={styles.typing}>Typing…</p>}
         <div ref={bottomRef} className={styles.bottomAnchor} />
         </div>
+      </div>
 
+      <div className={styles.composerDock}>
         {error && <p className={styles.error}>{error}</p>}
 
         <form
-        className={styles.composer}
-        onSubmit={(event) => {
-          event.preventDefault();
-          void handleSend();
-        }}
-      >
+          className={styles.composer}
+          onSubmit={(event) => {
+            event.preventDefault();
+            void handleSend();
+          }}
+        >
         <input
           ref={fileInputRef}
           type="file"
@@ -509,7 +513,7 @@ export function ChatView({
         >
           Send
         </Button>
-      </form>
+        </form>
       </div>
 
       {expandedImage && (

@@ -593,17 +593,18 @@
 .msgPane {
   display: flex;
   flex-direction: column;
-  flex: 1;
+  flex: 1 1 0;
   min-width: 0;
   min-height: 0;
   height: 100%;
+  overflow: hidden;
   background: var(--ws-panel);
 }
 
 .msgPaneBody {
   display: flex;
   flex-direction: row;
-  flex: 1;
+  flex: 1 1 0;
   min-height: 0;
   overflow: hidden;
   align-items: stretch;
@@ -615,13 +616,14 @@
   flex: 1 1 0;
   min-width: 0;
   min-height: 0;
-  height: 100%;
   overflow: hidden;
 }
 
-.msgPaneChat > :last-child {
-  flex: 1 1 auto;
+.msgPaneChat > * {
+  flex: 1 1 0;
   min-height: 0;
+  min-width: 0;
+  width: 100%;
 }
 
 .msgSplitHeader {
@@ -1144,6 +1146,7 @@
 }
 
 .inboxDetail {
+  flex: 1 1 0;
   min-width: 0;
   min-height: 0;
   display: flex;
@@ -5473,6 +5476,7 @@
   display: none;
   flex-direction: column;
   flex: 0 0 auto;
+  flex-shrink: 0;
   width: 17rem;
   max-width: 17rem;
   height: 100%;
