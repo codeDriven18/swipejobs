@@ -65,6 +65,10 @@ public class LocalMessageAttachmentStorage : IMessageAttachmentStorage
             ".pdf" => "application/pdf",
             ".doc" => "application/msword",
             ".docx" => "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ".jpg" or ".jpeg" => "image/jpeg",
+            ".png" => "image/png",
+            ".gif" => "image/gif",
+            ".webp" => "image/webp",
             _ => "application/octet-stream",
         };
 

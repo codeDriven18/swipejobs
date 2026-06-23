@@ -128,7 +128,26 @@ public static class DependencyInjection
             services.AddScoped<IResumeStorageService, Storage.LocalResumeStorageService>();
         }
 
-        if (perfEnabled)
+        // Message-attachment storage: prefer durable Azure Blob when configured; fall back to
+        // local disk for dev. Local storage on Azure App Service is ephemeral — attachments are
+        // lost on redeploy or restart without blob storage.
+        var attachmentBlobConnection = configuration["MessageStorage:AzureBlobConnectionString"]
+            ?? configuration.GetConnectionString("MessageAttachmentBlobStorage");
+        if (!string.IsNullOrWhiteSpace(attachmentBlobConnection))
+        {
+            if (perfEnabled)
+            {
+                services.AddScoped<Storage.BlobMessageAttachmentStorage>();
+                services.AddScoped<IMessageAttachmentStorage>(sp =>
+                    new Storage.TimedMessageAttachmentStorage(
+                        sp.GetRequiredService<Storage.BlobMessageAttachmentStorage>()));
+            }
+            else
+            {
+                services.AddScoped<IMessageAttachmentStorage, Storage.BlobMessageAttachmentStorage>();
+            }
+        }
+        else if (perfEnabled)
         {
             services.AddScoped<LocalMessageAttachmentStorage>();
             services.AddScoped<IMessageAttachmentStorage>(sp =>

@@ -47,17 +47,46 @@ export function replacePendingMessage(
   return upsertMessage(withoutPending, normalized);
 }
 
-/** Merge realtime events with optimistic uploads — avoids duplicate bubbles when SignalR beats the HTTP response. */
+/**
+ * Merge realtime events with optimistic uploads.
+ * Avoids duplicate bubbles when SignalR delivers the server event before the HTTP response returns.
+ *
+ * Matching strategy (in order of specificity):
+ *  1. Exact filename match on an uploading pending message (original logic)
+ *  2. Any uploading pending message when the server message has an attachmentUrl but no filename
+ *     recorded on the pending side yet (race condition in some browsers)
+ *  3. For text-only messages, server id deduplication via upsertMessage is sufficient
+ */
 export function reconcileIncomingMessage(current: ChatMessage[], message: ChatMessage): ChatMessage[] {
   const normalized = normalizeLoadedMessage(message);
   let next = current;
 
-  if (normalized.isMine && normalized.attachmentUrl) {
-    next = current.filter((m) => !(
-      m.id.startsWith('pending-')
-      && m.uploadStatus === 'uploading'
-      && m.attachmentFileName === normalized.attachmentFileName
-    ));
+  if (normalized.isMine) {
+    if (normalized.attachmentUrl) {
+      const pendingIndex = current.findIndex((m) => (
+        m.id.startsWith('pending-')
+        && m.uploadStatus === 'uploading'
+        && (
+          m.attachmentFileName === normalized.attachmentFileName
+          || !m.attachmentFileName
+          || !normalized.attachmentFileName
+        )
+      ));
+      if (pendingIndex >= 0) {
+        const pending = current[pendingIndex];
+        if (pending.localPreviewUrl?.startsWith('blob:')) {
+          URL.revokeObjectURL(pending.localPreviewUrl);
+        }
+        next = current.filter((_, i) => i !== pendingIndex);
+      }
+    } else if (!normalized.attachmentUrl) {
+      next = current.filter((m) => !(
+        m.id.startsWith('pending-')
+        && m.uploadStatus === 'uploading'
+        && !m.attachmentFileName
+        && m.messageText === normalized.messageText
+      ));
+    }
   }
 
   return upsertMessage(next, normalized);
