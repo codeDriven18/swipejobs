@@ -173,7 +173,8 @@
   flex-shrink: 0;
   margin-top: auto;
   padding-top: 0.5rem;
-  padding-bottom: max(0.25rem, env(safe-area-inset-bottom));
+  /* Keep action buttons clear of the frosted bottom nav */
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
 }
 
 .deckCount {

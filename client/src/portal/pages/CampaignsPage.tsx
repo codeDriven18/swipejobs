@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { portalApi } from '@/api/portalApi';
 import { ApiError } from '@/api/client';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { CampaignsSkeleton } from '@/portal/components/PortalSkeleton';
 import { useEmployerWorkspaceData } from '@/hooks/useEmployerWorkspaceData';
 import { getJobCampaignMetrics } from '@/lib/employer/employerWorkspaceData';
 import { JobCampaignCard } from '@/portal/components/JobCampaignCard';
@@ -138,6 +139,14 @@ export function CampaignsPage() {
     }
   };
 
+  if (loading && activeJobs.length === 0) {
+    return (
+      <PageFrame meta="Loading campaigns…">
+        <CampaignsSkeleton />
+      </PageFrame>
+    );
+  }
+
   if (showForm) {
     return (
       <PageFrame
@@ -174,10 +183,25 @@ export function CampaignsPage() {
         <div className={ws.notice}>Blocked — {CompanyStatusLabels[companyStatus]}. Publishing unlocks after approval.</div>
       )}
 
-      {loading ? <p className={ws.statusText}>Loading campaigns…</p> : failed ? (
-        <EmptyState illustration="generic" title="Could not load jobs" description="Check your connection." actions={[{ label: 'Retry', onClick: () => void refresh(), primary: true }]} />
+      {failed ? (
+        <EmptyState
+          illustration="generic"
+          title="Could not load your roles"
+          description="A network error occurred. Check your connection and try again."
+          actions={[{ label: 'Retry', onClick: () => void refresh(), primary: true }]}
+        />
       ) : activeJobs.length === 0 ? (
-        <EmptyState illustration="generic" title="No active campaigns" description="Publish a role to start receiving candidates." actions={canPublish ? [{ label: 'Post role', onClick: openCreate, primary: true }] : []} />
+        <EmptyState
+          illustration="generic"
+          title="No active hiring campaigns yet"
+          description="Create your first role to start attracting candidates. It only takes a few minutes."
+          actions={canPublish
+            ? [
+                { label: 'Post your first role →', onClick: openCreate, primary: true },
+                { label: 'Complete company profile first', to: '/portal/company' },
+              ]
+            : [{ label: 'Complete company profile to unlock posting', to: '/portal/company', primary: true }]}
+        />
       ) : (
         <div className={[ws.cardGrid, ws.cardGridWide].join(' ')}>
           {activeJobs.map((job) => (

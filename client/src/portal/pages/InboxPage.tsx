@@ -125,13 +125,13 @@ export function InboxPage() {
           ) : conversations.length === 0 ? (
             <div className={ws.msgInboxEmpty}>
               <p className={ws.msgInboxEmptyTitle}>No conversations yet</p>
-              <p className={ws.candidateSub}>Invite candidates to interview from the pipeline to unlock messaging.</p>
-              <Link to="/portal/pipeline" className={ws.btnPrimary}>Open pipeline</Link>
+              <p className={ws.candidateSub}>Candidate chat unlocks after you invite them to interview. Head to the pipeline to take action.</p>
+              <Link to="/portal/pipeline" className={ws.btnPrimary}>Open pipeline →</Link>
             </div>
           ) : visibleConversations.length === 0 ? (
             <div className={ws.msgInboxEmpty}>
-              <p className={ws.msgInboxEmptyTitle}>No matches</p>
-              <p className={ws.candidateSub}>No conversations match “{search.trim()}”.</p>
+              <p className={ws.msgInboxEmptyTitle}>No results</p>
+              <p className={ws.candidateSub}>No conversations match your search or filter.</p>
             </div>
           ) : filter === 'unread' ? (
             <section className={ws.msgInboxSection}>
@@ -190,10 +190,11 @@ export function InboxPage() {
 export function InboxEmptyPanel() {
   return (
     <div className={ws.inboxEmpty}>
+      <p className={ws.inboxEmptyTitle}>Pick a conversation</p>
       <p className={ws.candidateSub}>
-        Choose a candidate thread to read and reply. On desktop you can open a second chat in split view while you compare candidates.
+        Select a candidate thread on the left to read and reply. On wider screens you can open two chats side-by-side.
       </p>
-      <Link to="/portal/pipeline" className={ws.btnPrimary}>Open pipeline</Link>
+      <Link to="/portal/pipeline" className={ws.btnGhost}>View pipeline →</Link>
     </div>
   );
 }

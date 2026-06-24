@@ -1,7 +1,8 @@
+/* Use semantic tokens that work in both seeker app and portal */
 .list {
   list-style: none;
   margin: 0;
-  padding: var(--space-2) var(--space-4);
+  padding: var(--space-2) 0;
   display: flex;
   flex-direction: column;
 }
@@ -9,25 +10,34 @@
 .item {
   display: flex;
   gap: var(--space-4);
-  padding: var(--space-4) var(--space-2);
-  border-radius: var(--employer-radius-lg);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
   color: inherit;
   text-decoration: none;
+  border-bottom: 1px solid var(--color-border-subtle);
   transition: background var(--duration-fast) var(--ease-out), transform var(--duration-fast) var(--ease-out);
 }
 
+.item:last-child {
+  border-bottom: none;
+}
+
 .item:hover {
-  background: var(--employer-surface-hover);
+  background: var(--color-surface-raised, var(--employer-surface-hover));
 }
 
 .item:active {
   transform: scale(0.995);
 }
 
-.itemUnread .name,
-.itemUnread .preview {
+.itemUnread .name {
   font-weight: 700;
-  color: var(--employer-ink);
+  color: var(--color-text, var(--employer-ink));
+}
+
+.itemUnread .preview {
+  font-weight: 600;
+  color: var(--color-text, var(--employer-ink));
 }
 
 .avatarWrap {
@@ -37,8 +47,8 @@
 
 .avatar,
 .avatarFallback {
-  width: 3rem;
-  height: 3rem;
+  width: 2.75rem;
+  height: 2.75rem;
   border-radius: var(--radius-full);
   object-fit: cover;
 }
@@ -46,22 +56,22 @@
 .avatarFallback {
   display: grid;
   place-items: center;
-  background: var(--employer-surface-muted);
-  border: 1px solid var(--employer-border);
-  font-size: 1rem;
+  background: var(--color-surface, var(--employer-surface-muted));
+  border: 1px solid var(--color-border, var(--employer-border));
+  font-size: 0.9375rem;
   font-weight: 700;
-  color: var(--employer-ink-soft);
+  color: var(--color-text-muted, var(--employer-ink-soft));
 }
 
 .onlineDot {
   position: absolute;
   right: 2px;
   bottom: 2px;
-  width: 0.65rem;
-  height: 0.65rem;
+  width: 0.625rem;
+  height: 0.625rem;
   border-radius: 50%;
   background: #22c55e;
-  border: 2px solid var(--employer-surface);
+  border: 2px solid var(--color-bg, var(--employer-surface));
 }
 
 .body {
@@ -87,10 +97,11 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+  color: var(--color-text);
 }
 
 .time {
-  color: var(--employer-muted);
+  color: var(--color-text-muted, var(--employer-muted));
   font-size: 0.6875rem;
   flex-shrink: 0;
 }
@@ -98,7 +109,7 @@
 .jobLine {
   margin: 0;
   font-size: 0.75rem;
-  color: var(--employer-muted);
+  color: var(--color-text-muted, var(--employer-muted));
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -115,7 +126,7 @@
   margin: 0;
   flex: 1;
   min-width: 0;
-  color: var(--employer-muted);
+  color: var(--color-text-muted, var(--employer-muted));
   font-size: 0.8125rem;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -128,8 +139,8 @@
   height: 1.25rem;
   padding: 0 0.35rem;
   border-radius: var(--radius-full);
-  background: var(--employer-brand);
-  color: var(--employer-ink);
+  background: var(--color-accent, var(--employer-brand));
+  color: #000;
   font-size: 0.6875rem;
   font-weight: 800;
   display: grid;

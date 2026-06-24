@@ -2602,6 +2602,13 @@
   min-height: 20rem;
 }
 
+.inboxEmptyTitle {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
 .pipelineWrap {
   display: flex;
   flex-direction: column;
@@ -4696,10 +4703,11 @@
 
 .todayStatusLine {
   margin: 0;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-size: 1.0625rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
   color: var(--ws-ink);
+  line-height: 1.3;
 }
 
 .todayLayout {

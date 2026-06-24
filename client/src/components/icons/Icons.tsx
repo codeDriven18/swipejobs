@@ -157,6 +157,25 @@ export function IconMail(props: IconProps) {
   return <svg {...base(props)}><rect x="2" y="4" width="20" height="16" rx="2" /><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7" /></svg>;
 }
 
+/** Modern messaging bubble — Telegram / WhatsApp style */
+export function IconMessageBubble(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+    </svg>
+  );
+}
+
+/** Two overlapping chat bubbles — Discord / iMessage style */
+export function IconMessageBubbles(props: IconProps) {
+  return (
+    <svg {...base(props)}>
+      <path d="M8 11h.01M12 11h.01M16 11h.01" />
+      <path d="M20 2H4a2 2 0 0 0-2 2v16l4-4h14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2z" />
+    </svg>
+  );
+}
+
 export function IconMore(props: IconProps) {
   return <svg {...base(props)}><circle cx="12" cy="12" r="1" /><circle cx="19" cy="12" r="1" /><circle cx="5" cy="12" r="1" /></svg>;
 }

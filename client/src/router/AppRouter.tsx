@@ -116,13 +116,15 @@ export function AppRouter() {
           <Route path="settings" element={<PortalSettingsPage />} />
         </Route>
 
+        {/* Full-width microsite — must be outside AppLayout to avoid 480px column constraint */}
+        <Route path="/companies/:slug" element={<CompanyPage />} />
+
         <Route element={<AppLayout />}>
           <Route path="/welcome" element={<WelcomePage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/p/:id" element={<PublicProfilePage />} />
-          <Route path="/companies/:slug" element={<CompanyPage />} />
           <Route element={<UserAppGate><Outlet /></UserAppGate>}>
             <Route path="/" element={<DashboardPage />} />
             <Route path="/swipe" element={<SwipePage />} />

@@ -56,7 +56,9 @@ export function MessagesPage() {
           actions={[{ label: 'View applications', to: '/applications', primary: true }]}
         />
       ) : (
-        <ConversationList conversations={conversations} basePath="/messages" />
+        <div className={styles.listCard}>
+          <ConversationList conversations={conversations} basePath="/messages" />
+        </div>
       )}
     </section>
   );

@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { TodayPageSkeleton } from '@/portal/components/PortalSkeleton';
 import { useEmployerWorkspace } from '@/context/EmployerWorkspaceContext';
 import { useEmployerWorkspaceData } from '@/hooks/useEmployerWorkspaceData';
 import { useUnreadMessages } from '@/hooks/useUnreadMessages';
@@ -38,7 +39,11 @@ export function TodayPage() {
   const loading = statsLoading || dataLoading;
 
   if (loading && !stats) {
-    return <p className={ws.statusText}>Loading your hiring workspace…</p>;
+    return (
+      <PageFrame fill>
+        <TodayPageSkeleton />
+      </PageFrame>
+    );
   }
 
   if (!stats || failed) {
@@ -95,12 +100,11 @@ export function TodayPage() {
 
         {!hasUrgentWork && applications.length === 0 && (
           <div className={ws.todayCaughtUp}>
-            <p className={ws.todayCaughtUpTitle}>You&apos;re caught up.</p>
-            <p className={ws.todayCaughtUpSub}>Start building your hiring pipeline.</p>
+            <p className={ws.todayCaughtUpTitle}>You&apos;re all caught up.</p>
+            <p className={ws.todayCaughtUpSub}>No candidates need attention right now. Post a role to start receiving applicants.</p>
             <div className={ws.todayCaughtUpActions}>
-              <Link to="/portal/jobs" className={ws.btnPrimary}>Create your first role</Link>
-              <Link to="/portal/pipeline" className={ws.btnGhost}>Open pipeline</Link>
-              <Link to="/portal/company" className={ws.btnGhost}>Complete company profile</Link>
+              <Link to="/portal/jobs" className={ws.btnPrimary}>Post a role →</Link>
+              <Link to="/portal/company" className={ws.btnGhost}>Build your employer brand</Link>
             </div>
           </div>
         )}

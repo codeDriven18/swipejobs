@@ -61,6 +61,8 @@ export function SwipeCard({ job, dragX, dragY }: SwipeCardProps) {
         {preview.summary ? (
           <p className={styles.summary}>{preview.summary}</p>
         ) : null}
+
+        <p className={styles.tapHint} aria-hidden>Tap to view full details</p>
       </div>
     </article>
   );

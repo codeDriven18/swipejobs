@@ -5,6 +5,7 @@ import { portalApi } from '@/api/portalApi';
 import { ApiError } from '@/api/client';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { PageFrame } from '@/portal/components/PageFrame';
+import { CandidateProfileSkeleton } from '@/portal/components/PortalSkeleton';
 import { InterviewScheduler } from '@/portal/components/InterviewScheduler';
 import { CandidateRecruiterPanel } from '@/portal/components/CandidateRecruiterPanel';
 import { CandidateProfileHero } from '@/portal/components/CandidateProfileHero';
@@ -153,7 +154,13 @@ export function CandidateProfilePage() {
     }
   };
 
-  if (loading) return <p className={ws.statusText}>Loading candidate…</p>;
+  if (loading) {
+    return (
+      <PageFrame>
+        <CandidateProfileSkeleton />
+      </PageFrame>
+    );
+  }
 
   if (!applicant) {
     return (

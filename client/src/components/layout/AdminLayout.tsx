@@ -116,9 +116,9 @@ export function AdminLayout() {
         </nav>
 
         <div className={styles.sidebarFooter}>
-          <NavLink to="/" className={styles.footerLink}>
+          <NavLink to="/portal" className={styles.footerLink}>
             <IconChevronLeft size={16} />
-            Back to app
+            Employer portal
           </NavLink>
         </div>
       </aside>

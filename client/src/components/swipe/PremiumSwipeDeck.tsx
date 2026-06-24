@@ -45,16 +45,36 @@ interface PremiumSwipeDeckProps {
 interface ExitState {
   job: Job;
   direction: SwipeDirection;
+  /** Starting position for exit animation — preserves drag momentum */
+  startX: number;
+  startY: number;
+  startRotate: number;
 }
 
-/** Position-only threshold — speed does not affect commit. */
-function resolveDirection(offset: { x: number; y: number }): SwipeDirection | null {
+/** Position-only threshold. If position doesn't meet threshold, check velocity as a fallback. */
+function resolveDirection(
+  offset: { x: number; y: number },
+  velocity?: { x: number; y: number },
+): SwipeDirection | null {
   const absX = Math.abs(offset.x);
   const absY = Math.abs(offset.y);
 
+  // Primary: position threshold
   if (offset.y <= -SWIPE_THRESHOLD_Y && absY > absX) return 'save';
   if (offset.x <= -SWIPE_THRESHOLD_X && absX >= absY) return 'pass';
   if (offset.x >= SWIPE_THRESHOLD_X && absX >= absY) return 'apply';
+
+  // Fallback: fast flick even if position didn't cross threshold
+  if (velocity) {
+    const velAbsX = Math.abs(velocity.x);
+    const velAbsY = Math.abs(velocity.y);
+    const VELOCITY_THRESHOLD = 380;
+
+    if (velocity.y <= -VELOCITY_THRESHOLD && velAbsY > velAbsX && absY > 20) return 'save';
+    if (velocity.x <= -VELOCITY_THRESHOLD && velAbsX >= velAbsY && absX > 20) return 'pass';
+    if (velocity.x >= VELOCITY_THRESHOLD && velAbsX >= velAbsY && absX > 20) return 'apply';
+  }
+
   return null;
 }
 
@@ -95,22 +115,34 @@ export const PremiumSwipeDeck = forwardRef<PremiumSwipeDeckHandle, PremiumSwipeD
       setExitState(null);
     }, []);
 
-    const flyOut = useCallback((direction: SwipeDirection) => {
+    /**
+     * Commit and animate the top card out.
+     * fromDrag=true: capture current x/y/rotate so exit continues from where the drag ended.
+     * fromDrag=false (button press): animate from center.
+     */
+    const flyOut = useCallback((direction: SwipeDirection, fromDrag = false) => {
       if (exitLockedRef.current || !topJobRef.current) return;
       const job = topJobRef.current;
+
+      const startX = fromDrag ? x.get() : 0;
+      const startY = fromDrag ? y.get() : 0;
+      const startRotate = fromDrag ? rotate.get() : 0;
 
       exitLockedRef.current = true;
       x.stop();
       y.stop();
-      x.set(0);
-      y.set(0);
+
+      if (!fromDrag) {
+        x.set(0);
+        y.set(0);
+      }
 
       onDismiss(job, direction);
-      setExitState({ job, direction });
-    }, [onDismiss, x, y]);
+      setExitState({ job, direction, startX, startY, startRotate });
+    }, [onDismiss, x, y, rotate]);
 
     useImperativeHandle(ref, () => ({
-      dismiss: (direction: SwipeDirection) => flyOut(direction),
+      dismiss: (direction: SwipeDirection) => flyOut(direction, false),
     }), [flyOut]);
 
     const handleDragStart = () => {
@@ -126,9 +158,9 @@ export const PremiumSwipeDeck = forwardRef<PremiumSwipeDeckHandle, PremiumSwipeD
     const handleDragEnd = (_: unknown, info: PanInfo) => {
       if (exitLockedRef.current) return;
 
-      const direction = resolveDirection(info.offset);
+      const direction = resolveDirection(info.offset, info.velocity);
       if (direction) {
-        flyOut(direction);
+        flyOut(direction, true);
         return;
       }
 
@@ -214,7 +246,7 @@ export const PremiumSwipeDeck = forwardRef<PremiumSwipeDeckHandle, PremiumSwipeD
             key={`exit-${exitState.job.id}`}
             className={styles.topCard}
             style={{ zIndex: 30, pointerEvents: 'none' }}
-            initial={{ x: 0, y: 0, rotate: 0 }}
+            initial={{ x: exitState.startX, y: exitState.startY, rotate: exitState.startRotate }}
             animate={exitTarget(exitState.direction)}
             transition={SWIPE_EXIT}
             onAnimationComplete={finishExit}

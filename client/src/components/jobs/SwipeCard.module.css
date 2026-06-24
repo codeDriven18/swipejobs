@@ -152,6 +152,16 @@
   word-break: break-word;
 }
 
+.tapHint {
+  margin-top: auto;
+  padding-top: 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.3);
+  text-align: center;
+  letter-spacing: 0.03em;
+}
+
 @media (max-width: 380px) {
   .body {
     padding-inline: 0.9rem;

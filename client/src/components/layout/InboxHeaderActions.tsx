@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { IconMail } from '@/components/icons/Icons';
+import { IconMessageBubble } from '@/components/icons/Icons';
 import { NotificationBell } from '@/components/layout/NotificationBell';
 import { closeActiveFloatingPanel } from '@/lib/floatingPanels';
 import { useUnreadMessages } from '@/hooks/useUnreadMessages';
@@ -17,7 +17,7 @@ export function InboxHeaderActions() {
         aria-label="Messages"
         onClick={() => closeActiveFloatingPanel()}
       >
-        <IconMail size={22} className={styles.headerIcon} />
+        <IconMessageBubble size={22} className={styles.headerIcon} />
         {unreadMessages > 0 && (
           <span className={styles.badge}>
             {unreadMessages > 9 ? '9+' : unreadMessages}

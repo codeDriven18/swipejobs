@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { UserAvatar } from '@/components/profile/UserAvatar';
+import { PipelineListSkeleton } from '@/portal/components/PortalSkeleton';
 import { usePipelineBoard } from '@/hooks/usePipelineBoard';
 import { PIPELINE_COLUMNS } from '@/lib/employer/pipelineArchitecture';
 import { candidateProfilePath } from '@/lib/employer/hiringNavigation';
@@ -52,15 +53,15 @@ export function PipelineListView({ jobId }: PipelineListViewProps) {
   }, [applications, search, stageFilter, sort]);
 
   if (loading) {
-    return <p className={ws.statusText}>Loading candidates…</p>;
+    return <PipelineListSkeleton />;
   }
 
   if (failed) {
     return (
       <EmptyState
         illustration="applications"
-        title="Could not load candidates"
-        description="Check your connection and try again."
+        title="Couldn't load your pipeline"
+        description="A network error occurred. Try refreshing."
         actions={[{ label: 'Retry', onClick: refresh, primary: true }]}
       />
     );
@@ -108,12 +109,17 @@ export function PipelineListView({ jobId }: PipelineListViewProps) {
       {filtered.length === 0 ? (
         <EmptyState
           illustration="applications"
-          title="No candidates match"
+          title={applications.length === 0
+            ? 'Your pipeline is empty'
+            : 'No candidates match your filters'}
           description={applications.length === 0
-            ? 'Applications appear when candidates apply to your roles.'
-            : 'Try adjusting search or filters.'}
+            ? 'Share your job posting and candidates will start appearing here as they apply.'
+            : 'Try a different name, stage, or clear the search to see all candidates.'}
           actions={applications.length === 0
-            ? [{ label: 'Post a role', to: '/portal/jobs', primary: true }]
+            ? [
+                { label: 'View active roles', to: '/portal/jobs', primary: true },
+                { label: 'Switch to board view', onClick: () => {}, },
+              ]
             : [{ label: 'Clear filters', onClick: () => { setSearch(''); setStageFilter(''); }, primary: true }]}
         />
       ) : (
