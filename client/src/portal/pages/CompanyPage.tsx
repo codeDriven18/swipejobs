@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react
 import { Link } from 'react-router-dom';
 import { portalApi } from '@/api/portalApi';
 import { CompanyAvatar } from '@/components/profile/CompanyAvatar';
+import { CoverUploader } from '@/components/profile/CoverUploader';
 import { companyUploadApi } from '@/api/companyUploadApi';
 import { ImageDropZone } from '@/portal/components/ImageDropZone';
 import { PageFrame } from '@/portal/components/PageFrame';
@@ -302,7 +303,12 @@ export function CompanyPage() {
             <aside className={ws.companyEditorDrawer} aria-label="Edit company brand">
               <div className={ws.companyEditorDrawerHead}>
                 <h3 className={ws.panelTitle}>Edit brand</h3>
-                <button type="button" className={ws.btnGhost} onClick={() => { resetForm(); setEditing(false); }}>Close</button>
+                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                  <button type="button" className={ws.btnGhost} onClick={() => { resetForm(); setEditing(false); }}>Close</button>
+                  <button type="button" className={ws.btnPrimary} disabled={saving} onClick={() => void save()}>
+                    {saving ? 'Saving…' : 'Save'}
+                  </button>
+                </div>
               </div>
               <div className={ws.companyEditorDrawerBody}>
             <section className={ws.panel}>
@@ -310,15 +316,25 @@ export function CompanyPage() {
               <p className={ws.companyEditorHint}>
                 Your cover and logo are the first things candidates see. Upload high-quality assets that reflect your team.
               </p>
-              <ImageDropZone
-                label="Cover image"
-                hint="Drag & drop to upload, or paste a URL. Without a cover, a branded placeholder is shown."
-                value={form.bannerUrl ?? ''}
-                onChange={(bannerUrl) => syncMediaField('bannerUrl', bannerUrl)}
-                onUploadFile={handleBannerUpload}
-                aspect="banner"
-                placeholder={<span className={ws.dropZonePlaceholder}>Branded cover preview</span>}
-              />
+              <div>
+                <p className={ws.dropZoneLabel}>Cover image</p>
+                <p className={ws.candidateSub} style={{ marginBottom: '0.5rem' }}>
+                  Upload from device or paste a URL. Large photos are automatically compressed.
+                </p>
+                <CoverUploader
+                  bannerUrl={form.bannerUrl ?? ''}
+                  uploading={saving}
+                  uploadProgress={0}
+                  onUpload={async (file) => { await handleBannerUpload(file); }}
+                />
+                <input
+                  className={ws.input}
+                  placeholder="https://… (paste a cover image URL)"
+                  value={form.bannerUrl ?? ''}
+                  style={{ marginTop: '0.5rem' }}
+                  onChange={(e) => syncMediaField('bannerUrl', e.target.value)}
+                />
+              </div>
               <ImageDropZone
                 label="Logo"
                 hint="Square logo works best. Drag & drop to upload or paste a URL."

@@ -556,7 +556,7 @@ public class CompanyPortalController : ControllerBase
     }
 
     [HttpPost("company/banner")]
-    [RequestSizeLimit(2 * 1024 * 1024)]
+    [RequestSizeLimit(10 * 1024 * 1024)]   // 10 MB ceiling — service enforces 2 MB after content check
     public async Task<IActionResult> UploadCompanyBanner(IFormFile file, CancellationToken cancellationToken)
     {
         _currentUser.RequireRole(UserRole.Company, UserRole.Admin);
@@ -564,16 +564,33 @@ public class CompanyPortalController : ControllerBase
             return BadRequest(new { error = "File is required." });
 
         var companyId = _currentUser.GetRequiredCompanyId();
+
+        _logger.LogInformation(
+            "Banner upload start companyId={CompanyId} fileName={FileName} contentType={ContentType} length={Length}",
+            companyId, file.FileName, file.ContentType, file.Length);
+
         try
         {
             await using var stream = file.OpenReadStream();
             var company = await _portalService.UploadCompanyBannerAsync(
                 companyId, stream, file.ContentType, file.Length, cancellationToken);
+            _logger.LogInformation(
+                "Banner upload success companyId={CompanyId} bannerUrlLength={Length}",
+                companyId, company?.BannerUrl?.Length ?? 0);
             return company is null ? NotFound() : Ok(new { bannerUrl = company.BannerUrl });
         }
         catch (InvalidOperationException ex)
         {
+            _logger.LogWarning(
+                "Banner upload validation failed companyId={CompanyId} error={Error}", companyId, ex.Message);
             return BadRequest(new { error = ex.Message });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex,
+                "Banner upload unhandled error companyId={CompanyId} fileName={FileName} contentType={ContentType} length={Length}",
+                companyId, file.FileName, file.ContentType, file.Length);
+            return StatusCode(500, new { error = "Banner upload failed. Please try again or use a smaller image." });
         }
     }
 }
