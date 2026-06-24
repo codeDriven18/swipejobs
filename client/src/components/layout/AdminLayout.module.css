@@ -1,30 +1,49 @@
+/* ──────────────────────────────────────────────────────────────────
+   Admin layout — fixed sidebar, independently scrolling content area.
+   ────────────────────────────────────────────────────────────────── */
+
 .shell {
   --admin-sidebar-width: 14.5rem;
+  --admin-sidebar-collapsed-width: 3.5rem;
   --admin-header-height: 4rem;
   min-height: 100vh;
-  display: grid;
-  grid-template-columns: var(--admin-sidebar-width) 1fr;
   background: var(--color-bg);
   color: var(--color-text);
 }
 
+/* ── Fixed sidebar ── */
 .sidebar {
-  position: sticky;
+  position: fixed;
   top: 0;
-  height: 100vh;
+  left: 0;
+  bottom: 0;
+  width: var(--admin-sidebar-width);
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   padding: var(--space-5) var(--space-3);
   background: var(--color-surface);
   border-right: 1px solid var(--color-border-subtle);
+  z-index: 40;
+  overflow: hidden;
+
+  transition: width 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+.sidebarCollapsed {
+  width: var(--admin-sidebar-collapsed-width);
+}
+
+/* ── Brand row ── */
 .brand {
   display: flex;
   align-items: center;
   gap: var(--space-3);
   padding: 0 var(--space-2) var(--space-5);
   margin-bottom: var(--space-2);
+  flex-shrink: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .logo {
@@ -34,6 +53,20 @@
   background: var(--color-accent);
   box-shadow: var(--shadow-sm);
   flex-shrink: 0;
+}
+
+.brandText {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  opacity: 1;
+  transition: opacity 0.12s ease;
+}
+
+.sidebarCollapsed .brandText {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .brandTitle {
@@ -49,12 +82,60 @@
   color: var(--color-text-muted);
 }
 
+/* Collapse toggle button — sits to the right of brand text */
+.collapseBtn {
+  display: none;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+@media (min-width: 900px) {
+  .collapseBtn {
+    display: inline-flex;
+  }
+}
+
+.collapseBtn:hover {
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-bg));
+  color: var(--color-text);
+}
+
+.collapseBtn svg {
+  width: 0.9375rem;
+  height: 0.9375rem;
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sidebarCollapsed .collapseBtn svg {
+  transform: rotate(180deg);
+}
+
+/* ── Scrollable nav area ── */
 .nav {
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
   flex: 1;
-  overflow: auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.nav::-webkit-scrollbar {
+  display: none;
 }
 
 .navGroupLabel {
@@ -64,6 +145,17 @@
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--color-text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 0.1s ease;
+}
+
+.sidebarCollapsed .navGroupLabel {
+  opacity: 0;
+  height: 0;
+  margin: 0;
+  pointer-events: none;
 }
 
 .navLink {
@@ -75,7 +167,11 @@
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
   color: var(--color-text-muted);
-  transition: background var(--duration-fast) var(--ease-out), color var(--duration-fast) var(--ease-out);
+  white-space: nowrap;
+  overflow: hidden;
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out);
 }
 
 .navLink:hover {
@@ -91,12 +187,30 @@
 
 .navIcon {
   display: flex;
+  flex-shrink: 0;
   opacity: 0.85;
 }
 
+.navLabel {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 1;
+  transition: opacity 0.1s ease;
+}
+
+.sidebarCollapsed .navLabel {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── Pinned footer ── */
 .sidebarFooter {
+  flex-shrink: 0;
   padding-top: var(--space-4);
   border-top: 1px solid var(--color-border-subtle);
+  overflow: hidden;
 }
 
 .footerLink {
@@ -106,22 +220,39 @@
   font-size: var(--text-sm);
   color: var(--color-text-muted);
   padding: var(--space-2);
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .footerLink:hover {
   color: var(--color-text);
 }
 
+.footerLinkLabel {
+  overflow: hidden;
+  opacity: 1;
+  transition: opacity 0.1s ease;
+}
+
+.sidebarCollapsed .footerLinkLabel {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ──────────────────────────────────────────────
+   Main area — offset by sidebar, scrolls freely
+──────────────────────────────────────────────── */
 .mainArea {
   min-width: 0;
   display: flex;
   flex-direction: column;
+  /* margin-left set via inline style with transition in JSX */
 }
 
 .globalHeader {
   position: sticky;
   top: 0;
-  z-index: 20;
+  z-index: 30;
   height: var(--admin-header-height);
   display: grid;
   grid-template-columns: 1fr minmax(12rem, 22rem) auto;
@@ -131,6 +262,7 @@
   background: color-mix(in srgb, var(--color-surface-raised) 92%, transparent);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--color-border-subtle);
+  flex-shrink: 0;
 }
 
 .pageTitle {
@@ -166,7 +298,9 @@
   border-radius: var(--radius-full);
   font-size: var(--text-sm);
   font-weight: var(--weight-semibold);
-  transition: transform var(--duration-fast) var(--ease-out), background var(--duration-fast) var(--ease-out);
+  transition:
+    transform var(--duration-fast) var(--ease-out),
+    background var(--duration-fast) var(--ease-out);
 }
 
 .quickBtn {
@@ -245,6 +379,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-1);
+  z-index: 50;
 }
 
 .userMenu a,
@@ -266,6 +401,7 @@
   max-width: 88rem;
 }
 
+/* ── Responsive ── */
 @media (max-width: 1100px) {
   .globalHeader {
     grid-template-columns: 1fr auto;
@@ -280,22 +416,42 @@
   }
 }
 
+/* On small screens sidebar reverts to top bar */
 @media (max-width: 900px) {
-  .shell {
-    grid-template-columns: 1fr;
-  }
-
   .sidebar {
     position: relative;
+    width: 100% !important;
     height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border-subtle);
+    flex-direction: column;
+    padding: var(--space-3);
+  }
+
+  .sidebarCollapsed {
+    width: 100% !important;
   }
 
   .nav {
     flex-direction: row;
     flex-wrap: wrap;
+    overflow: visible;
+    flex: 0;
   }
 
   .navGroupLabel {
+    display: none;
+  }
+
+  .navLabel {
+    opacity: 1 !important;
+  }
+
+  .brandText {
+    opacity: 1 !important;
+  }
+
+  .collapseBtn {
     display: none;
   }
 }

@@ -22,6 +22,18 @@ import {
 import type { ReactNode } from 'react';
 import styles from './AdminLayout.module.css';
 
+const COLLAPSE_KEY = 'swipejobs.admin.sidebarCollapsed';
+const SIDEBAR_FULL = '14.5rem';
+const SIDEBAR_COLLAPSED = '3.5rem';
+
+function CollapseIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+      <path d="M10 12L6 8l4-4" />
+    </svg>
+  );
+}
+
 const primaryNav: { to: string; label: string; icon: ReactNode; end?: boolean }[] = [
   { to: '/admin', label: 'Dashboard', icon: <IconGrid size={18} />, end: true },
   { to: '/admin/moderation', label: 'Moderation', icon: <IconFilter size={18} /> },
@@ -67,21 +79,44 @@ export function AdminLayout() {
   const [menuOpen, setMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
+  const [collapsed, setCollapsed] = useState(() => {
+    try { return localStorage.getItem(COLLAPSE_KEY) === 'true'; } catch { return false; }
+  });
+
+  const toggleCollapse = useCallback(() => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try { localStorage.setItem(COLLAPSE_KEY, String(next)); } catch { /* ignore */ }
+      return next;
+    });
+  }, []);
+
   const openSearch = useCallback(() => setSearchOpen(true), []);
   useAdminSearchShortcut(openSearch);
   useDismissOnInteractOutside(menuOpen, () => setMenuOpen(false), userMenuRef);
 
   const pageTitle = pageTitles[location.pathname] ?? 'Admin';
+  const currentWidth = collapsed ? SIDEBAR_COLLAPSED : SIDEBAR_FULL;
 
   return (
     <div className={styles.shell}>
-      <aside className={styles.sidebar}>
+      {/* Fixed sidebar — never scrolls with page */}
+      <aside className={[styles.sidebar, collapsed ? styles.sidebarCollapsed : ''].filter(Boolean).join(' ')}>
         <div className={styles.brand}>
-          <span className={styles.logo} />
-          <div>
+          <span className={styles.logo} title={collapsed ? 'SwipeJobs Admin' : undefined} />
+          <div className={styles.brandText}>
             <span className={styles.brandTitle}>SwipeJobs</span>
             <span className={styles.brandSub}>Moderation Console</span>
           </div>
+          <button
+            type="button"
+            className={styles.collapseBtn}
+            onClick={toggleCollapse}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <CollapseIcon />
+          </button>
         </div>
 
         <nav className={styles.nav} aria-label="Admin navigation">
@@ -91,12 +126,13 @@ export function AdminLayout() {
               key={item.to}
               to={item.to}
               end={item.end ?? false}
+              title={collapsed ? item.label : undefined}
               className={({ isActive }) =>
                 `${styles.navLink} ${isActive ? styles.navActive : ''}`
               }
             >
               <span className={styles.navIcon}>{item.icon}</span>
-              {item.label}
+              <span className={styles.navLabel}>{item.label}</span>
             </NavLink>
           ))}
 
@@ -105,25 +141,38 @@ export function AdminLayout() {
             <NavLink
               key={item.to}
               to={item.to}
+              title={collapsed ? item.label : undefined}
               className={({ isActive }) =>
                 `${styles.navLink} ${isActive ? styles.navActive : ''}`
               }
             >
               <span className={styles.navIcon}>{item.icon}</span>
-              {item.label}
+              <span className={styles.navLabel}>{item.label}</span>
             </NavLink>
           ))}
         </nav>
 
+        {/* Pinned footer */}
         <div className={styles.sidebarFooter}>
-          <NavLink to="/portal" className={styles.footerLink}>
+          <NavLink
+            to="/portal"
+            className={styles.footerLink}
+            title={collapsed ? 'Employer portal' : undefined}
+          >
             <IconChevronLeft size={16} />
-            Employer portal
+            <span className={styles.footerLinkLabel}>Employer portal</span>
           </NavLink>
         </div>
       </aside>
 
-      <div className={styles.mainArea}>
+      {/* Main area — offset by sidebar width with smooth transition */}
+      <div
+        className={styles.mainArea}
+        style={{
+          marginLeft: `clamp(0px, ${currentWidth}, 100vw)`,
+          transition: 'margin-left 0.2s cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
+      >
         <header className={styles.globalHeader}>
           <div className={styles.headerLeft}>
             <h1 className={styles.pageTitle}>{pageTitle}</h1>
