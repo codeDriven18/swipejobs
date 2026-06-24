@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { HeaderThemeToggle } from '@/components/theme/HeaderThemeToggle';
 import { motion } from 'framer-motion';
 import {
   IconBriefcase,
@@ -209,6 +210,7 @@ export function CompanyPage() {
             <div className={styles.topBarActions}>
               <span className={styles.topBarHint}>Looking for opportunities?</span>
               <Link to="/jobs" className={styles.topBarLink}>Browse all jobs →</Link>
+              <HeaderThemeToggle />
             </div>
           </div>
         </div>
