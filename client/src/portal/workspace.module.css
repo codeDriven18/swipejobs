@@ -2326,6 +2326,24 @@
   color: var(--ws-brand);
 }
 
+.coverUploaderWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.coverUploaderBox {
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--ws-radius-lg);
+}
+
+.coverUploaderBox > * {
+  margin-bottom: 0 !important;
+}
+
 .companyEditorHint {
   margin: 0 0 1rem;
   font-size: 0.8125rem;

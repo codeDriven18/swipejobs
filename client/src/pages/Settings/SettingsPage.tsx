@@ -2,6 +2,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { UserRole } from '@/models/auth';
 import { ThemeAppearancePicker } from '@/components/theme/ThemeAppearancePicker';
+import { InstallAppButton } from '@/components/pwa/InstallAppButton';
 import { resetOnboarding } from '@/lib/onboardingStorage';
 import { PageHeader } from '@/components/ui/PageHeader';
 import {
@@ -97,6 +98,9 @@ export function SettingsPage() {
             </span>
             <IconChevronRight size={18} className={styles.rowChevron} aria-hidden />
           </Link>
+          <div style={{ padding: '0 1rem 1rem' }}>
+            <InstallAppButton variant="compact" showFallback={false} />
+          </div>
         </div>
       )}
 

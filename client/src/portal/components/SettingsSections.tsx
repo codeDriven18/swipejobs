@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { InstallAppButton } from '@/components/pwa/InstallAppButton';
 import { ApiError } from '@/api/client';
 import { authApi } from '@/api/authApi';
 import { useAuth } from '@/context/AuthContext';
@@ -185,6 +186,12 @@ export function SettingsSessionsSection() {
 export function SettingsWorkspaceSection() {
   return (
     <SettingsFields>
+      <SettingsField
+        label="Install Recruiter App"
+        description="Add SwipeJobs Recruiter to your home screen for faster access to your pipeline, inbox, and candidates."
+      >
+        <InstallAppButton variant="compact" showFallback={false} />
+      </SettingsField>
       <SettingsField
         label="Default pipeline view"
         description="Choose how the hiring board opens for your team."

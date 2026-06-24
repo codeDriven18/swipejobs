@@ -1,4 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
+import { useManifest } from '@/hooks/useManifest';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import { AdminGlobalSearch, useAdminSearchShortcut } from '@/components/admin/AdminGlobalSearch';
@@ -91,6 +92,7 @@ export function AdminLayout() {
     });
   }, []);
 
+  useManifest('/admin.webmanifest');
   const openSearch = useCallback(() => setSearchOpen(true), []);
   useAdminSearchShortcut(openSearch);
   useDismissOnInteractOutside(menuOpen, () => setMenuOpen(false), userMenuRef);

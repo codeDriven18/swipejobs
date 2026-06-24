@@ -6,12 +6,14 @@ interface InstallAppButtonProps {
   variant?: 'full' | 'compact';
   showFallback?: boolean;
   className?: string;
+  label?: string;
 }
 
 export function InstallAppButton({
   variant = 'full',
   showFallback = true,
   className = '',
+  label,
 }: InstallAppButtonProps) {
   const { canInstall, isInstalled, promptInstall, fallbackMessage } = usePwaInstallPrompt();
 
@@ -32,7 +34,7 @@ export function InstallAppButton({
       onClick={() => void promptInstall()}
     >
       <span className={styles.icon} aria-hidden="true"><IconSmartphone size={18} /></span>
-      <span>Install SwipeJobs</span>
+      <span>{label ?? 'Install SwipeJobs'}</span>
     </button>
   );
 }

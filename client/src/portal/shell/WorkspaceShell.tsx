@@ -1,5 +1,6 @@
 import { useMemo, useState, type CSSProperties } from 'react';
 import { Outlet, useLocation, useSearchParams } from 'react-router-dom';
+import { useManifest } from '@/hooks/useManifest';
 import { AnimatePresence, motion } from 'framer-motion';
 import { EmployerWorkspaceProvider, useEmployerWorkspace } from '@/context/EmployerWorkspaceContext';
 import { useUnreadMessages } from '@/hooks/useUnreadMessages';
@@ -42,6 +43,8 @@ function WorkspaceShellInner() {
     }) as CSSProperties,
     [brandColor, currentNavWidth],
   );
+
+  useManifest('/recruiter.webmanifest');
 
   if (workspaceLoading) {
     return <PortalLoadingShell />;

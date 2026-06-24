@@ -166,7 +166,7 @@ export function CompanyPage() {
       const updated = await portalApi.updateCompany(form);
       setCompany(updated);
       showToast('Company profile saved', 'success');
-      setEditing(false);
+      // Stay on editor page — do NOT close the drawer
       void refreshCompany();
     } catch (e) {
       showToast(getApiErrorMessage(e, 'Save failed'), 'error');
@@ -316,17 +316,19 @@ export function CompanyPage() {
               <p className={ws.companyEditorHint}>
                 Your cover and logo are the first things candidates see. Upload high-quality assets that reflect your team.
               </p>
-              <div>
+              <div className={ws.coverUploaderWrap}>
                 <p className={ws.dropZoneLabel}>Cover image</p>
                 <p className={ws.candidateSub} style={{ marginBottom: '0.5rem' }}>
                   Upload from device or paste a URL. Large photos are automatically compressed.
                 </p>
-                <CoverUploader
-                  bannerUrl={form.bannerUrl ?? ''}
-                  uploading={saving}
-                  uploadProgress={0}
-                  onUpload={async (file) => { await handleBannerUpload(file); }}
-                />
+                <div className={ws.coverUploaderBox}>
+                  <CoverUploader
+                    bannerUrl={form.bannerUrl ?? ''}
+                    uploading={saving}
+                    uploadProgress={0}
+                    onUpload={async (file) => { await handleBannerUpload(file); }}
+                  />
+                </div>
                 <input
                   className={ws.input}
                   placeholder="https://… (paste a cover image URL)"

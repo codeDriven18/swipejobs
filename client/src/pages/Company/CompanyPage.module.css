@@ -1,12 +1,15 @@
 /* ── Employer microsite — full-width landing, not a profile card ── */
 
+/* Default = dark (feels premium for a careers page) */
 .microsite {
   --bg: #050505;
   --text: #fafafa;
   --muted: #a3a3a3;
   --accent: #ffd600;
   --surface: rgba(255, 255, 255, 0.04);
+  --surface-raised: rgba(255, 255, 255, 0.06);
   --surface-border: rgba(255, 255, 255, 0.08);
+  --card-bg: rgba(255, 255, 255, 0.04);
   --max: 76rem;
   --section-y: clamp(2.5rem, 5vw, 4rem);
 
@@ -15,6 +18,19 @@
   background: var(--bg);
   color: var(--text);
   overflow-x: hidden;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+/* Light mode override — entire page switches cleanly */
+[data-theme='light'] .microsite {
+  --bg: #f8f8f8;
+  --text: #0a0a0a;
+  --muted: #6b7280;
+  --accent: #d4a800;
+  --surface: rgba(0, 0, 0, 0.04);
+  --surface-raised: rgba(0, 0, 0, 0.02);
+  --surface-border: rgba(0, 0, 0, 0.1);
+  --card-bg: rgba(0, 0, 0, 0.03);
 }
 
 .container {
@@ -114,7 +130,7 @@
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(135deg, #0a0a0a 0%, #141414 45%, color-mix(in srgb, var(--accent) 22%, #141414) 100%);
+    linear-gradient(135deg, var(--bg) 0%, color-mix(in srgb, var(--bg) 80%, #141414) 45%, color-mix(in srgb, var(--accent) 22%, var(--bg)) 100%);
   background-size: cover;
   background-position: center 30%;
 }
@@ -680,7 +696,7 @@
   border-radius: 999px;
   font-size: 0.6875rem;
   font-weight: 700;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--surface);
   border: 1px solid var(--surface-border);
   color: var(--muted);
 }
