@@ -1,16 +1,18 @@
-import { useMemo, type CSSProperties } from 'react';
+import { useMemo, useState, type CSSProperties } from 'react';
 import { Outlet, useLocation, useSearchParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { EmployerWorkspaceProvider, useEmployerWorkspace } from '@/context/EmployerWorkspaceContext';
 import { useUnreadMessages } from '@/hooks/useUnreadMessages';
 import { resolveWorkspaceContext } from '@/portal/nav';
-import { WorkspaceNav, WorkspaceNavDrawer } from '@/portal/shell/WorkspaceNav';
+import { WorkspaceNav, WorkspaceNavDrawer, useNavCollapse } from '@/portal/shell/WorkspaceNav';
 import { WorkspaceMobileNav } from '@/portal/shell/WorkspaceMobileNav';
 import { PortalLoadingShell } from '@/portal/shell/PortalLoadingShell';
 import '@/portal/tokens.css';
 import ws from '@/portal/workspace.module.css';
 import navStyles from '@/portal/shell/WorkspaceNav.module.css';
-import { useState } from 'react';
+
+const NAV_FULL_WIDTH = '15.5rem';
+const NAV_COLLAPSED_WIDTH = '3.75rem';
 
 function WorkspaceShellInner() {
   const location = useLocation();
@@ -18,18 +20,27 @@ function WorkspaceShellInner() {
   const { brandColor, loading: workspaceLoading } = useEmployerWorkspace();
   const { count: unreadMessages } = useUnreadMessages();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const { collapsed, toggle } = useNavCollapse();
 
   const isPipeline = location.pathname.startsWith('/portal/pipeline')
     || location.pathname === '/portal/applications';
   const isInbox = location.pathname.startsWith('/portal/messages');
+
   const context = useMemo(
     () => resolveWorkspaceContext(location.pathname, searchParams),
     [location.pathname, searchParams],
   );
 
+  const currentNavWidth = collapsed ? NAV_COLLAPSED_WIDTH : NAV_FULL_WIDTH;
+
   const style = useMemo(
-    () => ({ '--ws-brand': brandColor, '--employer-brand': brandColor }) as CSSProperties,
-    [brandColor],
+    () => ({
+      '--ws-brand': brandColor,
+      '--employer-brand': brandColor,
+      '--ws-nav-collapsed-width': NAV_COLLAPSED_WIDTH,
+      '--ws-nav-current-width': currentNavWidth,
+    }) as CSSProperties,
+    [brandColor, currentNavWidth],
   );
 
   if (workspaceLoading) {
@@ -38,15 +49,34 @@ function WorkspaceShellInner() {
 
   return (
     <div className={`employer-portal ${ws.shell}`} style={style}>
-      <WorkspaceNav unreadMessages={unreadMessages} />
-      <WorkspaceNavDrawer open={drawerOpen} unreadMessages={unreadMessages} onClose={() => setDrawerOpen(false)} />
+      {/* Fixed sidebar — never scrolls with page content */}
+      <WorkspaceNav
+        unreadMessages={unreadMessages}
+        collapsed={collapsed}
+        onToggleCollapse={toggle}
+      />
 
-      <div className={ws.mainColumn}>
+      {/* Mobile slide-out drawer */}
+      <WorkspaceNavDrawer
+        open={drawerOpen}
+        unreadMessages={unreadMessages}
+        onClose={() => setDrawerOpen(false)}
+      />
+
+      {/* Main content — offset by sidebar width and transitions smoothly */}
+      <div
+        className={ws.mainColumn}
+        style={{
+          marginLeft: `clamp(0px, ${currentNavWidth}, 100vw)`,
+          transition: 'margin-left 0.2s cubic-bezier(0.22, 1, 0.36, 1)',
+        }}
+      >
         <header className={ws.header}>
+          {/* Mobile: open drawer; Desktop: toggle collapse */}
           <button
             type="button"
             className={navStyles.menuBtn}
-            aria-label="Open menu"
+            aria-label="Toggle menu"
             onClick={() => setDrawerOpen(true)}
           >
             ☰
