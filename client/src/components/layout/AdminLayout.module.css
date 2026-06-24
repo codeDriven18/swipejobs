@@ -4,7 +4,7 @@
 
 .shell {
   --admin-sidebar-width: 14.5rem;
-  --admin-sidebar-collapsed-width: 3.5rem;
+  --admin-sidebar-collapsed-width: 4rem;
   --admin-header-height: 4rem;
   min-height: 100vh;
   background: var(--color-bg);
@@ -32,6 +32,19 @@
 
 .sidebarCollapsed {
   width: var(--admin-sidebar-collapsed-width);
+}
+
+/* Center content horizontally when collapsed so logo is never clipped */
+.sidebarCollapsed .brand,
+.sidebarCollapsed .nav,
+.sidebarCollapsed .sidebarFooter {
+  align-items: center;
+  padding-inline: 0;
+  justify-content: center;
+}
+
+.sidebarCollapsed .logoBtn {
+  margin-inline: auto;
 }
 
 /* ── Brand row ── */

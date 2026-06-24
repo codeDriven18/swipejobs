@@ -25,7 +25,7 @@ import styles from './AdminLayout.module.css';
 
 const COLLAPSE_KEY = 'swipejobs.admin.sidebarCollapsed';
 const SIDEBAR_FULL = '14.5rem';
-const SIDEBAR_COLLAPSED = '3.5rem';
+const SIDEBAR_COLLAPSED = '4rem';
 
 const primaryNav: { to: string; label: string; icon: ReactNode; end?: boolean }[] = [
   { to: '/admin', label: 'Dashboard', icon: <IconGrid size={18} />, end: true },
