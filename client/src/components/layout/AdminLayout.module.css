@@ -46,6 +46,29 @@
   overflow: hidden;
 }
 
+.logoBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: var(--radius-md);
+  outline-offset: 2px;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.logoBtn:hover {
+  opacity: 0.82;
+  transform: scale(1.07);
+}
+
+.logoBtn:active {
+  transform: scale(0.95);
+}
+
 .logo {
   width: 2rem;
   height: 2rem;
@@ -53,6 +76,7 @@
   background: var(--color-accent);
   box-shadow: var(--shadow-sm);
   flex-shrink: 0;
+  display: block;
 }
 
 .brandText {

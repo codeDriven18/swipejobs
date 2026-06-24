@@ -62,10 +62,11 @@ function WorkspaceShellInner() {
 
   return (
     <div className={`employer-portal ${ws.shell}`} style={style}>
-      {/* Fixed sidebar — never scrolls with page content */}
+      {/* Fixed sidebar — logo is the collapse toggle on desktop */}
       <WorkspaceNav
         unreadMessages={unreadMessages}
         collapsed={collapsed}
+        onToggleCollapse={toggle}
       />
 
       {/* Mobile slide-out drawer */}
@@ -84,21 +85,12 @@ function WorkspaceShellInner() {
         }}
       >
         <header className={ws.header}>
-          {/* Hamburger — mobile opens drawer, desktop toggles sidebar collapse */}
+          {/* Mobile-only: drawer trigger (sidebar not visible on mobile) */}
           <button
             type="button"
             className={navStyles.menuBtn}
             aria-label="Open navigation"
             onClick={() => setDrawerOpen(true)}
-          >
-            <HamburgerIcon />
-          </button>
-          <button
-            type="button"
-            className={navStyles.headerToggleBtn}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            onClick={toggle}
           >
             <HamburgerIcon />
           </button>

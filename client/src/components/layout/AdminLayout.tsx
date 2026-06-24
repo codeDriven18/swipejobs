@@ -97,12 +97,20 @@ export function AdminLayout() {
       {/* Fixed sidebar — never scrolls with page */}
       <aside className={[styles.sidebar, collapsed ? styles.sidebarCollapsed : ''].filter(Boolean).join(' ')}>
         <div className={styles.brand}>
-          <span className={styles.logo} title={collapsed ? 'SwipeJobs Admin' : undefined} />
+          {/* Logo square is the sidebar toggle */}
+          <button
+            type="button"
+            className={styles.logoBtn}
+            onClick={toggleCollapse}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          >
+            <span className={styles.logo} aria-hidden />
+          </button>
           <div className={styles.brandText}>
             <span className={styles.brandTitle}>SwipeJobs</span>
             <span className={styles.brandSub}>Moderation Console</span>
           </div>
-          {/* Toggle moved to header hamburger — removed from sidebar */}
         </div>
 
         <nav className={styles.nav} aria-label="Admin navigation">
@@ -161,19 +169,6 @@ export function AdminLayout() {
       >
         <header className={styles.globalHeader}>
           <div className={styles.headerLeft}>
-            <button
-              type="button"
-              className={styles.headerToggleBtn}
-              onClick={toggleCollapse}
-              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" aria-hidden>
-                <line x1="2" y1="4.5" x2="16" y2="4.5" />
-                <line x1="2" y1="9" x2="16" y2="9" />
-                <line x1="2" y1="13.5" x2="16" y2="13.5" />
-              </svg>
-            </button>
             <h1 className={styles.pageTitle}>{pageTitle}</h1>
           </div>
 

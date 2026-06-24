@@ -59,8 +59,9 @@ export function WorkspaceNav({
   onNavigate,
   className,
   collapsed = false,
+  onToggleCollapse,
   drawer = false,
-}: WorkspaceNavProps) {
+}: WorkspaceNavProps & { onToggleCollapse?: () => void }) {
   const { company, stats } = useEmployerWorkspace();
   const companyName = company?.name ?? 'Hiring workspace';
   const status = company?.status ?? stats?.companyStatus;
@@ -74,23 +75,36 @@ export function WorkspaceNav({
   return (
     <aside className={navClass} style={drawer ? { position: 'relative', width: '100%', height: '100dvh' } : undefined}>
       <div className={navStyles.navInner}>
-        {/* Identity + collapse toggle */}
+        {/* Identity — logo is the collapse toggle on desktop */}
         <div className={navStyles.identity}>
-          {company ? (
-            <span title={collapsed ? companyName : undefined}>
-              <CompanyAvatar
-                company={company}
-                size="sm"
-                circular
-                className={navStyles.identityLogo}
-              />
-            </span>
-          ) : (
-            <span
-              className={navStyles.identityLogoFallback}
-              aria-hidden
-              title={collapsed ? companyName : undefined}
+          {onToggleCollapse && !drawer ? (
+            <button
+              type="button"
+              className={navStyles.identityLogoBtn}
+              onClick={onToggleCollapse}
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              title={collapsed ? `Expand — ${companyName}` : `Collapse sidebar`}
+            >
+              {company ? (
+                <CompanyAvatar
+                  company={company}
+                  size="sm"
+                  circular
+                  className={navStyles.identityLogo}
+                />
+              ) : (
+                <span className={navStyles.identityLogoFallback} aria-hidden />
+              )}
+            </button>
+          ) : company ? (
+            <CompanyAvatar
+              company={company}
+              size="sm"
+              circular
+              className={navStyles.identityLogo}
             />
+          ) : (
+            <span className={navStyles.identityLogoFallback} aria-hidden />
           )}
           <div className={navStyles.identityText}>
             <p className={navStyles.identityName}>{companyName}</p>
@@ -99,7 +113,6 @@ export function WorkspaceNav({
               <span className={navStyles.identityStatus}>{CompanyStatusLabels[status]}</span>
             )}
           </div>
-          {/* Collapse toggle is now in the header — remove from sidebar */}
         </div>
 
         {/* Scrollable primary nav */}
