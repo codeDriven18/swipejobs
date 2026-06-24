@@ -265,6 +265,45 @@
   flex-shrink: 0;
 }
 
+.headerLeft {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+/* Three-line hamburger button — toggles sidebar on desktop, visible always */
+.headerToggleBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition:
+    background var(--duration-fast) var(--ease-out),
+    color var(--duration-fast) var(--ease-out),
+    border-color var(--duration-fast) var(--ease-out);
+}
+
+.headerToggleBtn:hover {
+  background: color-mix(in srgb, var(--color-accent) 8%, var(--color-bg));
+  border-color: var(--color-border-subtle);
+  color: var(--color-text);
+}
+
+/* On small screens where sidebar becomes a top bar, hide the toggle */
+@media (max-width: 900px) {
+  .headerToggleBtn {
+    display: none;
+  }
+}
+
 .pageTitle {
   font-size: var(--text-section);
   font-weight: var(--weight-semibold);

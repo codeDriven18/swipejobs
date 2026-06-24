@@ -13,14 +13,6 @@ import { CompanyStatus, CompanyStatusLabels } from '@/models/operations';
 
 const COLLAPSE_KEY = 'swipejobs.portal.sidebarCollapsed';
 
-function ChevronLeftIcon() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M10 12L6 8l4-4" />
-    </svg>
-  );
-}
-
 interface NavLinkItemProps {
   item: WorkspaceNavItem;
   unreadMessages: number;
@@ -58,7 +50,6 @@ interface WorkspaceNavProps {
   onNavigate?: () => void;
   className?: string;
   collapsed?: boolean;
-  onToggleCollapse?: () => void;
   /** When true, renders without position:fixed (for drawer use) */
   drawer?: boolean;
 }
@@ -68,7 +59,6 @@ export function WorkspaceNav({
   onNavigate,
   className,
   collapsed = false,
-  onToggleCollapse,
   drawer = false,
 }: WorkspaceNavProps) {
   const { company, stats } = useEmployerWorkspace();
@@ -109,17 +99,7 @@ export function WorkspaceNav({
               <span className={navStyles.identityStatus}>{CompanyStatusLabels[status]}</span>
             )}
           </div>
-          {onToggleCollapse && !drawer && (
-            <button
-              type="button"
-              className={navStyles.collapseBtn}
-              onClick={onToggleCollapse}
-              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            >
-              <ChevronLeftIcon />
-            </button>
-          )}
+          {/* Collapse toggle is now in the header — remove from sidebar */}
         </div>
 
         {/* Scrollable primary nav */}

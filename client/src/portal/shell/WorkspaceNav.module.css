@@ -330,24 +330,55 @@
 }
 
 /* ─────────────────────
-   Mobile header button
+   Header toggle buttons
 ───────────────────────*/
-.menuBtn {
+
+/* Shared button style for both mobile and desktop toggles */
+.menuBtn,
+.headerToggleBtn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 2.25rem;
   height: 2.25rem;
-  border: 1px solid var(--ws-border);
-  border-radius: var(--ws-radius);
-  background: var(--ws-panel);
-  cursor: pointer;
   flex-shrink: 0;
+  border-radius: var(--ws-radius);
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ws-muted);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.menuBtn:hover,
+.headerToggleBtn:hover {
+  background: var(--ws-nav-hover);
+  border-color: var(--ws-border);
+  color: var(--ws-ink);
+}
+
+/* Mobile button: visible on mobile, hidden on desktop */
+.menuBtn {
+  display: inline-flex;
 }
 
 @media (min-width: 768px) {
   .menuBtn {
     display: none;
+  }
+}
+
+/* Desktop toggle: hidden on mobile, visible on desktop */
+.headerToggleBtn {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .headerToggleBtn {
+    display: inline-flex;
   }
 }
 

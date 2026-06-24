@@ -27,14 +27,6 @@ const COLLAPSE_KEY = 'swipejobs.admin.sidebarCollapsed';
 const SIDEBAR_FULL = '14.5rem';
 const SIDEBAR_COLLAPSED = '3.5rem';
 
-function CollapseIcon() {
-  return (
-    <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-      <path d="M10 12L6 8l4-4" />
-    </svg>
-  );
-}
-
 const primaryNav: { to: string; label: string; icon: ReactNode; end?: boolean }[] = [
   { to: '/admin', label: 'Dashboard', icon: <IconGrid size={18} />, end: true },
   { to: '/admin/moderation', label: 'Moderation', icon: <IconFilter size={18} /> },
@@ -110,15 +102,7 @@ export function AdminLayout() {
             <span className={styles.brandTitle}>SwipeJobs</span>
             <span className={styles.brandSub}>Moderation Console</span>
           </div>
-          <button
-            type="button"
-            className={styles.collapseBtn}
-            onClick={toggleCollapse}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-            title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            <CollapseIcon />
-          </button>
+          {/* Toggle moved to header hamburger — removed from sidebar */}
         </div>
 
         <nav className={styles.nav} aria-label="Admin navigation">
@@ -177,6 +161,19 @@ export function AdminLayout() {
       >
         <header className={styles.globalHeader}>
           <div className={styles.headerLeft}>
+            <button
+              type="button"
+              className={styles.headerToggleBtn}
+              onClick={toggleCollapse}
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+              title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" aria-hidden>
+                <line x1="2" y1="4.5" x2="16" y2="4.5" />
+                <line x1="2" y1="9" x2="16" y2="9" />
+                <line x1="2" y1="13.5" x2="16" y2="13.5" />
+              </svg>
+            </button>
             <h1 className={styles.pageTitle}>{pageTitle}</h1>
           </div>
 
