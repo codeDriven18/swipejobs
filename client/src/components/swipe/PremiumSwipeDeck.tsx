@@ -98,6 +98,9 @@ export const PremiumSwipeDeck = forwardRef<PremiumSwipeDeckHandle, PremiumSwipeD
     const saveOpacity = useTransform(y, [0, -24, -SWIPE_THRESHOLD_Y], [0, 0.35, 1]);
 
     const [exitState, setExitState] = useState<ExitState | null>(null);
+    const backgroundJobs = exitState
+      ? jobs.slice(0, STACK_LAYERS - 1).map((job, index) => ({ job, layerIndex: index + 1 }))
+      : stackJobs.slice(1).map((job, index) => ({ job, layerIndex: index + 1 }));
     const exitLockedRef = useRef(false);
     const draggedRef = useRef(false);
     const topJobRef = useRef(topJob);
@@ -180,8 +183,7 @@ export const PremiumSwipeDeck = forwardRef<PremiumSwipeDeckHandle, PremiumSwipeD
 
     return (
       <div className={styles.deck}>
-        {stackJobs.slice(1).reverse().map((job, reverseIndex) => {
-          const layerIndex = stackJobs.length - 1 - reverseIndex;
+        {backgroundJobs.reverse().map(({ job, layerIndex }) => {
           const layer = STACK_STYLE[layerIndex] ?? STACK_STYLE[2];
           return (
             <div
