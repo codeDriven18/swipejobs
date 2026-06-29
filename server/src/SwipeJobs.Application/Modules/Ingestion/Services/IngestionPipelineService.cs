@@ -180,82 +180,132 @@ public class IngestionPipelineService
                 aiResponse.ExtractionSource,
                 cancellationToken);
 
-            var extracted = AiExtractionMapper.ToJobExtractionResult(aiResponse.Result);
-            if (string.IsNullOrWhiteSpace(extracted.Title) && string.IsNullOrWhiteSpace(extracted.Description))
+            // ── Step 1: Classification — skip non-job content immediately ──────
+            if (!aiResponse.Result.IsJobPosting)
             {
-                await MarkMessageFailed(message, "Invalid AI response.", cancellationToken);
-                await MarkSourceFailure(source, "Invalid AI response", "AI returned no usable job fields.", cancellationToken);
+                var postType = aiResponse.Result.PostType;
+                await Log(
+                    source.Id, "classification", "Info",
+                    $"Post classified as '{postType}' — not a job vacancy. Skipping.",
+                    dto.TelegramMessageId,
+                    cancellationToken);
+
+                message.Status = IngestionMessageStatus.Skipped;
+                message.ProcessingError = $"Not a job vacancy (type: {postType})";
+                await _messageRepository.UpdateAsync(message, cancellationToken);
+                source.SourceLastCheckedAt = DateTime.UtcNow;
+                source.LastSyncStatus = "Success";
+                source.LastSuccessfulIngestionAt = DateTime.UtcNow;
+                source.LastScannedTelegramMessageId = dto.TelegramMessageId;
+                await _sourceRepository.UpdateAsync(source, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
                 throw new IngestionPipelineException(
                     IngestionErrorCodes.InvalidAiResponse,
-                    "Gemini returned an invalid or empty job extraction.");
+                    $"Post skipped: classified as '{postType}', not a job vacancy.");
             }
 
-            var normalized = _normalizer.Normalize(extracted);
+            if (aiResponse.Result.Vacancies.Count == 0)
+            {
+                await MarkMessageFailed(message, "Invalid AI response: no vacancies extracted.", cancellationToken);
+                await MarkSourceFailure(source, "Invalid AI response", "AI returned no vacancies.", cancellationToken);
+                throw new IngestionPipelineException(
+                    IngestionErrorCodes.InvalidAiResponse,
+                    "AI returned no vacancies.");
+            }
+
             var channelHint = dto.ChannelName ?? source.ChannelName ?? source.Name;
 
-            await Log(source.Id, "preview", "Info", "Job preview generation started.", null, cancellationToken);
-            var previewStarted = stopwatch.ElapsedMilliseconds;
-            var preview = await _jobPreviewService.GenerateAsync(
-                normalized,
-                channelHint,
-                normalized.Confidence,
-                cancellationToken);
-            var previewMs = stopwatch.ElapsedMilliseconds - previewStarted;
-            await Log(
-                source.Id,
-                "preview",
-                "Info",
-                $"Job preview completed in {previewMs}ms.",
-                preview.DisplayTitle,
-                cancellationToken);
+            // ── Step 2: Process each vacancy (supports multi-position posts) ──
+            JobCandidate? firstCandidate = null;
+            var isDuplicate = false;
 
-            var normalizedForScoring = normalized;
-            if (string.IsNullOrWhiteSpace(normalizedForScoring.CompanyName))
-                normalizedForScoring = normalizedForScoring with { CompanyName = channelHint };
-
-            var (completeness, trust, spam) = _qualityScoring.Score(normalizedForScoring, source.TrustScore, dto.RawMessageText);
-
-            var fingerprint = JobContentFingerprint.ComputeForCandidate(
-                normalizedForScoring.Title,
-                normalizedForScoring.CompanyName,
-                normalizedForScoring.City ?? normalizedForScoring.Location,
-                normalizedForScoring.ApplyUrl);
-
-            var existingCandidate = await _candidateRepository.FindByContentFingerprintAsync(fingerprint, cancellationToken);
-            var isDuplicate = existingCandidate is not null &&
-                existingCandidate.Status is CandidateJobStatus.PendingReview or CandidateJobStatus.Approved;
-
-            JobCandidate candidate;
-            if (isDuplicate && existingCandidate is not null)
+            for (var vacancyIndex = 0; vacancyIndex < aiResponse.Result.Vacancies.Count; vacancyIndex++)
             {
-                candidate = existingCandidate;
-                candidate.MessageLinks.Add(new JobCandidateMessage
+                var vacancy = aiResponse.Result.Vacancies[vacancyIndex];
+                var vacancyLabel = aiResponse.Result.Vacancies.Count > 1
+                    ? $"[{vacancyIndex + 1}/{aiResponse.Result.Vacancies.Count}] {vacancy.Title}"
+                    : vacancy.Title;
+
+                await Log(source.Id, "vacancy", "Info", $"Processing vacancy: {vacancyLabel}", null, cancellationToken);
+
+                var extracted = AiExtractionMapper.VacancyToExtractionResult(vacancy);
+                if (string.IsNullOrWhiteSpace(extracted.Title) && string.IsNullOrWhiteSpace(extracted.Description))
                 {
-                    JobCandidateId = candidate.Id,
-                    IngestionMessageId = message.Id,
-                    IsPrimary = false,
-                });
-                await _candidateRepository.UpdateAsync(candidate, cancellationToken);
-                await Log(source.Id, "dedupe", "Info", "Linked message to existing candidate.", candidate.Id.ToString(), cancellationToken);
+                    await Log(source.Id, "vacancy", "Warning", "Vacancy has no title or description — skipping.", vacancyLabel, cancellationToken);
+                    continue;
+                }
+
+                var normalized = _normalizer.Normalize(extracted);
+
+                await Log(source.Id, "preview", "Info", $"Generating preview for: {vacancyLabel}", null, cancellationToken);
+                var preview = await _jobPreviewService.GenerateAsync(
+                    normalized,
+                    channelHint,
+                    normalized.Confidence,
+                    cancellationToken);
+                await Log(source.Id, "preview", "Info", $"Preview ready: {preview.DisplayTitle}", null, cancellationToken);
+
+                var normalizedForScoring = string.IsNullOrWhiteSpace(normalized.CompanyName)
+                    ? normalized with { CompanyName = channelHint }
+                    : normalized;
+
+                var (completeness, trust, spam) = _qualityScoring.Score(normalizedForScoring, source.TrustScore, dto.RawMessageText);
+
+                var fingerprint = JobContentFingerprint.ComputeForCandidate(
+                    normalizedForScoring.Title,
+                    normalizedForScoring.CompanyName,
+                    normalizedForScoring.City ?? normalizedForScoring.Location,
+                    normalizedForScoring.ApplyUrl);
+
+                var existingCandidate = await _candidateRepository.FindByContentFingerprintAsync(fingerprint, cancellationToken);
+                var thisVacancyIsDuplicate = existingCandidate is not null &&
+                    existingCandidate.Status is CandidateJobStatus.PendingReview or CandidateJobStatus.Approved;
+
+                if (vacancyIndex == 0) isDuplicate = thisVacancyIsDuplicate;
+
+                JobCandidate candidate;
+                if (thisVacancyIsDuplicate && existingCandidate is not null)
+                {
+                    candidate = existingCandidate;
+                    candidate.MessageLinks.Add(new JobCandidateMessage
+                    {
+                        JobCandidateId = candidate.Id,
+                        IngestionMessageId = message.Id,
+                        IsPrimary = false,
+                    });
+                    await _candidateRepository.UpdateAsync(candidate, cancellationToken);
+                    await Log(source.Id, "dedupe", "Info", $"Linked to existing candidate: {vacancyLabel}", candidate.Id.ToString(), cancellationToken);
+                }
+                else
+                {
+                    candidate = new JobCandidate
+                    {
+                        SourceId = dto.SourceId,
+                        Status = CandidateJobStatus.PendingReview,
+                        DuplicateGroupId = Guid.NewGuid(),
+                        ContentFingerprint = fingerprint,
+                    };
+                    ApplyExtraction(candidate, normalizedForScoring, completeness, trust, spam);
+                    ApplyPreview(candidate, preview);
+                    candidate.MessageLinks.Add(new JobCandidateMessage
+                    {
+                        IngestionMessageId = message.Id,
+                        IsPrimary = vacancyIndex == 0,
+                    });
+                    await _candidateRepository.AddAsync(candidate, cancellationToken);
+                    await Log(source.Id, "candidate", "Info", $"Candidate created: {vacancyLabel}", null, cancellationToken);
+                }
+
+                if (vacancyIndex == 0) firstCandidate = candidate;
             }
-            else
+
+            if (firstCandidate is null)
             {
-                candidate = new JobCandidate
-                {
-                    SourceId = dto.SourceId,
-                    Status = CandidateJobStatus.PendingReview,
-                    DuplicateGroupId = Guid.NewGuid(),
-                    ContentFingerprint = fingerprint,
-                };
-                ApplyExtraction(candidate, normalizedForScoring, completeness, trust, spam);
-                ApplyPreview(candidate, preview);
-                candidate.MessageLinks.Add(new JobCandidateMessage
-                {
-                    IngestionMessageId = message.Id,
-                    IsPrimary = true,
-                });
-                await _candidateRepository.AddAsync(candidate, cancellationToken);
-                await Log(source.Id, "candidate", "Info", "Candidate job created.", null, cancellationToken);
+                await MarkMessageFailed(message, "All vacancies were invalid or empty.", cancellationToken);
+                throw new IngestionPipelineException(
+                    IngestionErrorCodes.InvalidAiResponse,
+                    "All extracted vacancies were empty.");
             }
 
             message.Status = IngestionMessageStatus.Processed;
@@ -283,8 +333,8 @@ public class IngestionPipelineService
                     ex);
             }
 
-            var loaded = await _candidateRepository.GetByIdWithDetailsAsync(candidate.Id, cancellationToken)
-                ?? candidate;
+            var loaded = await _candidateRepository.GetByIdWithDetailsAsync(firstCandidate.Id, cancellationToken)
+                ?? firstCandidate;
 
             await Log(
                 source.Id,

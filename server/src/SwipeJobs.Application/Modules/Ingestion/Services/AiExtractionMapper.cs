@@ -5,28 +5,39 @@ namespace SwipeJobs.Application.Modules.Ingestion.Services;
 
 internal static class AiExtractionMapper
 {
+    /// <summary>Maps the first vacancy (or a specific one) to a JobExtractionResult for the pipeline.</summary>
     public static JobExtractionResult ToJobExtractionResult(ParsedJobCandidate ai)
     {
-        var applyMethod = ResolveApplyMethod(ai.ApplyUrl, ai.Email, ai.TelegramContact, ai.Phone, ai.ApplyMethod);
+        var v = ai.FirstVacancy
+            ?? throw new InvalidOperationException("Cannot map a non-job response to a JobExtractionResult.");
+        return MapVacancy(v);
+    }
+
+    /// <summary>Maps a specific vacancy to a JobExtractionResult.</summary>
+    public static JobExtractionResult VacancyToExtractionResult(ParsedVacancy v) => MapVacancy(v);
+
+    private static JobExtractionResult MapVacancy(ParsedVacancy v)
+    {
+        var applyMethod = ResolveApplyMethod(v.ApplyUrl, v.Email, v.TelegramContact, v.Phone, v.ApplyMethod);
         return new JobExtractionResult(
-            ai.Title,
-            ai.Company,
-            ai.Description,
-            ai.Location,
-            ai.Remote == true ? "Remote" : ai.Location,
-            ai.Remote,
-            ai.SalaryMin,
-            ai.SalaryMax,
+            v.Title,
+            v.Company,
+            v.Description,
+            v.Location,
+            v.Remote == true ? "Remote" : v.Location,
+            v.Remote,
+            v.SalaryMin,
+            v.SalaryMax,
             JobCategory.It,
-            MapLevel(ai.ExperienceLevel),
-            ai.EmploymentType,
-            ai.Skills,
+            MapLevel(v.ExperienceLevel),
+            v.EmploymentType,
+            v.Skills,
             applyMethod,
-            ai.ApplyUrl,
-            ai.Email,
-            ai.TelegramContact,
-            ai.Phone,
-            ai.Confidence);
+            v.ApplyUrl,
+            v.Email,
+            v.TelegramContact,
+            v.Phone,
+            v.Confidence);
     }
 
     private static ApplyMethodType ResolveApplyMethod(
