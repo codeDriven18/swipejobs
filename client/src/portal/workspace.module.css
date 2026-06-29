@@ -17,6 +17,13 @@
   overflow-x: hidden;
 }
 
+/* Mobile: sidebar is hidden (drawer), so no margin needed */
+@media (max-width: 767px) {
+  .mainColumn {
+    margin-left: 0 !important;
+  }
+}
+
 .header {
   display: flex;
   align-items: center;
@@ -24,6 +31,7 @@
   gap: 1rem;
   min-height: var(--ws-header-height);
   padding: 0 1.5rem;
+  padding-top: env(safe-area-inset-top, 0px);
   border-bottom: 1px solid var(--ws-border);
   background: var(--ws-panel);
   /* Sticky within the scrollable mainColumn */
@@ -71,6 +79,67 @@
   padding: 1.25rem 1.5rem 5rem;
   overflow-x: hidden;
   /* Let main content grow naturally — mainColumn scrolls */
+}
+
+/* ── Mobile-first overrides (< 768px) ── */
+@media (max-width: 767px) {
+  .main {
+    padding: 1rem 0.875rem 6.5rem;
+  }
+
+  .header {
+    padding: 0 0.875rem;
+    min-height: 3.25rem;
+  }
+
+  .headerTitle {
+    font-size: 0.9375rem;
+  }
+
+  .page {
+    gap: 0.875rem;
+  }
+
+  .panel,
+  .panelMuted {
+    padding: 0.875rem;
+  }
+
+  .pageTitle {
+    font-size: 1.125rem;
+  }
+
+  .pageActions {
+    width: 100%;
+  }
+
+  .pageActions > * {
+    flex: 1 1 auto;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .pageHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.625rem;
+  }
+
+  /* Buttons full-width on mobile */
+  .btnPrimary,
+  .btnGhost,
+  .btnDanger {
+    min-height: 2.625rem;
+  }
+
+  /* Candidate profile grid */
+  .candidateProfileGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .candidateProfileSidebar {
+    order: -1;
+  }
 }
 
 .mainPipeline {
@@ -1125,9 +1194,17 @@
 .inbox {
   display: grid;
   grid-template-columns: 1fr;
-  height: calc(100dvh - var(--ws-header-height));
-  max-height: calc(100dvh - var(--ws-header-height));
+  /* Mobile: subtract header + mobile bottom nav height */
+  height: calc(100dvh - var(--ws-header-height) - 4.5rem);
+  max-height: calc(100dvh - var(--ws-header-height) - 4.5rem);
   overflow: hidden;
+}
+
+@media (min-width: 768px) {
+  .inbox {
+    height: calc(100dvh - var(--ws-header-height));
+    max-height: calc(100dvh - var(--ws-header-height));
+  }
 }
 
 @media (min-width: 900px) {
@@ -5228,6 +5305,7 @@
   font-size: 0.8125rem;
   font-weight: 600;
   color: var(--ws-accent);
+  white-space: nowrap;
 }
 
 /* ── Pipeline page ── */
@@ -5500,6 +5578,193 @@
     grid-column: 2;
     grid-row: 2 / 4;
     align-self: center;
+  }
+}
+
+/* ── Pipeline toolbar mobile ── */
+@media (max-width: 767px) {
+  .pipelineToolbar {
+    gap: 0.5rem;
+  }
+
+  .pipelineToolbarActions {
+    margin-left: 0;
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .pipelineJobFilter {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+/* ── Inbox mobile ── */
+@media (max-width: 767px) {
+  .inbox {
+    height: calc(100dvh - var(--ws-header-height) - 4rem);
+    max-height: calc(100dvh - var(--ws-header-height) - 4rem);
+  }
+
+  .inboxList {
+    min-width: 0;
+    padding: 0.625rem;
+    gap: 0.375rem;
+  }
+
+  .msgInboxHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.375rem;
+    padding: 0.5rem 0.25rem;
+  }
+}
+
+/* ── Settings layout mobile ── */
+@media (max-width: 767px) {
+  .settingsShell {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .settingsAside {
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--ws-border);
+    padding: 0.75rem;
+  }
+
+  .settingsNav {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+  }
+
+  .settingsNavItem {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 0.35rem 0.75rem;
+    font-size: 0.8125rem;
+  }
+
+  .settingsContent {
+    padding: 1rem 0.875rem;
+  }
+
+  .settingsContentHeader {
+    margin-bottom: 0.875rem;
+  }
+
+  .settingsField {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .settingsFieldValue {
+    width: 100%;
+  }
+}
+
+/* ── Today page layout mobile ── */
+@media (max-width: 767px) {
+  .todayWorkspace {
+    gap: 0.75rem;
+  }
+
+  .todayStatusBar {
+    padding: 0;
+  }
+
+  .todayStatusLine {
+    font-size: 0.9375rem;
+  }
+
+  .todayLayout {
+    gap: 0.75rem;
+  }
+
+  .todayCaughtUp {
+    padding: 1rem;
+  }
+
+  .todayCaughtUpActions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .todayCaughtUpActions > * {
+    text-align: center;
+    justify-content: center;
+  }
+}
+
+/* ── Company editor mobile ── */
+@media (max-width: 767px) {
+  .companyEditorOverlay {
+    justify-content: stretch;
+  }
+
+  .companyEditorDrawer {
+    width: 100vw;
+    max-height: 92dvh;
+    border-left: none;
+    border-radius: var(--ws-radius-lg) var(--ws-radius-lg) 0 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    box-shadow: 0 -8px 32px rgba(0,0,0,0.18);
+  }
+}
+
+/* ── Candidate profile page mobile ── */
+@media (max-width: 767px) {
+  .candidateProfileGrid {
+    grid-template-columns: 1fr;
+    gap: 0.875rem;
+  }
+
+  .candidateSection {
+    padding: 0.875rem;
+  }
+
+  .candidateTimeline {
+    padding-left: 0.75rem;
+  }
+
+  .candidateTimelineItem {
+    padding-left: 1rem;
+  }
+
+  .recruitActionsRow {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .recruitActionsRow > * {
+    flex: 1 1 auto;
+    min-width: 7rem;
+    text-align: center;
+    justify-content: center;
+  }
+}
+
+/* ── Pipeline board cards mobile ── */
+@media (max-width: 767px) {
+  .pipelineBoardPage {
+    gap: 0.5rem;
+  }
+
+  .pipelineListControls {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .pipelineListSearch,
+  .pipelineListSelect {
+    width: 100%;
   }
 }
 

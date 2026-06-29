@@ -76,10 +76,11 @@ function WorkspaceShellInner() {
         onClose={() => setDrawerOpen(false)}
       />
 
-      {/* Main content — offset by sidebar width and transitions smoothly */}
+      {/* Main content — offset by sidebar width on desktop; 0 on mobile (sidebar is drawer) */}
       <div
         className={ws.mainColumn}
         style={{
+          // clamp(0px, width, 100vw) keeps it 0 when the sidebar is hidden on mobile
           marginLeft: `clamp(0px, ${currentNavWidth}, 100vw)`,
           transition: 'margin-left 0.2s cubic-bezier(0.22, 1, 0.36, 1)',
         }}
