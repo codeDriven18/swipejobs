@@ -112,8 +112,12 @@ export const PremiumSwipeDeck = forwardRef<PremiumSwipeDeckHandle, PremiumSwipeD
 
     const finishExit = useCallback(() => {
       exitLockedRef.current = false;
+      // Reset motion values so the next top card starts at centre, not at
+      // the drag-release position (which caused the "frozen card" ghost bug).
+      x.set(0);
+      y.set(0);
       setExitState(null);
-    }, []);
+    }, [x, y]);
 
     /**
      * Commit and animate the top card out.

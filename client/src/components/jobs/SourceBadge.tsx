@@ -20,15 +20,22 @@ export function SourceBadge({ job, className = '' }: SourceBadgeProps) {
   const level = job.sourceTrustLevel ?? SourceTrustLevel.Unknown;
   const logo = resolveLogoUrl(job.sourceLogoUrl);
 
-  return (
-    <span className={`${styles.badge} ${styles[`level${level}`]} ${className}`} title={SourceTrustLevelLabels[level]}>
+  const inner = (
+    <>
       {logo && (
         <img src={logo} alt="" className={styles.logo} loading="lazy" decoding="async" />
       )}
+      <span className={styles.poweredBy}>via</span>
       <span className={styles.name}>{job.sourceName}</span>
       {level >= SourceTrustLevel.Verified && level !== SourceTrustLevel.Standard && (
         <span className={styles.trustDot} aria-label={SourceTrustLevelLabels[level]} />
       )}
+    </>
+  );
+
+  return (
+    <span className={`${styles.badge} ${styles[`level${level}`]} ${className}`} title={`Powered by ${job.sourceName}`}>
+      {inner}
     </span>
   );
 }

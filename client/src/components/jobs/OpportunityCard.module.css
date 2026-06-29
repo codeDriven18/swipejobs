@@ -179,14 +179,14 @@
 .heroFade {
   position: absolute;
   inset: 0;
+  /* Extend fade below the hero area so the cut line disappears */
+  bottom: -2px;
   z-index: 1;
   background:
-    /* top vignette — gentle darkening so text on top is readable */
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.22) 0%, transparent 32%),
-    /* side vignettes — prevent hard edge on left/right */
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.22) 0%, transparent 28%),
     linear-gradient(to right, rgba(0, 0, 0, 0.1) 0%, transparent 18%, transparent 82%, rgba(0, 0, 0, 0.1) 100%),
-    /* bottom fade — blends image into card background */
-    linear-gradient(to bottom, transparent 42%, rgba(10, 10, 10, 0.55) 75%, var(--color-surface-raised) 100%);
+    /* Deep bottom fade completely dissolves into card surface */
+    linear-gradient(to bottom, transparent 38%, rgba(10, 10, 10, 0.5) 65%, var(--color-surface-raised) 92%, var(--color-surface-raised) 100%);
   pointer-events: none;
 }
 

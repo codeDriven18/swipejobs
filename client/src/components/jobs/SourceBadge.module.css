@@ -24,6 +24,14 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: 600;
+}
+
+.poweredBy {
+  font-size: 0.6rem;
+  opacity: 0.7;
+  flex-shrink: 0;
+  font-weight: 400;
 }
 
 .trustDot {

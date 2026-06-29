@@ -324,9 +324,39 @@ export function JobDetailPage() {
         <h2 className={styles.sectionTitle}>Full description</h2>
         <ContactLinkText text={job.description} className={styles.sectionText} as="p" />
         {job.sourceName && (
-          <p className={styles.source}>Source: {job.sourceName}</p>
+          <p className={styles.source}>
+            {job.sourceName && 'Sourced via '}
+            {job.sourceLogoUrl ? (
+              <img
+                src={job.sourceLogoUrl.startsWith('/') || job.sourceLogoUrl.startsWith('http')
+                  ? job.sourceLogoUrl
+                  : `/sources/${job.sourceLogoUrl}`}
+                alt=""
+                className={styles.sourceInlineIcon}
+              />
+            ) : null}
+            <strong>{job.sourceName}</strong>
+          </p>
         )}
       </article>
+
+      {(job.externalUrl || job.sourceName) && (
+        <div className={styles.externalActions}>
+          {job.externalUrl && !job.externalUrl.startsWith('swipejobs:') && (
+            <a
+              href={job.externalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.externalBtn}
+            >
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+                <path d="M11 3H17v6M17 3L9 11M8 5H4a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V13" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Apply on company website
+            </a>
+          )}
+        </div>
+      )}
 
       <JobShareMenu job={job} open={shareOpen} onClose={() => setShareOpen(false)} />
 
